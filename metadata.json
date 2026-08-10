@@ -1,0 +1,6 @@
+{
+  "name": "AI Intent Predictor",
+  "description": "AI-powered context and intention prediction assistant concept",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
