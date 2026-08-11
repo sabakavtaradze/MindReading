@@ -341,7 +341,12 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         _uiState.update { it.copy(isGeneratingPrediction = true) }
 
         viewModelScope.launch {
-            val apiKey = try { BuildConfig.GEMINI_API_KEY } catch (e: Exception) { "" }
+            val apiKey = try {
+                val field = BuildConfig::class.java.getField("GEMINI_API_KEY")
+                (field.get(null) as? String) ?: ""
+            } catch (e: Exception) {
+                ""
+            }
 
             if (apiKey.isNotBlank()) {
                 val apiSuccess = fetchPredictionFromGemini(apiKey)

@@ -14,11 +14,14 @@ android {
   compileSdk = 36
 
   defaultConfig {
-    applicationId = "com.example"
+    applicationId = "com.aistudio.mindreading.neuro"
     minSdk = 24
     targetSdk = 35
     versionCode = 1
     versionName = "1.0"
+    multiDexEnabled = true
+
+    buildConfigField("String", "GEMINI_API_KEY", "\"\"")
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -46,7 +49,14 @@ android {
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
       signingConfig = signingConfigs.getByName("release")
     }
-    debug { signingConfig = signingConfigs.getByName("debugConfig") }
+    debug {
+      val customKeystore = file("${rootDir}/debug.keystore")
+      if (customKeystore.exists()) {
+        signingConfig = signingConfigs.getByName("debugConfig")
+      } else {
+        signingConfig = signingConfigs.getByName("debug")
+      }
+    }
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
