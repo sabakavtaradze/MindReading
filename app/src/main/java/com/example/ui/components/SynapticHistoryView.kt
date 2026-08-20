@@ -14,9 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DeleteSweep
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -30,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.PredictionEntity
+import com.example.ui.theme.AppIcons
 import com.example.ui.theme.NeuralAccent
 import com.example.ui.theme.NeuralDeepPurple
 import com.example.ui.theme.NeuralSurface
@@ -56,7 +54,7 @@ fun SynapticHistoryView(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    imageVector = Icons.Default.History,
+                    imageVector = AppIcons.History,
                     contentDescription = "History",
                     tint = NeuralAccent,
                     modifier = Modifier.size(20.dp)
@@ -78,7 +76,7 @@ fun SynapticHistoryView(
                     modifier = Modifier.size(32.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.DeleteSweep,
+                        imageVector = AppIcons.DeleteSweep,
                         contentDescription = "Clear History",
                         tint = NeuralTextSecondary,
                         modifier = Modifier.size(18.dp)

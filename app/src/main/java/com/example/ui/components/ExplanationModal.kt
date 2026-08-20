@@ -15,10 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -33,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.ui.theme.AppIcons
 import com.example.ui.theme.NeuralAccent
 import com.example.ui.theme.NeuralCardPurple
 import com.example.ui.theme.NeuralDeepPurple
@@ -65,7 +62,7 @@ fun ExplanationModal(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.Psychology,
+                            imageVector = AppIcons.Psychology,
                             contentDescription = "AI & OS Reality",
                             tint = NeuralAccent,
                             modifier = Modifier.size(24.dp)
@@ -80,7 +77,7 @@ fun ExplanationModal(
                     }
                     IconButton(onClick = onDismissRequest) {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            imageVector = AppIcons.CloseIcon,
                             contentDescription = "Close",
                             tint = NeuralTextSecondary
                         )

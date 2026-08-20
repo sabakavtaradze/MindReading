@@ -21,8 +21,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,6 +35,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.theme.AppIcons
 import com.example.ui.theme.NeuralAccent
 import com.example.ui.theme.NeuralDeepPurple
 import com.example.ui.theme.NeuralSurface
@@ -136,7 +135,7 @@ fun HeroNeuralOverlay(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Psychology,
+                            imageVector = AppIcons.Psychology,
                             contentDescription = "Synaptic Core",
                             tint = NeuralDeepPurple,
                             modifier = Modifier.size(34.dp)
@@ -166,42 +165,42 @@ fun HeroNeuralOverlay(
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             TelemetryBarItem(
-                label = "Touch",
+                label = "შეხება",
                 value = touchValue,
                 isPulse = isSyncing,
                 alpha = alphaPulse,
                 modifier = Modifier.weight(1f)
             )
             TelemetryBarItem(
-                label = "Audio",
+                label = "აუდიო",
                 value = audioValue,
                 isPulse = isSyncing,
                 alpha = alphaPulse,
                 modifier = Modifier.weight(1f)
             )
             TelemetryBarItem(
-                label = "Camera",
+                label = "კამერა",
                 value = visualValue,
                 isPulse = isSyncing,
                 alpha = alphaPulse,
                 modifier = Modifier.weight(1f)
             )
             TelemetryBarItem(
-                label = "Motion",
+                label = "მოძრაობა",
                 value = motionValue,
                 isPulse = isSyncing,
                 alpha = alphaPulse,
                 modifier = Modifier.weight(1f)
             )
             TelemetryBarItem(
-                label = "Bio",
+                label = "ბიო",
                 value = biometricsValue,
                 isPulse = isSyncing,
                 alpha = alphaPulse,
                 modifier = Modifier.weight(1f)
             )
             TelemetryBarItem(
-                label = "Neural",
+                label = "ნეირო",
                 value = neuralValue,
                 isPulse = isSyncing,
                 alpha = alphaPulse,

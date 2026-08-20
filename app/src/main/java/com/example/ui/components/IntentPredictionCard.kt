@@ -12,16 +12,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
@@ -39,11 +33,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.theme.AppIcons
 import com.example.ui.theme.NeuralAccent
 import com.example.ui.theme.NeuralCardPurple
 import com.example.ui.theme.NeuralDeepPurple
 import com.example.ui.theme.NeuralTextPrimary
 import com.example.ui.theme.NeuralTextSecondary
+
+data class MindBandData(
+    val subconsciousFocusLevel: String = "Deep Flow State (Alpha 10.2 Hz)",
+    val alphaBandHz: Float = 10.2f,
+    val betaBandHz: Float = 18.5f,
+    val thetaBandHz: Float = 6.1f,
+    val gammaBandHz: Float = 42.0f,
+    val thoughtCognitiveLoadPct: Int = 42
+)
 
 @Composable
 fun IntentPredictionCard(
@@ -52,12 +56,7 @@ fun IntentPredictionCard(
     actionPlan: String,
     isGenerating: Boolean,
     onRunInferenceClick: () -> Unit,
-    subconsciousFocusLevel: String = "Deep Flow State (Alpha 10.2 Hz)",
-    alphaBandHz: Float = 10.2f,
-    betaBandHz: Float = 18.5f,
-    thetaBandHz: Float = 6.1f,
-    gammaBandHz: Float = 42.0f,
-    thoughtCognitiveLoadPct: Int = 42,
+    mindBands: MindBandData = MindBandData(),
     onDecodeCustomThought: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
@@ -80,6 +79,7 @@ fun IntentPredictionCard(
             .padding(20.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Header Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -92,7 +92,7 @@ fun IntentPredictionCard(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = Icons.Default.AutoAwesome,
+                        imageVector = AppIcons.AutoAwesome,
                         contentDescription = "Intent AI",
                         tint = NeuralDeepPurple,
                         modifier = Modifier.size(24.dp)
@@ -130,7 +130,7 @@ fun IntentPredictionCard(
                         )
                     } else {
                         Icon(
-                            imageVector = Icons.Default.Refresh,
+                            imageVector = AppIcons.RefreshIcon,
                             contentDescription = "Re-analyze Intent",
                             tint = NeuralAccent,
                             modifier = Modifier.size(18.dp)
@@ -155,7 +155,7 @@ fun IntentPredictionCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Psychology,
+                        imageVector = AppIcons.Psychology,
                         contentDescription = null,
                         tint = NeuralAccent,
                         modifier = Modifier.size(18.dp)
@@ -169,177 +169,17 @@ fun IntentPredictionCard(
                 }
             }
 
-            // Real-time Brainwave Spectral Bands Telemetry
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(NeuralDeepPurple)
-                    .padding(12.dp)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "SUBCONSCIOUS MIND FREQUENCY BANDS",
-                            color = NeuralAccent,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "Load: $thoughtCognitiveLoadPct%",
-                            color = NeuralTextSecondary,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-
-                    Text(
-                        text = "Mind Focus: $subconsciousFocusLevel",
-                        color = NeuralTextPrimary,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    // Spectral Bar Indicators
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Alpha", color = NeuralTextSecondary, fontSize = 9.sp)
-                            Text("${String.format("%.1f", alphaBandHz)}Hz", color = NeuralAccent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Beta", color = NeuralTextSecondary, fontSize = 9.sp)
-                            Text("${String.format("%.1f", betaBandHz)}Hz", color = NeuralAccent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Theta", color = NeuralTextSecondary, fontSize = 9.sp)
-                            Text("${String.format("%.1f", thetaBandHz)}Hz", color = NeuralAccent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Gamma", color = NeuralTextSecondary, fontSize = 9.sp)
-                            Text("${String.format("%.1f", gammaBandHz)}Hz", color = NeuralAccent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
-                }
-            }
+            // Spectral Band Telemetry
+            MindSpectralCard(mindBands = mindBands)
 
             // Direct Mind Thought Decoder Console
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(NeuralDeepPurple)
-                    .border(1.dp, NeuralAccent.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
-                    .padding(12.dp)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(
-                        text = "DIRECT MIND THOUGHT DECODER",
-                        color = NeuralAccent,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        OutlinedTextField(
-                            value = customThoughtText,
-                            onValueChange = { customThoughtText = it },
-                            placeholder = { Text("Type mental focus / thought...", color = NeuralTextSecondary, fontSize = 11.sp) },
-                            modifier = Modifier.weight(1f),
-                            singleLine = true,
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = NeuralCardPurple,
-                                unfocusedContainerColor = NeuralCardPurple,
-                                focusedTextColor = NeuralTextPrimary,
-                                unfocusedTextColor = NeuralTextPrimary,
-                                focusedIndicatorColor = NeuralAccent,
-                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.1f)
-                            )
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(NeuralAccent)
-                                .clickable {
-                                    if (customThoughtText.isNotBlank()) {
-                                        onDecodeCustomThought?.invoke(customThoughtText)
-                                    }
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Send,
-                                contentDescription = "Decode Thought",
-                                tint = NeuralDeepPurple,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-
-                    // Quick Thought Focus Chips
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(NeuralCardPurple)
-                                .clickable {
-                                    customThoughtText = "Refactor Code Architecture"
-                                    onDecodeCustomThought?.invoke("Refactor Code Architecture")
-                                }
-                                .padding(vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("⚡ Refactor UI", color = NeuralAccent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(NeuralCardPurple)
-                                .clickable {
-                                    customThoughtText = "Short Mind Break"
-                                    onDecodeCustomThought?.invoke("Short Mind Break")
-                                }
-                                .padding(vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("☕ Coffee Break", color = NeuralAccent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(NeuralCardPurple)
-                                .clickable {
-                                    customThoughtText = "Deep Flow Coding"
-                                    onDecodeCustomThought?.invoke("Deep Flow Coding")
-                                }
-                                .padding(vertical = 6.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("🧠 Deep Flow", color = NeuralAccent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
-                        }
-                    }
+            DirectThoughtDecoderView(
+                customThoughtText = customThoughtText,
+                onTextChanged = { customThoughtText = it },
+                onDecode = { thought ->
+                    onDecodeCustomThought?.invoke(thought)
                 }
-            }
+            )
 
             Text(
                 text = summary,
@@ -349,71 +189,13 @@ fun IntentPredictionCard(
                 fontWeight = FontWeight.Normal
             )
 
-            // Mind Thought Accuracy & Recalibration Feedback
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(NeuralDeepPurple.copy(alpha = 0.5f))
-                    .padding(10.dp)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        text = "WAS THIS PREDICTED THOUGHT ACCURATE?",
-                        color = NeuralTextSecondary,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (userFeedback == "Accurate") NeuralAccent else Color.White.copy(alpha = 0.08f))
-                                .clickable { userFeedback = "Accurate" }
-                                .padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "✓ Accurate Thought",
-                                color = if (userFeedback == "Accurate") NeuralDeepPurple else NeuralTextPrimary,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
+            // Thought Accuracy Feedback
+            MindThoughtFeedbackSection(
+                userFeedback = userFeedback,
+                onFeedbackSelected = { userFeedback = it }
+            )
 
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (userFeedback == "Recalibrate") NeuralAccent else Color.White.copy(alpha = 0.08f))
-                                .clickable { userFeedback = "Recalibrate" }
-                                .padding(vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "⚡ Recalibrate Model",
-                                color = if (userFeedback == "Recalibrate") NeuralDeepPurple else NeuralTextPrimary,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
-                    }
-
-                    if (userFeedback != null) {
-                        Text(
-                            text = if (userFeedback == "Accurate") "Synaptic weight reinforced (+1.2% model confidence)." else "Model weights adjusted for hesitation & touch latency.",
-                            color = NeuralAccent,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Normal
-                        )
-                    }
-                }
-            }
-
+            // Expandable Action Plan
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -429,7 +211,7 @@ fun IntentPredictionCard(
                     fontWeight = FontWeight.SemiBold
                 )
                 Icon(
-                    imageVector = Icons.Default.Psychology,
+                    imageVector = AppIcons.Psychology,
                     contentDescription = "Toggle",
                     tint = NeuralAccent,
                     modifier = Modifier.size(16.dp)
@@ -495,6 +277,236 @@ fun IntentPredictionCard(
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MindSpectralCard(
+    mindBands: MindBandData
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(NeuralDeepPurple)
+            .padding(12.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "SUBCONSCIOUS MIND FREQUENCY BANDS",
+                    color = NeuralAccent,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Load: ${mindBands.thoughtCognitiveLoadPct}%",
+                    color = NeuralTextSecondary,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Text(
+                text = "Mind Focus: ${mindBands.subconsciousFocusLevel}",
+                color = NeuralTextPrimary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SpectralBandItem(name = "Alpha", hz = mindBands.alphaBandHz, modifier = Modifier.weight(1f))
+                SpectralBandItem(name = "Beta", hz = mindBands.betaBandHz, modifier = Modifier.weight(1f))
+                SpectralBandItem(name = "Theta", hz = mindBands.thetaBandHz, modifier = Modifier.weight(1f))
+                SpectralBandItem(name = "Gamma", hz = mindBands.gammaBandHz, modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SpectralBandItem(name: String, hz: Float, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(name, color = NeuralTextSecondary, fontSize = 9.sp)
+        Text(
+            text = "${String.format(java.util.Locale.US, "%.1f", hz)}Hz",
+            color = NeuralAccent,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+private fun DirectThoughtDecoderView(
+    customThoughtText: String,
+    onTextChanged: (String) -> Unit,
+    onDecode: (String) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(NeuralDeepPurple)
+            .border(1.dp, NeuralAccent.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+            .padding(12.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                text = "DIRECT MIND THOUGHT DECODER",
+                color = NeuralAccent,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = customThoughtText,
+                    onValueChange = onTextChanged,
+                    placeholder = { Text("Type mental focus / thought...", color = NeuralTextSecondary, fontSize = 11.sp) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = NeuralCardPurple,
+                        unfocusedContainerColor = NeuralCardPurple,
+                        focusedTextColor = NeuralTextPrimary,
+                        unfocusedTextColor = NeuralTextPrimary,
+                        focusedIndicatorColor = NeuralAccent,
+                        unfocusedIndicatorColor = Color.White.copy(alpha = 0.1f)
+                    )
+                )
+
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(NeuralAccent)
+                        .clickable {
+                            if (customThoughtText.isNotBlank()) {
+                                onDecode(customThoughtText)
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = AppIcons.SendIcon,
+                        contentDescription = "Decode Thought",
+                        tint = NeuralDeepPurple,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+
+            // Quick Thought Focus Chips
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                ThoughtChip(title = "⚡ Refactor UI", thought = "Refactor Code Architecture", onSelect = onDecode, modifier = Modifier.weight(1f))
+                ThoughtChip(title = "☕ Coffee Break", thought = "Short Mind Break", onSelect = onDecode, modifier = Modifier.weight(1f))
+                ThoughtChip(title = "🧠 Deep Flow", thought = "Deep Flow Coding", onSelect = onDecode, modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThoughtChip(
+    title: String,
+    thought: String,
+    onSelect: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(NeuralCardPurple)
+            .clickable { onSelect(thought) }
+            .padding(vertical = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(title, color = NeuralAccent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+@Composable
+private fun MindThoughtFeedbackSection(
+    userFeedback: String?,
+    onFeedbackSelected: (String) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(NeuralDeepPurple.copy(alpha = 0.5f))
+            .padding(10.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = "WAS THIS PREDICTED THOUGHT ACCURATE?",
+                color = NeuralTextSecondary,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (userFeedback == "Accurate") NeuralAccent else Color.White.copy(alpha = 0.08f))
+                        .clickable { onFeedbackSelected("Accurate") }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "✓ Accurate Thought",
+                        color = if (userFeedback == "Accurate") NeuralDeepPurple else NeuralTextPrimary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (userFeedback == "Recalibrate") NeuralAccent else Color.White.copy(alpha = 0.08f))
+                        .clickable { onFeedbackSelected("Recalibrate") }
+                        .padding(vertical = 8.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "⚡ Recalibrate Model",
+                        color = if (userFeedback == "Recalibrate") NeuralDeepPurple else NeuralTextPrimary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+
+            if (userFeedback != null) {
+                Text(
+                    text = if (userFeedback == "Accurate") "Synaptic weight reinforced (+1.2% model confidence)." else "Model weights adjusted for hesitation & touch latency.",
+                    color = NeuralAccent,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Normal
+                )
             }
         }
     }

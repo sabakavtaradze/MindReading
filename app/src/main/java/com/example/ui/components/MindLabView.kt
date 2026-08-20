@@ -15,15 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Headphones
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Psychology
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Slider
@@ -41,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.theme.AppIcons
 import com.example.ui.theme.NeuralAccent
 import com.example.ui.theme.NeuralBorder
 import com.example.ui.theme.NeuralDeepPurple
@@ -95,7 +87,7 @@ fun MindLabView(
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Psychology,
+                                imageVector = AppIcons.Psychology,
                                 contentDescription = null,
                                 tint = NeuralAccent,
                                 modifier = Modifier.size(18.dp)
@@ -183,7 +175,7 @@ fun MindLabView(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Headphones,
+                            imageVector = AppIcons.Headphones,
                             contentDescription = null,
                             tint = NeuralAccent,
                             modifier = Modifier.size(20.dp)
@@ -205,7 +197,7 @@ fun MindLabView(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = if (isSoundscapeActive) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            imageVector = if (isSoundscapeActive) AppIcons.Pause else AppIcons.PlayCircle,
                             contentDescription = "Toggle Soundscape",
                             tint = if (isSoundscapeActive) NeuralDeepPurple else NeuralAccent,
                             modifier = Modifier.size(20.dp)
@@ -215,7 +207,7 @@ fun MindLabView(
 
                 Text(
                     text = if (isSoundscapeActive)
-                        "⚡ Synthesizing Isochronic Binaural Pulses @ ${String.format("%.1f", soundscapeFrequency)} Hz ($soundscapeMode)"
+                        "⚡ Synthesizing Isochronic Binaural Pulses @ ${String.format(java.util.Locale.US, "%.1f", soundscapeFrequency)} Hz ($soundscapeMode)"
                     else
                         "Soundscape offline. Tap Play to stimulate brainwave synchronization.",
                     color = if (isSoundscapeActive) NeuralAccent else NeuralTextSecondary,
@@ -284,7 +276,7 @@ fun MindLabView(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Lightbulb,
+                        imageVector = AppIcons.Lightbulb,
                         contentDescription = null,
                         tint = NeuralAccent,
                         modifier = Modifier.size(20.dp)

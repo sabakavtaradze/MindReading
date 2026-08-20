@@ -12,15 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.TouchApp
-import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -38,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import com.example.ui.theme.AppIcons
 import com.example.ui.theme.NeuralAccent
 import com.example.ui.theme.NeuralCardPurple
 import com.example.ui.theme.NeuralDeepPurple
@@ -48,10 +40,12 @@ import com.example.ui.theme.NeuralTextSecondary
 @Composable
 fun PermissionsDialog(
     micGranted: Boolean,
+    cameraGranted: Boolean = false,
     usageStatsGranted: Boolean,
     accessibilityGranted: Boolean,
     overlayGranted: Boolean,
     onMicToggle: (Boolean) -> Unit,
+    onCameraToggle: (Boolean) -> Unit = {},
     onUsageStatsToggle: (Boolean) -> Unit,
     onAccessibilityToggle: (Boolean) -> Unit,
     onOverlayToggle: (Boolean) -> Unit,
@@ -75,7 +69,7 @@ fun PermissionsDialog(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.Security,
+                            imageVector = AppIcons.Security,
                             contentDescription = "Permissions",
                             tint = NeuralAccent,
                             modifier = Modifier.size(22.dp)
@@ -90,7 +84,7 @@ fun PermissionsDialog(
                     }
                     IconButton(onClick = onDismissRequest) {
                         Icon(
-                            imageVector = Icons.Default.Close,
+                            imageVector = AppIcons.CloseIcon,
                             contentDescription = "Close",
                             tint = NeuralTextSecondary
                         )
@@ -105,7 +99,7 @@ fun PermissionsDialog(
                 )
 
                 PermissionRowItem(
-                    icon = Icons.Default.Mic,
+                    icon = AppIcons.Mic,
                     title = "Microphone Audio Sampling",
                     description = "Analyze ambient sound decibels for activity context",
                     isChecked = micGranted,
@@ -113,7 +107,15 @@ fun PermissionsDialog(
                 )
 
                 PermissionRowItem(
-                    icon = Icons.Default.TouchApp,
+                    icon = AppIcons.CameraFront,
+                    title = "Front Camera Gaze & Optical HUD",
+                    description = "Analyze eye gaze vectors, blinks, and facial radiance",
+                    isChecked = cameraGranted,
+                    onCheckedChange = onCameraToggle
+                )
+
+                PermissionRowItem(
+                    icon = AppIcons.TouchApp,
                     title = "Accessibility Touch Events",
                     description = "Detect tap gestures & screen interactions",
                     isChecked = accessibilityGranted,
@@ -121,7 +123,7 @@ fun PermissionsDialog(
                 )
 
                 PermissionRowItem(
-                    icon = Icons.Default.Visibility,
+                    icon = AppIcons.Visibility,
                     title = "Usage Stats & App Context",
                     description = "Observe active foreground application type",
                     isChecked = usageStatsGranted,
@@ -129,7 +131,7 @@ fun PermissionsDialog(
                 )
 
                 PermissionRowItem(
-                    icon = Icons.Default.Lock,
+                    icon = AppIcons.Security,
                     title = "System Overlay Floating UI",
                     description = "Display real-time intent HUD over apps",
                     isChecked = overlayGranted,
@@ -145,7 +147,7 @@ fun PermissionsDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Info,
+                        imageVector = AppIcons.Info,
                         contentDescription = "Privacy",
                         tint = NeuralAccent,
                         modifier = Modifier.size(20.dp)

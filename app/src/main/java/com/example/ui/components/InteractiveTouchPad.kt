@@ -17,13 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraFront
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.ScreenRotation
-import androidx.compose.material.icons.filled.TouchApp
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -43,6 +36,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.theme.AppIcons
 import com.example.ui.theme.NeuralAccent
 import com.example.ui.theme.NeuralDeepPurple
 import com.example.ui.theme.NeuralSurface
@@ -121,7 +115,7 @@ fun InteractiveTouchPad(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.TouchApp,
+                        imageVector = AppIcons.TouchApp,
                         contentDescription = "Touch Stream",
                         tint = NeuralAccent,
                         modifier = Modifier.size(16.dp)
@@ -163,7 +157,7 @@ fun InteractiveTouchPad(
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.CameraFront,
+                            imageVector = AppIcons.CameraFront,
                             contentDescription = "Camera Gaze",
                             tint = NeuralAccent,
                             modifier = Modifier.size(16.dp)
@@ -217,7 +211,7 @@ fun InteractiveTouchPad(
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.ScreenRotation,
+                            imageVector = AppIcons.ScreenRotation,
                             contentDescription = "Motion Gyro",
                             tint = NeuralAccent,
                             modifier = Modifier.size(16.dp)
@@ -232,7 +226,7 @@ fun InteractiveTouchPad(
                     }
 
                     Text(
-                        text = "${String.format("%.1f", motionTremor)} m/s²",
+                        text = "${String.format(java.util.Locale.US, "%.1f", motionTremor)} m/s²",
                         color = NeuralTextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
@@ -281,7 +275,7 @@ fun InteractiveTouchPad(
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.Mic,
+                            imageVector = AppIcons.Mic,
                             contentDescription = "Audio Level",
                             tint = NeuralAccent,
                             modifier = Modifier.size(16.dp)
@@ -301,7 +295,7 @@ fun InteractiveTouchPad(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(text = "Mic In: ${audioDb.toInt()} dB", color = NeuralTextPrimary, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
-                        Icon(imageVector = Icons.Default.VolumeUp, contentDescription = "Speaker", tint = NeuralTextSecondary, modifier = Modifier.size(14.dp))
+                        Icon(imageVector = AppIcons.VolumeUp, contentDescription = "Speaker", tint = NeuralTextSecondary, modifier = Modifier.size(14.dp))
                         Text(text = "Speaker: ${speakerOutputDb.toInt()} dB", color = NeuralTextPrimary, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
                     }
 
@@ -335,7 +329,7 @@ fun InteractiveTouchPad(
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.Favorite,
+                            imageVector = AppIcons.WaterDrop,
                             contentDescription = "Heart Rate",
                             tint = Color(0xFFFF5252),
                             modifier = Modifier.size(16.dp)
@@ -461,7 +455,7 @@ fun InteractiveTouchPad(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("Accelerometer Tremor", color = NeuralTextSecondary, fontSize = 11.sp)
-                        Text("${String.format("%.1f", motionTremor)} m/s²", color = NeuralTextPrimary, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                        Text("${String.format(java.util.Locale.US, "%.1f", motionTremor)} m/s²", color = NeuralTextPrimary, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
                     }
                     Slider(
                         value = motionTremor,

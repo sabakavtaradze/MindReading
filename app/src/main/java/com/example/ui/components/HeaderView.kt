@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Psychology
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +30,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.theme.AppIcons
 import com.example.ui.theme.NeuralAccent
 import com.example.ui.theme.NeuralDeepPurple
 import com.example.ui.theme.NeuralTextPrimary
@@ -59,12 +58,11 @@ fun HeaderView(
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = if (isSyncing) "NEURAL LINK ACTIVE" else "NEURAL LINK STANDBY",
+                text = if (isSyncing) "ნეირონული კავშირი აქტიურია" else "ნეირონული კავშირი მოლოდინში",
                 color = NeuralAccent,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 1.8.sp,
-                fontFamily = FontFamily.Monospace
+                letterSpacing = 1.2.sp
             )
             Spacer(modifier = Modifier.height(2.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -108,7 +106,7 @@ fun HeaderView(
                         )
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Psychology,
+                        imageVector = AppIcons.Psychology,
                         contentDescription = "Neural Active",
                         tint = NeuralDeepPurple,
                         modifier = Modifier
@@ -118,7 +116,7 @@ fun HeaderView(
                 }
             } else {
                 Icon(
-                    imageVector = Icons.Default.Psychology,
+                    imageVector = AppIcons.Psychology,
                     contentDescription = "Neural Standby",
                     tint = NeuralDeepPurple,
                     modifier = Modifier.size(24.dp)

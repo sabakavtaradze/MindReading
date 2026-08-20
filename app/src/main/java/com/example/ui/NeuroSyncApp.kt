@@ -1,5 +1,7 @@
 package com.example.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,11 +24,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PlayCircle
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.StopCircle
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,21 +32,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.example.ui.components.ExplanationModal
-import com.example.ui.components.HeaderView
-import com.example.ui.components.HeroNeuralOverlay
-import com.example.ui.components.IntentPredictionCard
-import com.example.ui.components.InteractiveTouchPad
-import com.example.ui.components.MindLabView
-import com.example.ui.components.PermissionsDialog
-import com.example.ui.components.SynapticHistoryView
-import com.example.ui.theme.NeuralAccent
-import com.example.ui.theme.NeuralBackground
-import com.example.ui.theme.NeuralBorder
-import com.example.ui.theme.NeuralDeepPurple
-import com.example.ui.theme.NeuralSurface
-import com.example.viewmodel.NeuroSyncViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,8 +39,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.components.ExplanationModal
+import com.example.ui.components.HeaderView
+import com.example.ui.components.HeroNeuralOverlay
+import com.example.ui.components.IntentPredictionCard
+import com.example.ui.components.MindBandData
+import com.example.ui.components.InteractiveTouchPad
+import com.example.ui.components.MindLabView
+import com.example.ui.components.PermissionsDialog
+import com.example.ui.components.SynapticHistoryView
+import com.example.ui.components.UnifiedSimulationMatrix
+import com.example.ui.theme.AppIcons
+import com.example.ui.theme.NeuralAccent
+import com.example.ui.theme.NeuralBackground
+import com.example.ui.theme.NeuralBorder
+import com.example.ui.theme.NeuralDeepPurple
+import com.example.ui.theme.NeuralSurface
+import com.example.viewmodel.NeuroSyncViewModel
 
-enum class NeuroTab { INFERENCE, MIND_LAB, SENSORS, LOGS }
+enum class NeuroTab { UNIFIED_MATRIX, MIND_LAB, SENSORS, LOGS }
 
 @Composable
 fun NeuroSyncApp(
@@ -66,8 +67,23 @@ fun NeuroSyncApp(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val historyList by viewModel.history.collectAsStateWithLifecycle()
+    var activeTab by remember { mutableStateOf(NeuroTab.UNIFIED_MATRIX) }
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    var activeTab by remember { mutableStateOf(NeuroTab.INFERENCE) }
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        viewModel.setCameraPermissionGranted(isGranted)
+        if (isGranted) {
+            viewModel.startCameraGazeTracking(lifecycleOwner)
+        }
+    }
+
+    val micPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        viewModel.setMicPermission(isGranted)
+    }
 
     Scaffold(
         containerColor = NeuralBackground,
@@ -121,20 +137,73 @@ fun NeuroSyncApp(
                 // Tab Content Switcher
                 Box(modifier = Modifier.padding(horizontal = 24.dp)) {
                     when (activeTab) {
-                        NeuroTab.INFERENCE -> {
-                            IntentPredictionCard(
-                                title = uiState.currentPredictionTitle,
-                                summary = uiState.currentPredictionText,
-                                actionPlan = uiState.currentActionPlan,
-                                isGenerating = uiState.isGeneratingPrediction,
-                                onRunInferenceClick = { viewModel.runNeuralPredictionInference() },
-                                subconsciousFocusLevel = uiState.subconsciousFocusLevel,
+                        NeuroTab.UNIFIED_MATRIX -> {
+                            UnifiedSimulationMatrix(
+                                isSyncing = uiState.isSyncing,
+                                matchPercentage = uiState.matchPercentage,
+                                statusText = uiState.statusText,
                                 alphaBandHz = uiState.alphaBandHz,
                                 betaBandHz = uiState.betaBandHz,
                                 thetaBandHz = uiState.thetaBandHz,
                                 gammaBandHz = uiState.gammaBandHz,
-                                thoughtCognitiveLoadPct = uiState.thoughtCognitiveLoadPct,
-                                onDecodeCustomThought = { viewModel.decodeCustomThought(it) }
+                                cognitiveLoadPct = uiState.thoughtCognitiveLoadPct,
+                                subconsciousFocusLevel = uiState.subconsciousFocusLevel,
+                                touchTapsCount = uiState.touchTapsCount,
+                                lastTouchCoords = uiState.lastTouchCoords,
+                                audioDb = uiState.audioDb,
+                                speakerOutputDb = uiState.speakerOutputDb,
+                                cameraGazeX = uiState.cameraGazeX,
+                                cameraGazeY = uiState.cameraGazeY,
+                                motionTremor = uiState.motionTremor,
+                                heartRateBpm = uiState.heartRateBpm,
+                                activeAppContext = uiState.activeAppContext,
+                                currentPredictionTitle = uiState.currentPredictionTitle,
+                                currentPredictionText = uiState.currentPredictionText,
+                                currentActionPlan = uiState.currentActionPlan,
+                                timeHorizons = uiState.timeHorizons,
+                                hesitationMetrics = uiState.hesitationMetrics,
+                                circadian = uiState.circadian,
+                                calibrationWeights = uiState.calibrationWeights,
+                                sandboxActions = uiState.sandboxActions,
+                                subvocalSpeech = uiState.subvocalSpeech,
+                                mentalImagery = uiState.mentalImagery,
+                                preErrorState = uiState.preErrorState,
+                                mindGraph = uiState.mindGraph,
+                                emotionalFriction = uiState.emotionalFriction,
+                                decisionTree = uiState.decisionTree,
+                                ghostTyping = uiState.ghostTyping,
+                                neuroFatigue = uiState.neuroFatigue,
+                                thoughtTimeline = uiState.thoughtTimeline,
+                                entrainment = uiState.entrainment,
+                                realSensors = uiState.realSensors,
+                                cameraGaze = uiState.cameraGaze,
+                                isGeneratingPrediction = uiState.isGeneratingPrediction,
+                                onRunUnifiedInference = { viewModel.runNeuralPredictionInference() },
+                                onInjectStimulus = { viewModel.injectStimulus(it) },
+                                onAppContextChanged = { viewModel.setAppContext(it) },
+                                onTouchTap = { x, y -> viewModel.registerTouchTap(x, y) },
+                                onDecodeCustomThought = { viewModel.decodeCustomThought(it) },
+                                onApplyFeedback = { isAccurate -> viewModel.applyFeedbackCalibration(isAccurate) },
+                                onToggleSandboxAction = { actionKey -> viewModel.toggleSandboxAction(actionKey) },
+                                onTriggerSubvocal = { viewModel.triggerSubvocalSpeechWord() },
+                                onSynthesizeImagery = { prompt -> viewModel.synthesizeMentalImagery(prompt) },
+                                onCheckPreError = { viewModel.simulateErnPreErrorCheck() },
+                                onSelectGraphNode = { nodeId -> viewModel.selectMindGraphNode(nodeId) },
+                                onModulateMood = { dValence, dArousal -> viewModel.modulateEmotionalValence(dValence, dArousal) },
+                                onSelectDecisionBranch = { branchId -> viewModel.selectDecisionBranch(branchId) },
+                                onAcceptGhostTyping = { viewModel.acceptGhostTyping() },
+                                onCycleGhostSuggestion = { viewModel.cycleGhostSuggestion() },
+                                onRefreshFatigue = { viewModel.refreshNeuroFatigueCheck() },
+                                onSearchThoughtHistory = { query -> viewModel.searchThoughtTimeline(query) },
+                                onToggleEntrainment = { viewModel.toggleEntrainmentPlay() },
+                                onSetEntrainmentMode = { mode -> viewModel.setEntrainmentMode(mode) },
+                                onToggleCamera = {
+                                    if (uiState.cameraGaze.isCameraActive) {
+                                        viewModel.stopCameraGazeTracking()
+                                    } else {
+                                        cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                                    }
+                                }
                             )
                         }
                         NeuroTab.MIND_LAB -> {
@@ -181,10 +250,21 @@ fun NeuroSyncApp(
         if (uiState.isPermissionsModalOpen) {
             PermissionsDialog(
                 micGranted = uiState.micPermissionGranted,
+                cameraGranted = uiState.cameraPermissionGranted,
                 usageStatsGranted = uiState.usageStatsPermissionGranted,
                 accessibilityGranted = uiState.accessibilityPermissionGranted,
                 overlayGranted = uiState.overlayPermissionGranted,
-                onMicToggle = { viewModel.setMicPermission(it) },
+                onMicToggle = { 
+                    if (it) micPermissionLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
+                    else viewModel.setMicPermission(false)
+                },
+                onCameraToggle = {
+                    if (it) cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                    else {
+                        viewModel.setCameraPermissionGranted(false)
+                        viewModel.stopCameraGazeTracking()
+                    }
+                },
                 onUsageStatsToggle = { viewModel.setUsageStatsPermission(it) },
                 onAccessibilityToggle = { viewModel.setAccessibilityPermission(it) },
                 onOverlayToggle = { viewModel.setOverlayPermission(it) },
@@ -218,16 +298,16 @@ private fun TabSelectorBar(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        TabPillItem("Predict", activeTab == NeuroTab.INFERENCE, modifier = Modifier.weight(1f)) {
-            onTabSelected(NeuroTab.INFERENCE)
+        TabPillItem("მატრიცა", activeTab == NeuroTab.UNIFIED_MATRIX, modifier = Modifier.weight(1f)) {
+            onTabSelected(NeuroTab.UNIFIED_MATRIX)
         }
-        TabPillItem("Mind Lab", activeTab == NeuroTab.MIND_LAB, modifier = Modifier.weight(1f)) {
+        TabPillItem("ნეირო-ლაბი", activeTab == NeuroTab.MIND_LAB, modifier = Modifier.weight(1f)) {
             onTabSelected(NeuroTab.MIND_LAB)
         }
-        TabPillItem("Sensors", activeTab == NeuroTab.SENSORS, modifier = Modifier.weight(1f)) {
+        TabPillItem("სენსორები", activeTab == NeuroTab.SENSORS, modifier = Modifier.weight(1f)) {
             onTabSelected(NeuroTab.SENSORS)
         }
-        TabPillItem("Logs", activeTab == NeuroTab.LOGS, modifier = Modifier.weight(1f)) {
+        TabPillItem("ისტორია", activeTab == NeuroTab.LOGS, modifier = Modifier.weight(1f)) {
             onTabSelected(NeuroTab.LOGS)
         }
 
@@ -240,8 +320,8 @@ private fun TabSelectorBar(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = "Limits Info",
+                imageVector = AppIcons.Info,
+                contentDescription = "ინფორმაცია",
                 tint = NeuralAccent,
                 modifier = Modifier.size(18.dp)
             )
@@ -303,15 +383,15 @@ private fun FooterBar(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Settings",
+                    imageVector = AppIcons.Settings,
+                    contentDescription = "ნებართვები",
                     tint = NeuralAccent,
                     modifier = Modifier.size(18.dp)
                 )
                 Text(
-                    text = "Permissions",
+                    text = "ნებართვები",
                     color = NeuralAccent,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
             }
@@ -332,15 +412,15 @@ private fun FooterBar(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    imageVector = if (isSyncing) Icons.Default.StopCircle else Icons.Default.PlayCircle,
-                    contentDescription = "Syncing",
+                    imageVector = if (isSyncing) AppIcons.StopCircle else AppIcons.PlayCircle,
+                    contentDescription = "სინქრონიზაცია",
                     tint = NeuralDeepPurple,
                     modifier = Modifier.size(18.dp)
                 )
                 Text(
-                    text = if (isSyncing) "Syncing" else "Paused",
+                    text = if (isSyncing) "სინქრონიზაცია" else "დაპაუზებული",
                     color = NeuralDeepPurple,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
