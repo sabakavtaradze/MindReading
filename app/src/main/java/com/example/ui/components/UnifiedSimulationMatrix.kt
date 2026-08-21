@@ -122,6 +122,7 @@ fun UnifiedSimulationMatrix(
     entrainment: NeuroEntrainmentState,
     realSensors: com.example.sensor.RealHardwareSensorState,
     cameraGaze: com.example.sensor.RealCameraGazeState,
+    earbudSensor: com.example.viewmodel.EarbudSensorState = com.example.viewmodel.EarbudSensorState(),
     isGeneratingPrediction: Boolean,
     // Callbacks
     onRunUnifiedInference: () -> Unit,
@@ -144,6 +145,8 @@ fun UnifiedSimulationMatrix(
     onToggleEntrainment: () -> Unit,
     onSetEntrainmentMode: (String) -> Unit,
     onToggleCamera: () -> Unit,
+    onToggleEarbuds: () -> Unit = {},
+    onRecalibrateEarbuds: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var customThoughtPrompt by remember { mutableStateOf("") }
@@ -385,6 +388,15 @@ fun UnifiedSimulationMatrix(
         GeorgianPhonemeMatrixCard()
 
         // -------------------------------------------------------------
+        // 1.2 Samsung Galaxy Buds 2 & Ear-EEG Telemetry Card
+        // -------------------------------------------------------------
+        GalaxyBuds2EarEegCard(
+            earbud = earbudSensor,
+            onRecalibrate = onRecalibrateEarbuds,
+            onToggle = onToggleEarbuds
+        )
+
+        // -------------------------------------------------------------
         // 2. Pre-Error ERN (Error-Related Negativity) Wave Detector Card
         // -------------------------------------------------------------
         PreErrorErnDetectorCard(
@@ -480,13 +492,32 @@ fun UnifiedSimulationMatrix(
             onTabSelected = { activeHorizonTab = it }
         )
 
-        // Master Multimodal Inference Action Card
+        // Master Multimodal Inference Action Card (PREDICT Section)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
-                .background(NeuralCardPurple)
-                .border(1.dp, NeuralAccent.copy(alpha = 0.4f), RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(26.dp))
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFF261245),
+                            NeuralCardPurple,
+                            Color(0xFF130924)
+                        )
+                    )
+                )
+                .border(
+                    width = 2.dp,
+                    brush = Brush.horizontalGradient(
+                        listOf(
+                            Color(0xFF00E5FF),
+                            NeuralAccent,
+                            Color(0xFFFF52A2),
+                            Color(0xFF00E5FF)
+                        )
+                    ),
+                    shape = RoundedCornerShape(26.dp)
+                )
                 .padding(18.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -497,26 +528,33 @@ fun UnifiedSimulationMatrix(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "PREDICTED INTENT & COGNITIVE STATE",
-                            color = NeuralAccent,
+                            text = "🧠 მულტიმოდალური ნეირო-პროგნოზი & განზრახვა",
+                            color = Color(0xFF00E5FF),
                             fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 0.8.sp
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = 0.5.sp
                         )
                         Text(
                             text = currentPredictionTitle,
                             color = Color.White,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
 
                     Box(
                         modifier = Modifier
-                            .clip(CircleShape)
-                            .background(NeuralAccent)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(
+                                Brush.horizontalGradient(
+                                    listOf(
+                                        NeuralAccent,
+                                        Color(0xFF00E5FF)
+                                    )
+                                )
+                            )
                             .clickable { onRunUnifiedInference() }
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                            .padding(horizontal = 16.dp, vertical = 10.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -524,35 +562,44 @@ fun UnifiedSimulationMatrix(
                         ) {
                             if (isGeneratingPrediction) {
                                 CircularProgressIndicator(
-                                    modifier = Modifier.size(14.dp),
+                                    modifier = Modifier.size(16.dp),
                                     color = NeuralDeepPurple,
                                     strokeWidth = 2.dp
                                 )
                             } else {
                                 Icon(
                                     imageVector = AppIcons.AutoAwesome,
-                                    contentDescription = "Predict",
+                                    contentDescription = "პროგნოზირება",
                                     tint = NeuralDeepPurple,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
                             }
                             Text(
-                                text = if (isGeneratingPrediction) "Fusing..." else "PREDICT",
+                                text = if (isGeneratingPrediction) "ანალიზი..." else "⚡ პროგნოზი",
                                 color = NeuralDeepPurple,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.ExtraBold
                             )
                         }
                     }
                 }
 
                 // Intent Explanation and Synthesis
-                Text(
-                    text = currentPredictionText,
-                    color = NeuralTextPrimary,
-                    fontSize = 13.sp,
-                    lineHeight = 19.sp
-                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(NeuralDeepPurple.copy(alpha = 0.6f))
+                        .padding(12.dp)
+                ) {
+                    Text(
+                        text = currentPredictionText,
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 20.sp
+                    )
+                }
 
                 // Multimodal Adaptive Calibration Weights Display
                 CalibrationWeightsSection(
@@ -564,8 +611,8 @@ fun UnifiedSimulationMatrix(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(NeuralDeepPurple.copy(alpha = 0.7f))
-                        .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(16.dp))
+                        .background(NeuralDeepPurple.copy(alpha = 0.85f))
+                        .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.25f), RoundedCornerShape(16.dp))
                         .padding(12.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -575,15 +622,16 @@ fun UnifiedSimulationMatrix(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = "AUTOMATED PROACTIVE OS ACTIONS",
+                                text = "ავტომატური პროაქტიული მოქმედებების გეგმა",
                                 color = NeuralAccent,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "Confidence: ${String.format(java.util.Locale.US, "%.1f", matchPercentage)}%",
-                                color = NeuralTextSecondary,
-                                fontSize = 10.sp
+                                text = "სიზუსტე: ${String.format(java.util.Locale.US, "%.1f", matchPercentage)}%",
+                                color = Color(0xFF00FF66),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
 
@@ -591,7 +639,7 @@ fun UnifiedSimulationMatrix(
                             text = currentActionPlan,
                             color = NeuralTextPrimary,
                             fontSize = 12.sp,
-                            lineHeight = 17.sp
+                            lineHeight = 18.sp
                         )
 
                         Box(
@@ -600,13 +648,13 @@ fun UnifiedSimulationMatrix(
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(if (isActionExecuted) NeuralAccent.copy(alpha = 0.2f) else NeuralAccent)
                                 .clickable { isActionExecuted = true }
-                                .padding(vertical = 8.dp),
+                                .padding(vertical = 10.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = if (isActionExecuted) "✓ Proactive Plan Executed to System" else "⚡ Execute Proactive Action Plan",
+                                text = if (isActionExecuted) "✓ პროაქტიული გეგმა შესრულებულია სისტემაში" else "⚡ პროაქტიული მოქმედების გეგმის შესრულება",
                                 color = if (isActionExecuted) NeuralAccent else NeuralDeepPurple,
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -627,11 +675,11 @@ fun UnifiedSimulationMatrix(
                                 selectedFeedback = true
                                 onApplyFeedback(true)
                             }
-                            .padding(vertical = 8.dp),
+                            .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "✓ Accurate (+Reinforce)",
+                            text = "✓ ზუსტია (+განმტკიცება)",
                             color = if (selectedFeedback == true) NeuralDeepPurple else NeuralTextPrimary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold
@@ -647,11 +695,11 @@ fun UnifiedSimulationMatrix(
                                 selectedFeedback = false
                                 onApplyFeedback(false)
                             }
-                            .padding(vertical = 8.dp),
+                            .padding(vertical = 10.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "⚡ Recalibrate (Shift Weights)",
+                            text = "⚡ გადაკალიბრება",
                             color = if (selectedFeedback == false) NeuralDeepPurple else NeuralTextPrimary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.SemiBold
@@ -799,8 +847,8 @@ private fun SubvocalSpeechCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.RecordVoiceOver, contentDescription = "Subvocal", tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
-                    Text("SILENT SUBVOCAL SPEECH STREAM", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.RecordVoiceOver, contentDescription = "სუბვოკალური", tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
+                    Text("სუბვოკალური შინაგანი ხმის ნაკადი", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 Box(
                     modifier = Modifier
@@ -809,12 +857,12 @@ private fun SubvocalSpeechCard(
                         .clickable { onTriggerNewWord() }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text("⚡ Sample Phoneme", color = Color(0xFF00E5FF), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("⚡ ფონემა", color = Color(0xFF00E5FF), fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
             Text(
-                text = "Decoded Inner Voice: \"${subvocal.decodedPhrase}\"",
+                text = "დეკოდირებული შინაგანი ხმა: \"${subvocal.decodedPhrase}\"",
                 color = NeuralTextPrimary,
                 fontSize = 12.sp,
                 fontFamily = FontFamily.Monospace,
@@ -843,6 +891,137 @@ private fun SubvocalSpeechCard(
                     }
                 }
             }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+// 1.2 Samsung Galaxy Buds 2 & Ear-EEG Telemetry Composable
+// -------------------------------------------------------------------------------------------------
+@Composable
+private fun GalaxyBuds2EarEegCard(
+    earbud: com.example.viewmodel.EarbudSensorState,
+    onRecalibrate: () -> Unit,
+    onToggle: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(NeuralSurface)
+            .border(1.dp, Color(0xFF9D4EDD).copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+            .padding(14.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(
+                        imageVector = AppIcons.Headphones,
+                        contentDescription = "Galaxy Buds 2",
+                        tint = Color(0xFF9D4EDD),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column {
+                        Text(
+                            text = "🎧 Samsung Galaxy Buds 2 & Ear-EEG",
+                            color = Color(0xFF9D4EDD),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = if (earbud.isConnected) "BLE სინქრონიზებული • VPU + IMU ნაკადი" else "გათიშულია",
+                            color = NeuralTextSecondary,
+                            fontSize = 9.5.sp
+                        )
+                    }
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF9D4EDD).copy(alpha = 0.15f))
+                            .clickable { onRecalibrate() }
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text("⚡ რეკალიბრაცია", color = Color(0xFF9D4EDD), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            // Real-time telemetry grid: VPU, IMU, Ear Canal Occlusion, Simulated Bio-Potential
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(NeuralDeepPurple)
+                        .padding(8.dp)
+                ) {
+                    Column {
+                        Text("VPU ძვლის ვიბრაცია", color = NeuralTextSecondary, fontSize = 8.sp)
+                        Text(
+                            "${String.format(java.util.Locale.US, "%.1f", earbud.vpuBoneConductionHz)} Hz",
+                            color = Color(0xFF00E5FF),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(NeuralDeepPurple)
+                        .padding(8.dp)
+                ) {
+                    Column {
+                        Text("თავის დახრა (IMU)", color = NeuralTextSecondary, fontSize = 8.sp)
+                        Text(
+                            "${String.format(java.util.Locale.US, "%.1f", earbud.headImuPitchDeg)}° Pitch",
+                            color = Color(0xFF00FF66),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(NeuralDeepPurple)
+                        .padding(8.dp)
+                ) {
+                    Column {
+                        Text("Ear-EEG სიგნალი", color = NeuralTextSecondary, fontSize = 8.sp)
+                        Text(
+                            "${String.format(java.util.Locale.US, "%.1f", earbud.earEegSimulatedMicrovolts)} μV",
+                            color = Color(0xFFFF52A2),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = "💡 Galaxy Buds 2 აფიქსირებს ყბის სუბვოკალურ მოძრაობებს (VPU), თავის დახრის კუთხეს და ყურის არხის აკუსტიკას, რაც აძლიერებს აზრების პროგნოზირების სიზუსტეს.",
+                color = NeuralTextPrimary.copy(alpha = 0.85f),
+                fontSize = 10.5.sp,
+                lineHeight = 14.sp
+            )
         }
     }
 }
@@ -879,7 +1058,7 @@ private fun PreErrorErnDetectorCard(
                         tint = borderColor,
                         modifier = Modifier.size(16.dp)
                     )
-                    Text("PRE-ERROR ERN WAVE DETECTOR", color = borderColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("შეცდომის წინასწარი ERN ტალღის დეტექტორი", color = borderColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 Box(
                     modifier = Modifier
@@ -888,7 +1067,7 @@ private fun PreErrorErnDetectorCard(
                         .clickable { onSimulateCheck() }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text("Scan Wave (-300ms)", color = borderColor, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("სკანირება (-300ms)", color = borderColor, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -903,10 +1082,10 @@ private fun PreErrorErnDetectorCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                HesitationMetricPill("ERN Peak (μV)", "${String.format(java.util.Locale.US, "%.1f", preError.ernWaveMagnitudeUv)} μV", Modifier.weight(1f))
-                HesitationMetricPill("Pre-Error Risk", "${preError.preErrorProbabilityPct}%", Modifier.weight(1f))
-                HesitationMetricPill("Intercept Window", "-${preError.timeToImpactMs} ms", Modifier.weight(1f))
-                HesitationMetricPill("Interceptions", "${preError.preventedMistakesCount} Saved", Modifier.weight(1f))
+                HesitationMetricPill("ERN პიკი (μV)", "${String.format(java.util.Locale.US, "%.1f", preError.ernWaveMagnitudeUv)} μV", Modifier.weight(1f))
+                HesitationMetricPill("შეცდომის რისკი", "${preError.preErrorProbabilityPct}%", Modifier.weight(1f))
+                HesitationMetricPill("ინტერვალი", "-${preError.timeToImpactMs} ms", Modifier.weight(1f))
+                HesitationMetricPill("პრევენცია", "${preError.preventedMistakesCount}", Modifier.weight(1f))
             }
         }
     }
@@ -935,10 +1114,10 @@ private fun SemanticMindGraphCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.Hub, contentDescription = "Mind Graph", tint = Color(0xFF9D4EDD), modifier = Modifier.size(16.dp))
-                    Text("SEMANTIC MIND ASSOCIATION GRAPH", color = Color(0xFF9D4EDD), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.Hub, contentDescription = "ასოციაციური გრაფი", tint = Color(0xFF9D4EDD), modifier = Modifier.size(16.dp))
+                    Text("სემანტიკური აზროვნების ასოციაციური გრაფი", color = Color(0xFF9D4EDD), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("Central: ${mindGraph.centralTopic}", color = NeuralTextSecondary, fontSize = 10.sp)
+                Text("ცენტრი: ${mindGraph.centralTopic}", color = NeuralTextSecondary, fontSize = 10.sp)
             }
 
             // Interactive Node Graph View
@@ -1031,8 +1210,8 @@ private fun MentalImageryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.Image, contentDescription = "Mental Imagery", tint = Color(0xFFFFD166), modifier = Modifier.size(16.dp))
-                    Text("MENTAL IMAGERY RECONSTRUCTION", color = Color(0xFFFFD166), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.Image, contentDescription = "ვიზუალიზაცია", tint = Color(0xFFFFD166), modifier = Modifier.size(16.dp))
+                    Text("მენტალური ვიზუალიზაციის რეკონსტრუქცია", color = Color(0xFFFFD166), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 Box(
                     modifier = Modifier
@@ -1041,12 +1220,12 @@ private fun MentalImageryCard(
                         .clickable { onSynthesize("") }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text(if (imagery.isSynthesizing) "Rendering..." else "⚡ Synthesize", color = Color(0xFFFFD166), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text(if (imagery.isSynthesizing) "გენერაცია..." else "⚡ სინთეზი", color = Color(0xFFFFD166), fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
             Text(
-                text = "Visualized Concept: \"${imagery.activeConcept}\"",
+                text = "ვიზუალიზებული კონცეფცია: \"${imagery.activeConcept}\"",
                 color = NeuralTextPrimary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
@@ -1087,8 +1266,8 @@ private fun MentalImageryCard(
                         .padding(8.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text("Fidelity: ${imagery.visualFidelityPct}%", color = Color(0xFFFFD166), fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                    Text("θ-γ Coherence: ${String.format(java.util.Locale.US, "%.2f", imagery.thetaGammaCoherence)}", color = NeuralTextSecondary, fontSize = 9.sp)
+                    Text("სიზუსტე: ${imagery.visualFidelityPct}%", color = Color(0xFFFFD166), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("θ-γ კოჰერენტულობა: ${String.format(java.util.Locale.US, "%.2f", imagery.thetaGammaCoherence)}", color = NeuralTextSecondary, fontSize = 9.sp)
                 }
             }
 
@@ -1141,14 +1320,14 @@ private fun EmotionalFrictionCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.Mood, contentDescription = "Emotional Resonance", tint = valenceColor, modifier = Modifier.size(16.dp))
-                    Text("EMOTIONAL RESONANCE & COGNITIVE FRICTION", color = valenceColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.Mood, contentDescription = "ემოციური რეზონანსი", tint = valenceColor, modifier = Modifier.size(16.dp))
+                    Text("ემოციური რეზონანსი & კოგნიტური ხახუნი", color = valenceColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("${friction.cognitiveFrictionPct}% Friction", color = valenceColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text("${friction.cognitiveFrictionPct}% ხახუნი", color = valenceColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
 
             Text(
-                text = "Resonance Mood: ${friction.dominantMood}",
+                text = "რეზონანსული განწყობა: ${friction.dominantMood}",
                 color = NeuralTextPrimary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
@@ -1174,7 +1353,7 @@ private fun EmotionalFrictionCard(
                         .padding(vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("🧘 Flow Boost (+Valence)", color = Color(0xFF00FF66), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("🧘 ფოკუსის გაუმჯობესება", color = Color(0xFF00FF66), fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
 
                 Box(
@@ -1186,7 +1365,7 @@ private fun EmotionalFrictionCard(
                         .padding(vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("⚠️ Inject Friction", color = Color(0xFFFF5252), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("⚠️ ხახუნის დამატება", color = Color(0xFFFF5252), fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -1216,14 +1395,14 @@ private fun CognitiveDecisionTreeCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.AccountTree, contentDescription = "Decision Tree", tint = Color(0xFF9D4EDD), modifier = Modifier.size(16.dp))
-                    Text("BRANCHING COGNITIVE DECISION TREE", color = Color(0xFF9D4EDD), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.AccountTree, contentDescription = "გადაწყვეტილების ხე", tint = Color(0xFF9D4EDD), modifier = Modifier.size(16.dp))
+                    Text("გადაწყვეტილების განშტოებადი ხე", color = Color(0xFF9D4EDD), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("3 Active Pathways", color = NeuralAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                Text("3 აქტიური გზა", color = NeuralAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
             }
 
             Text(
-                text = "Multiverse Cognitive Branching: The mind evaluates parallel intent paths prior to physical motor commitment.",
+                text = "მრავალვარიანტული კოგნიტური განშტოება: გონება აფასებს პარალელურ ვარიანტებს მოქმედებამდე.",
                 color = NeuralTextSecondary,
                 fontSize = 11.sp,
                 lineHeight = 15.sp
@@ -1259,7 +1438,7 @@ private fun CognitiveDecisionTreeCard(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "${branch.probabilityPct}% Probability",
+                                    text = "${branch.probabilityPct}% ალბათობა",
                                     color = if (isSelected) Color(0xFF00FF66) else NeuralTextSecondary,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold
@@ -1272,7 +1451,7 @@ private fun CognitiveDecisionTreeCard(
                                 lineHeight = 15.sp
                             )
                             Text(
-                                text = "Next Proactive Action: ${branch.nextAction}",
+                                text = "შემდეგი პროაქტიული ნაბიჯი: ${branch.nextAction}",
                                 color = Color(0xFF00E5FF),
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.SemiBold
@@ -1310,7 +1489,7 @@ private fun GhostTypingEngineCard(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(imageVector = AppIcons.Keyboard, contentDescription = "Ghost Typing", tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
-                    Text("SUBCONSCIOUS GHOST-TYPING ENGINE", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Text("ქვეცნობიერი წინასწარ-აკრეფის ძრავა", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 Box(
                     modifier = Modifier
@@ -1319,12 +1498,12 @@ private fun GhostTypingEngineCard(
                         .clickable { onCycle() }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text("⚡ Cycle Thought", color = Color(0xFF00E5FF), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("⚡ აზრის შეცვლა", color = Color(0xFF00E5FF), fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
             Text(
-                text = "Telepathic Pre-Completion: Synthesizes entire expressions from sub-conscious intent buffers before keystrokes.",
+                text = "ტელეპათიური წინასწარ-შევსება: აყალიბებს სრულ წინადადებას განზრახვის ბუფერიდან კლავიშის დაჭერამდე.",
                 color = NeuralTextSecondary,
                 fontSize = 11.sp
             )
@@ -1343,8 +1522,8 @@ private fun GhostTypingEngineCard(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("IDE CONVERGENCE STREAM", color = NeuralAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                        Text("${ghostTyping.confidencePct}% Confidence", color = Color(0xFF00FF66), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text("კოდის / ტექსტის ნაკადი", color = NeuralAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text("${ghostTyping.confidencePct}% სიზუსტე", color = Color(0xFF00FF66), fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
 
                     // Simulated Code Line with Ghost completion
@@ -1380,7 +1559,7 @@ private fun GhostTypingEngineCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = if (ghostTyping.isAccepted) "✓ Thought Expression Accepted into IDE" else "⚡ Accept Ghost Thought (Tab Key)",
+                    text = if (ghostTyping.isAccepted) "✓ აზრი მიღებულია და შეყვანილია" else "⚡ აზრის დადასტურება (Tab)",
                     color = if (ghostTyping.isAccepted) Color(0xFF00FF66) else NeuralDeepPurple,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold
@@ -1419,8 +1598,8 @@ private fun NeuroFatigueClarityCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.BatteryChargingFull, contentDescription = "Mental Energy", tint = energyColor, modifier = Modifier.size(16.dp))
-                    Text("NEURO-FATIGUE & CLARITY SPECTRUM", color = energyColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.BatteryChargingFull, contentDescription = "მენტალური ენერგია", tint = energyColor, modifier = Modifier.size(16.dp))
+                    Text("ნეირო-დაღლილობა & სიცხადის სპექტრი", color = energyColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 Box(
                     modifier = Modifier
@@ -1429,12 +1608,12 @@ private fun NeuroFatigueClarityCard(
                         .clickable { onRefresh() }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
-                    Text("⚡ Re-Scan θ/β", color = energyColor, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    Text("⚡ სკანირება θ/β", color = energyColor, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
             Text(
-                text = "Clarity Status: ${fatigue.clarityStatus}",
+                text = "სიცხადის სტატუსი: ${fatigue.clarityStatus}",
                 color = NeuralTextPrimary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
@@ -1443,8 +1622,8 @@ private fun NeuroFatigueClarityCard(
             // Mental Battery Indicator Bar
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Mental Battery Reserve", color = NeuralTextSecondary, fontSize = 10.sp)
-                    Text("${fatigue.mentalEnergyPct}% Capacity (${fatigue.cognitiveEnduranceMinutes} mins reserve)", color = energyColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Text("მენტალური ენერგიის რეზერვი", color = NeuralTextSecondary, fontSize = 10.sp)
+                    Text("${fatigue.mentalEnergyPct}% (${fatigue.cognitiveEnduranceMinutes} წთ დარჩენილი)", color = energyColor, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
                 Box(
                     modifier = Modifier
@@ -1475,8 +1654,8 @@ private fun NeuroFatigueClarityCard(
                         .padding(8.dp)
                 ) {
                     Column {
-                        Text("θ/β Power Ratio", color = NeuralTextSecondary, fontSize = 8.sp)
-                        Text("${String.format(java.util.Locale.US, "%.2f", fatigue.thetaBetaRatio)} (Optimal < 2.0)", color = NeuralTextPrimary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text("θ/β თანაფარდობა", color = NeuralTextSecondary, fontSize = 8.sp)
+                        Text("${String.format(java.util.Locale.US, "%.2f", fatigue.thetaBetaRatio)} (ოპტიმ. < 2.0)", color = NeuralTextPrimary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 Box(
@@ -1487,7 +1666,7 @@ private fun NeuroFatigueClarityCard(
                         .padding(8.dp)
                 ) {
                     Column {
-                        Text("Recovery Directive", color = NeuralTextSecondary, fontSize = 8.sp)
+                        Text("რეკომენდაცია", color = NeuralTextSecondary, fontSize = 8.sp)
                         Text(fatigue.recoveryRecommendation.take(28) + "...", color = Color(0xFF00E5FF), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -1521,10 +1700,10 @@ private fun ThoughtStreamTimelineCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.Timeline, contentDescription = "Timeline", tint = Color(0xFFFFD166), modifier = Modifier.size(16.dp))
-                    Text("THOUGHT STREAM TIMELINE & LOGS", color = Color(0xFFFFD166), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.Timeline, contentDescription = "ქრონოლოგია", tint = Color(0xFFFFD166), modifier = Modifier.size(16.dp))
+                    Text("აზრების ნაკადის ქრონოლოგია & ლოგები", color = Color(0xFFFFD166), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("${timeline.historyLogs.size} Logged Thoughts", color = NeuralAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                Text("${timeline.historyLogs.size} ჩაწერილი აზრი", color = NeuralAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
             }
 
             // Search Bar
@@ -1534,7 +1713,7 @@ private fun ThoughtStreamTimelineCard(
                     searchInput = it
                     onSearch(it)
                 },
-                placeholder = { Text("Search decoded thoughts & intentions...", color = NeuralTextSecondary, fontSize = 11.sp) },
+                placeholder = { Text("მოძებნეთ დეკოდირებული აზრები...", color = NeuralTextSecondary, fontSize = 11.sp) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp)),
@@ -1597,7 +1776,7 @@ private fun ThoughtStreamTimelineCard(
                                     fontSize = 9.sp
                                 )
                                 Text(
-                                    text = "${item.confidencePct}% match",
+                                    text = "${item.confidencePct}% სიზუსტე",
                                     color = Color(0xFF00FF66),
                                     fontSize = 9.sp,
                                     fontWeight = FontWeight.Bold
@@ -1635,8 +1814,8 @@ private fun AudioNeuroEntrainmentCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.Waves, contentDescription = "Neuro-Entrainment", tint = Color(0xFF00FF66), modifier = Modifier.size(16.dp))
-                    Text("AUDIO NEURO-ENTRAINMENT BEATS", color = Color(0xFF00FF66), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.Waves, contentDescription = "ნეირო-სინქრონიზაცია", tint = Color(0xFF00FF66), modifier = Modifier.size(16.dp))
+                    Text("აუდიო ნეირო-სინქრონიზაციის ბინორალური ტალღები", color = Color(0xFF00FF66), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 Box(
                     modifier = Modifier
@@ -1646,7 +1825,7 @@ private fun AudioNeuroEntrainmentCard(
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = if (entrainment.isPlaying) "🔊 ACTIVE BEATS" else "🔇 PAUSED",
+                        text = if (entrainment.isPlaying) "🔊 აქტიურია" else "🔇 შეჩერებულია",
                         color = if (entrainment.isPlaying) Color(0xFF00FF66) else NeuralTextSecondary,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold
@@ -1655,14 +1834,14 @@ private fun AudioNeuroEntrainmentCard(
             }
 
             Text(
-                text = "Binaural Synaptic Alignment: Modulates carrier audio waves (${entrainment.carrierFrequencyHz} Hz) to stimulate targeted brainwave resonance (${entrainment.targetWaveHz} Hz).",
+                text = "ბინორალური სინაფსური სინქრონიზაცია: მართავს აუდიო ტალღებს (${entrainment.carrierFrequencyHz} Hz) ტვინის სასურველი სიხშირის სტიმულაციისთვის (${entrainment.targetWaveHz} Hz).",
                 color = NeuralTextSecondary,
                 fontSize = 11.sp,
                 lineHeight = 15.sp
             )
 
             Text(
-                text = "Mode Effect: ${entrainment.entrainmentBenefit}",
+                text = "ეფექტი: ${entrainment.entrainmentBenefit}",
                 color = Color(0xFF00E5FF),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold
@@ -1674,11 +1853,11 @@ private fun AudioNeuroEntrainmentCard(
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 listOf(
-                    "Alpha Flow (10 Hz)",
-                    "Theta Creative (6 Hz)",
-                    "Gamma Hyper-Focus (40 Hz)"
+                    "Alpha ნაკადი (10 Hz)",
+                    "Theta შემოქმედება (6 Hz)",
+                    "Gamma ფოკუსი (40 Hz)"
                 ).forEach { mode ->
-                    val isSelected = entrainment.activeFrequencyMode == mode
+                    val isSelected = entrainment.activeFrequencyMode.startsWith(mode.take(5))
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -1725,10 +1904,10 @@ private fun TimeHorizonsPredictionCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.AccessTime, contentDescription = "Time Horizons", tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
-                    Text("MULTI-HORIZON INTENT PREDICTIONS", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.AccessTime, contentDescription = "დროის ჰორიზონტი", tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
+                    Text("დროის ჰორიზონტის პროგნოზები", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("3 Time Scales", color = NeuralTextSecondary, fontSize = 10.sp)
+                Text("3 მასშტაბი", color = NeuralTextSecondary, fontSize = 10.sp)
             }
 
             // Tabs for +30s / +5m / +30m
@@ -1736,9 +1915,9 @@ private fun TimeHorizonsPredictionCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                TimeHorizonPill("+30 SEC (Motor)", activeTab == "30s", Modifier.weight(1f)) { onTabSelected("30s") }
-                TimeHorizonPill("+5 MIN (Task)", activeTab == "5m", Modifier.weight(1f)) { onTabSelected("5m") }
-                TimeHorizonPill("+30 MIN (Energy)", activeTab == "30m", Modifier.weight(1f)) { onTabSelected("30m") }
+                TimeHorizonPill("+30 წმ (მოტორული)", activeTab == "30s", Modifier.weight(1f)) { onTabSelected("30s") }
+                TimeHorizonPill("+5 წთ (დავალება)", activeTab == "5m", Modifier.weight(1f)) { onTabSelected("5m") }
+                TimeHorizonPill("+30 წთ (ენერგია)", activeTab == "30m", Modifier.weight(1f)) { onTabSelected("30m") }
             }
 
             // Horizon Content Box
@@ -1750,9 +1929,9 @@ private fun TimeHorizonsPredictionCard(
                     .padding(12.dp)
             ) {
                 val (badgeColor, title, desc) = when (activeTab) {
-                    "30s" -> Triple(Color(0xFF00FF66), "IMMEDIATE MOTOR REFLEX (+30 SEC)", horizons.horizon30Sec)
-                    "5m" -> Triple(Color(0xFF00E5FF), "TASK-LEVEL WORKFLOW OBJECTIVE (+5 MIN)", horizons.horizon5Min)
-                    else -> Triple(Color(0xFFFFD166), "SUBCONSCIOUS ENERGY & COGNITIVE TRAJECTORY (+30 MIN)", horizons.horizon30Min)
+                    "30s" -> Triple(Color(0xFF00FF66), "დაუყოვნებელი მოტორული რეფლექსი (+30 წმ)", horizons.horizon30Sec)
+                    "5m" -> Triple(Color(0xFF00E5FF), "მიმდინარე სამუშაო მიზანი (+5 წთ)", horizons.horizon5Min)
+                    else -> Triple(Color(0xFFFFD166), "ქვეცნობიერი ენერგია & ტრაექტორია (+30 წთ)", horizons.horizon30Min)
                 }
 
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -1790,8 +1969,8 @@ private fun CalibrationWeightsSection(weights: StreamCalibrationWeights) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("REINFORCED MULTIMODAL WEIGHTS (ITERATION #${weights.reinforcedIterations})", color = NeuralTextSecondary, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-            Text("${weights.calibrationConfidence}% Conf", color = NeuralAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Text("მულტიმოდალური კალიბრაციის წონები (#${weights.reinforcedIterations})", color = NeuralTextSecondary, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Text("${weights.calibrationConfidence}% სიზუსტე", color = NeuralAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
         }
 
         Row(
@@ -1812,10 +1991,10 @@ private fun CalibrationWeightsSection(weights: StreamCalibrationWeights) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text("EEG ${(weights.neuralWeight * 100).toInt()}%", color = Color(0xFF9D4EDD), fontSize = 9.sp)
-            Text("Touch ${(weights.touchWeight * 100).toInt()}%", color = Color(0xFF00E5FF), fontSize = 9.sp)
-            Text("Audio ${(weights.audioWeight * 100).toInt()}%", color = Color(0xFF00FF66), fontSize = 9.sp)
-            Text("Vision ${(weights.visionWeight * 100).toInt()}%", color = Color(0xFFFFD166), fontSize = 9.sp)
-            Text("Bio ${(weights.bioWeight * 100).toInt()}%", color = Color(0xFFFF5252), fontSize = 9.sp)
+            Text("შეხება ${(weights.touchWeight * 100).toInt()}%", color = Color(0xFF00E5FF), fontSize = 9.sp)
+            Text("ხმა ${(weights.audioWeight * 100).toInt()}%", color = Color(0xFF00FF66), fontSize = 9.sp)
+            Text("მზერა ${(weights.visionWeight * 100).toInt()}%", color = Color(0xFFFFD166), fontSize = 9.sp)
+            Text("ბიო ${(weights.bioWeight * 100).toInt()}%", color = Color(0xFFFF5252), fontSize = 9.sp)
         }
     }
 }
@@ -1841,14 +2020,14 @@ private fun MicroHesitationCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.Speed, contentDescription = "Hesitation", tint = Color(0xFF00FF66), modifier = Modifier.size(16.dp))
-                    Text("MICRO-HESITATION & KINETIC LATENCY", color = Color(0xFF00FF66), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.Speed, contentDescription = "მიკრო-დაყოვნება", tint = Color(0xFF00FF66), modifier = Modifier.size(16.dp))
+                    Text("მიკრო-დაყოვნება & კინეტიკური ლატენტობა", color = Color(0xFF00FF66), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("${metrics.interTapLatencyMs} ms Latency", color = Color(0xFF00FF66), fontSize = 10.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
+                Text("${metrics.interTapLatencyMs} ms ლატენტობა", color = Color(0xFF00FF66), fontSize = 10.sp, fontFamily = FontFamily.Monospace, fontWeight = FontWeight.Bold)
             }
 
             Text(
-                text = "Typing Rhythm State: ${metrics.typingRhythmState}",
+                text = "აკრეფის რიტმის სტატუსი: ${metrics.typingRhythmState}",
                 color = NeuralTextPrimary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold
@@ -1858,9 +2037,9 @@ private fun MicroHesitationCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                HesitationMetricPill("Hesitation Index", String.format(java.util.Locale.US, "%.2f", metrics.hesitationIndex), Modifier.weight(1f))
-                HesitationMetricPill("Motor Jitter", "${metrics.motorJitterPct}%", Modifier.weight(1f))
-                HesitationMetricPill("Total Taps", "$touchCount", Modifier.weight(1f))
+                HesitationMetricPill("დაყოვნების ინდექსი", String.format(java.util.Locale.US, "%.2f", metrics.hesitationIndex), Modifier.weight(1f))
+                HesitationMetricPill("მოტორული რყევა", "${metrics.motorJitterPct}%", Modifier.weight(1f))
+                HesitationMetricPill("სულ შეხებები", "$touchCount", Modifier.weight(1f))
             }
         }
     }
@@ -1903,21 +2082,21 @@ private fun CircadianDynamicsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.WbSunny, contentDescription = "Circadian", tint = Color(0xFFFFD166), modifier = Modifier.size(16.dp))
-                    Text("CIRCADIAN & ENVIRONMENTAL CONTEXT", color = Color(0xFFFFD166), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.WbSunny, contentDescription = "ცირკადული", tint = Color(0xFFFFD166), modifier = Modifier.size(16.dp))
+                    Text("ცირკადული & გარემო კონტექსტი", color = Color(0xFFFFD166), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("Battery: ${circadian.batteryPct}%", color = Color(0xFFFFD166), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text("ელემენტი: ${circadian.batteryPct}%", color = Color(0xFFFFD166), fontSize = 10.sp, fontWeight = FontWeight.Bold)
             }
 
-            Text("Phase: ${circadian.timeOfDayPeriod} | Thermals: ${circadian.thermalState}", color = NeuralTextPrimary, fontSize = 11.sp)
+            Text("ფაზა: ${circadian.timeOfDayPeriod} | თერმული: ${circadian.thermalState}", color = NeuralTextPrimary, fontSize = 11.sp)
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                HesitationMetricPill("Ambient Light", "${circadian.ambientLux} Lux", Modifier.weight(1f))
-                HesitationMetricPill("Biological Rhythm", "$heartRate BPM", Modifier.weight(1f))
-                HesitationMetricPill("Work Context", activeAppContext.take(12), Modifier.weight(1f))
+                HesitationMetricPill("გარემო სინათლე", "${circadian.ambientLux} Lux", Modifier.weight(1f))
+                HesitationMetricPill("ბიოლოგიური რიტმი", "$heartRate BPM", Modifier.weight(1f))
+                HesitationMetricPill("სამუშაო კონტექსტი", activeAppContext.take(12), Modifier.weight(1f))
             }
         }
     }
@@ -1943,17 +2122,17 @@ private fun ProactiveActionSandboxCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.Build, contentDescription = "Sandbox", tint = NeuralAccent, modifier = Modifier.size(16.dp))
-                    Text("PROACTIVE OS ACTION SANDBOX", color = NeuralAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Icon(imageVector = AppIcons.Build, contentDescription = "პანელი", tint = NeuralAccent, modifier = Modifier.size(16.dp))
+                    Text("პროაქტიული სისტემური მოქმედებების პანელი", color = NeuralAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
-                Text("Live Controls", color = NeuralTextSecondary, fontSize = 10.sp)
+                Text("მართვა", color = NeuralTextSecondary, fontSize = 10.sp)
             }
 
-            SandboxToggleRow("Do-Not-Disturb Focus Shield", sandbox.isDndActive) { onToggle("DND") }
-            SandboxToggleRow("Display Blue-Light / Dimming Filter", sandbox.isDisplayDimmed) { onToggle("DISPLAY_DIM") }
-            SandboxToggleRow("Spatial 432Hz Binaural Carrier Sound", sandbox.isBinauralAudioOn) { onToggle("BINAURAL") }
-            SandboxToggleRow("Pre-warm Software Keyboard Buffers", sandbox.isImePrewarmed) { onToggle("IME_PREWARM") }
-            SandboxToggleRow("Compute & CPU Thermal Governor Lock", sandbox.isThermalOptimized) { onToggle("THERMAL") }
+            SandboxToggleRow("არ შემაწუხოთ (ფოკუსის ფარი)", sandbox.isDndActive) { onToggle("DND") }
+            SandboxToggleRow("ეკრანის დაბნელება & ლურჯი სინათლის ფილტრი", sandbox.isDisplayDimmed) { onToggle("DISPLAY_DIM") }
+            SandboxToggleRow("432Hz ბინორალური დამამშვიდებელი ხმა", sandbox.isBinauralAudioOn) { onToggle("BINAURAL") }
+            SandboxToggleRow("კლავიატურის ბუფერის წინასწარი მომზადება", sandbox.isImePrewarmed) { onToggle("IME_PREWARM") }
+            SandboxToggleRow("პროცესორის თერმული ოპტიმიზაცია", sandbox.isThermalOptimized) { onToggle("THERMAL") }
         }
     }
 }
@@ -2081,8 +2260,8 @@ private fun UnifiedMatrixVisualizer(
 
             for (i in 0 until nodeCount) {
                 val angle = (i.toFloat() / nodeCount) * 2 * Math.PI - (Math.PI / 2)
-                val nodeX = center.x + (radius * 0.85f * cos(angle)).toFloat()
-                val nodeY = center.y + (radius * 0.85f * sin(angle)).toFloat()
+                val nodeX = center.x + (radius * 0.85f * kotlin.math.cos(angle)).toFloat()
+                val nodeY = center.y + (radius * 0.85f * kotlin.math.sin(angle)).toFloat()
 
                 // Connecting synaptic ray
                 drawLine(
@@ -2124,7 +2303,7 @@ private fun UnifiedMatrixVisualizer(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         imageVector = AppIcons.Psychology,
-                        contentDescription = "Core",
+                        contentDescription = "ბირთვი",
                         tint = NeuralDeepPurple,
                         modifier = Modifier.size(32.dp)
                     )
@@ -2141,7 +2320,7 @@ private fun UnifiedMatrixVisualizer(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "MULTIMODAL NEXUS CORE",
+                text = "მულტიმოდალური ბირთვი",
                 color = NeuralAccent,
                 fontSize = 10.sp,
                 fontFamily = FontFamily.Monospace,
@@ -2160,7 +2339,7 @@ private fun UnifiedMatrixVisualizer(
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Text(
-                text = "EEG: ${String.format(java.util.Locale.US, "%.1f", alphaHz)}Hz Alpha",
+                text = "EEG: ${String.format(java.util.Locale.US, "%.1f", alphaHz)} Hz",
                 color = Color(0xFF9D4EDD),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
@@ -2176,7 +2355,7 @@ private fun UnifiedMatrixVisualizer(
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Text(
-                text = "TOUCH: $touchCount Taps",
+                text = "შეხება: $touchCount",
                 color = Color(0xFF00E5FF),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
@@ -2192,7 +2371,7 @@ private fun UnifiedMatrixVisualizer(
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Text(
-                text = "AUDIO: ${audioDb.toInt()} dB",
+                text = "აუდიო: ${audioDb.toInt()} dB",
                 color = Color(0xFF00FF66),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
@@ -2208,7 +2387,7 @@ private fun UnifiedMatrixVisualizer(
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Text(
-                text = "HEART: $heartRate BPM",
+                text = "პულსი: $heartRate BPM",
                 color = Color(0xFFFF5252),
                 fontSize = 10.sp,
                 fontWeight = FontWeight.Bold
@@ -2250,7 +2429,7 @@ private fun StreamControlMatrixSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "LIVE SENSORY & NEURAL STREAMS (INTERACTIVE)",
+                text = "სენსორული & ნეირონული ნაკადები (ინტერაქტიული)",
                 color = NeuralAccent,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
@@ -2258,7 +2437,7 @@ private fun StreamControlMatrixSection(
             )
             Icon(
                 imageVector = AppIcons.Settings,
-                contentDescription = "Toggle Streams",
+                contentDescription = "ნაკადების ჩაკეცვა",
                 tint = NeuralAccent,
                 modifier = Modifier.size(16.dp)
             )
@@ -2291,21 +2470,21 @@ private fun StreamControlMatrixSection(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Icon(imageVector = AppIcons.TouchApp, contentDescription = "Touch", tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
-                                Text("TOUCH KINEMATICS STREAM (TAP HERE)", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Icon(imageVector = AppIcons.TouchApp, contentDescription = "შეხება", tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
+                                Text("შეხების კინემატიკური ნაკადი (დააჭირეთ აქ)", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
-                            Text("Taps: $touchTapsCount", color = NeuralTextPrimary, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
+                            Text("შეხებები: $touchTapsCount", color = NeuralTextPrimary, fontSize = 11.sp, fontFamily = FontFamily.Monospace)
                         }
 
                         Text(
-                            text = "Last Touch Coordinates: $lastTouchCoords | Pressure: 0.72 | Velocity: 3.4 Hz",
+                            text = "ბოლო შეხების კოორდინატები: $lastTouchCoords | წნევა: 0.72 | სიჩქარე: 3.4 Hz",
                             color = NeuralTextSecondary,
                             fontSize = 11.sp,
                             fontFamily = FontFamily.Monospace
                         )
 
                         Text(
-                            text = "Tap on this surface to stream live motor impulses to the prediction matrix.",
+                            text = "შეეხეთ ამ პანელს მოტორული იმპულსების პროგნოზირების მატრიცაში გადასაცემად.",
                             color = NeuralTextPrimary.copy(alpha = 0.7f),
                             fontSize = 10.sp
                         )
@@ -2329,12 +2508,12 @@ private fun StreamControlMatrixSection(
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Icon(imageVector = AppIcons.Psychology, contentDescription = "EEG", tint = Color(0xFF9D4EDD), modifier = Modifier.size(16.dp))
-                                Text("EEG SUBCONSCIOUS BRAINWAVES", color = Color(0xFF9D4EDD), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                Text("EEG ტვინის ტალღები", color = Color(0xFF9D4EDD), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                             }
-                            Text("Load: $cognitiveLoadPct%", color = NeuralAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text("დატვირთვა: $cognitiveLoadPct%", color = NeuralAccent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
 
-                        Text(text = "Focus: $subconsciousFocusLevel", color = NeuralTextPrimary, fontSize = 11.sp)
+                        Text(text = "ფოკუსირება: $subconsciousFocusLevel", color = NeuralTextPrimary, fontSize = 11.sp)
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -2368,7 +2547,7 @@ private fun StreamControlMatrixSection(
                         .padding(14.dp)
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("SIMULATED ACTIVE APP CONTEXT", color = NeuralTextSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text("აქტიური აპლიკაციის კონტექსტი", color = NeuralTextSecondary, fontSize = 10.sp, fontWeight = FontWeight.Bold)
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -2462,9 +2641,13 @@ private fun RealHardwareSensorsCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.Speed, contentDescription = "Sensors", tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
-                    Text("REAL HARDWARE SENSORS (IMU)", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically, 
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    Icon(imageVector = AppIcons.Speed, contentDescription = "სენსორები", tint = Color(0xFF00E5FF), modifier = Modifier.size(16.dp))
+                    Text("აპარატურული სენსორები (IMU)", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 Box(
                     modifier = Modifier
@@ -2473,7 +2656,7 @@ private fun RealHardwareSensorsCard(
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = if (sensors.isTracking) "⚡ SENSOR MANAGER ACTIVE" else "STANDBY",
+                        text = if (sensors.isTracking) "● აქტიურია" else "მზადყოფნა",
                         color = if (sensors.isTracking) Color(0xFF00FF66) else NeuralTextSecondary,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold
@@ -2482,7 +2665,7 @@ private fun RealHardwareSensorsCard(
             }
 
             Text(
-                text = "Live On-Device IMU: Measures physical hand micro-tremor (8–12 Hz) and physiological stability directly from your phone's accelerometer and gyroscope.",
+                text = "მოწყობილობის ფიზიკური IMU სენსორები: ზომავს ხელის მიკრო-ტრემორს (8–12 Hz) და ფიზიოლოგიურ სტაბილურობას აქსელერომეტრიდან და გიროსკოპიდან.",
                 color = NeuralTextSecondary,
                 fontSize = 11.sp,
                 lineHeight = 15.sp
@@ -2490,7 +2673,7 @@ private fun RealHardwareSensorsCard(
 
             // Stability & Hand Tension Status
             Text(
-                text = "Motor Status: ${sensors.handTensionLevel}",
+                text = "მოტორული სტატუსი: ${sensors.handTensionLevel}",
                 color = NeuralTextPrimary,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold
@@ -2509,7 +2692,7 @@ private fun RealHardwareSensorsCard(
                         .padding(8.dp)
                 ) {
                     Column {
-                        Text("Micro-Tremor", color = NeuralTextSecondary, fontSize = 8.sp)
+                        Text("მიკრო-ტრემორი", color = NeuralTextSecondary, fontSize = 8.sp)
                         Text("${String.format(java.util.Locale.US, "%.2f", sensors.microTremorMagnitude)} g", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -2521,7 +2704,7 @@ private fun RealHardwareSensorsCard(
                         .padding(8.dp)
                 ) {
                     Column {
-                        Text("Tremor Freq", color = NeuralTextSecondary, fontSize = 8.sp)
+                        Text("სიხშირე (Hz)", color = NeuralTextSecondary, fontSize = 8.sp)
                         Text("${String.format(java.util.Locale.US, "%.1f", sensors.physiologicalTremorHz)} Hz", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -2533,19 +2716,60 @@ private fun RealHardwareSensorsCard(
                         .padding(8.dp)
                 ) {
                     Column {
-                        Text("Stability Index", color = NeuralTextSecondary, fontSize = 8.sp)
+                        Text("სტაბილურობა", color = NeuralTextSecondary, fontSize = 8.sp)
                         Text("${sensors.neuromuscularStabilityPct}%", color = stabilityColor, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
 
-            // Real X/Y/Z Vector telemetry
-            Text(
-                text = "Accel (X: ${String.format(java.util.Locale.US, "%.2f", sensors.accelX)}, Y: ${String.format(java.util.Locale.US, "%.2f", sensors.accelY)}, Z: ${String.format(java.util.Locale.US, "%.2f", sensors.accelZ)}) • Gyro Z: ${String.format(java.util.Locale.US, "%.2f", sensors.gyroZ)}",
-                color = NeuralTextSecondary,
-                fontSize = 9.sp,
-                fontFamily = FontFamily.Monospace
-            )
+            // Real X/Y/Z Vector telemetry with stable 2-row layout to prevent screen jumping
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(NeuralDeepPurple.copy(alpha = 0.5f))
+                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "აქსელერომეტრი",
+                        color = NeuralTextSecondary,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "X: ${String.format(java.util.Locale.US, "%+05.2f", sensors.accelX)}  Y: ${String.format(java.util.Locale.US, "%+05.2f", sensors.accelY)}  Z: ${String.format(java.util.Locale.US, "%+05.2f", sensors.accelZ)}",
+                        color = Color.White,
+                        fontSize = 9.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "გიროსკოპი",
+                        color = NeuralTextSecondary,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "X: ${String.format(java.util.Locale.US, "%+05.2f", sensors.gyroX)}  Y: ${String.format(java.util.Locale.US, "%+05.2f", sensors.gyroY)}  Z: ${String.format(java.util.Locale.US, "%+05.2f", sensors.gyroZ)}",
+                        color = Color(0xFF00E5FF),
+                        fontSize = 9.sp,
+                        fontFamily = FontFamily.Monospace,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }
@@ -2572,19 +2796,23 @@ private fun RealCameraGazeHUDCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(imageVector = AppIcons.CameraFront, contentDescription = "Camera Gaze", tint = Color(0xFFFF52A2), modifier = Modifier.size(16.dp))
-                    Text("LIVE CAMERA-X GAZE & FACIAL HUD", color = Color(0xFFFF52A2), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically, 
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.weight(1f, fill = false)
+                ) {
+                    Icon(imageVector = AppIcons.CameraFront, contentDescription = "კამერის მზერა", tint = Color(0xFFFF52A2), modifier = Modifier.size(16.dp))
+                    Text("კამერის მზერა & სახის HUD", color = Color(0xFFFF52A2), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 }
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(8.dp))
                         .background(if (gaze.isCameraActive) Color(0xFFFF52A2).copy(alpha = 0.2f) else NeuralDeepPurple)
                         .clickable { onToggleCamera() }
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        text = if (gaze.isCameraActive) "📷 ACTIVE CAM" else "📷 START CAMERA",
+                        text = if (gaze.isCameraActive) "● აქტიურია" else "ჩართვა",
                         color = if (gaze.isCameraActive) Color(0xFFFF52A2) else NeuralTextSecondary,
                         fontSize = 9.sp,
                         fontWeight = FontWeight.Bold
@@ -2593,7 +2821,7 @@ private fun RealCameraGazeHUDCard(
             }
 
             Text(
-                text = "Selfie-Camera Computer Vision: Evaluates facial radiance (rPPG pulse), blink frequency, pupil dilation score, and visual gaze vectors at 60 FPS.",
+                text = "წინა კამერის კომპიუტერული ხედვა: აფასებს სახის ნათებას (rPPG პულსი), თვალის დახამხამებას, გუგის რეაქციასა და მზერის მიმართულებას 60 FPS რეჟიმში.",
                 color = NeuralTextSecondary,
                 fontSize = 11.sp,
                 lineHeight = 15.sp
@@ -2606,15 +2834,15 @@ private fun RealCameraGazeHUDCard(
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color(0xFF140826))
                     .border(1.dp, Color(0xFFFF52A2).copy(alpha = 0.25f), RoundedCornerShape(12.dp))
-                .padding(12.dp)
+                    .padding(12.dp)
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("GAZE VECTOR FOCUS", color = Color(0xFFFF52A2), fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                        Text("${gaze.gazeConfidencePct}% Gaze Lock", color = Color(0xFF00FF66), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text("მზერის ვექტორის ფოკუსი", color = Color(0xFFFF52A2), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text("${gaze.gazeConfidencePct}% ფიქსაცია", color = Color(0xFF00FF66), fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                     Text(
                         text = "👀 ${gaze.gazeDirection}",
@@ -2638,8 +2866,8 @@ private fun RealCameraGazeHUDCard(
                         .padding(8.dp)
                 ) {
                     Column {
-                        Text("Blink Rate", color = NeuralTextSecondary, fontSize = 8.sp)
-                        Text("${gaze.eyeBlinkRatePerMin} / min", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("დახამხამება", color = NeuralTextSecondary, fontSize = 8.sp)
+                        Text("${gaze.eyeBlinkRatePerMin} / წთ", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 Box(
@@ -2650,7 +2878,7 @@ private fun RealCameraGazeHUDCard(
                         .padding(8.dp)
                 ) {
                     Column {
-                        Text("Cognitive Dilation", color = NeuralTextSecondary, fontSize = 8.sp)
+                        Text("გუგის რეაქცია", color = NeuralTextSecondary, fontSize = 8.sp)
                         Text("${String.format(java.util.Locale.US, "%.2f", gaze.opticalPupilDilationScore)}", color = Color(0xFF00E5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -2662,7 +2890,7 @@ private fun RealCameraGazeHUDCard(
                         .padding(8.dp)
                 ) {
                     Column {
-                        Text("rPPG Pulse", color = NeuralTextSecondary, fontSize = 8.sp)
+                        Text("rPPG პულსი", color = NeuralTextSecondary, fontSize = 8.sp)
                         Text("${gaze.opticalRadiancePulseBpm} BPM", color = Color(0xFF00FF66), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     }
                 }

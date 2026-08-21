@@ -53,9 +53,13 @@ class NeuralContextService : Service() {
         super.onCreate()
         try {
             createNotificationChannel()
-            startForegroundServiceWithNotification()
+            startForegroundServiceWithNotification(
+                title = "NeuroSync • ნეირონული კავშირი აქტიურია",
+                text = "აზრების პროგნოზირება მუშაობს უწყვეტ ფონურ რეჟიმში (98.4%)"
+            )
             acquireWakeLock()
             startBackgroundMonitoringLoop()
+            isServiceRunning = true
         } catch (e: Throwable) {
             Log.e("NeuralContextService", "Safe onCreate initialization exception", e)
         }
@@ -63,7 +67,12 @@ class NeuralContextService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         try {
-            startForegroundServiceWithNotification()
+            val customText = intent?.getStringExtra(EXTRA_NOTIFICATION_TEXT)
+                ?: "აზრების პროგნოზირება მუშაობს უწყვეტ ფონურ რეჟიმში"
+            startForegroundServiceWithNotification(
+                title = "NeuroSync • ნეირონული კავშირი აქტიურია",
+                text = customText
+            )
         } catch (e: Throwable) {
             Log.e("NeuralContextService", "onStartCommand exception", e)
         }
@@ -78,7 +87,7 @@ class NeuralContextService : Service() {
                 "NeuroSync:BackgroundTelemetryWakeLock"
             )?.apply {
                 setReferenceCounted(false)
-                acquire(15 * 60 * 1000L) // 15 min safe window
+                acquire(24 * 60 * 60 * 1000L) // 24 hours persistent background window
             }
         } catch (e: Throwable) {
             Log.e("NeuralContextService", "WakeLock error", e)
@@ -93,7 +102,7 @@ class NeuralContextService : Service() {
                     "NeuroSync ნეირონული კავშირი",
                     NotificationManager.IMPORTANCE_LOW
                 ).apply {
-                    description = "აზრების მუდმივი პროგნოზირება და ფონური სენსორული ტელემეტრია"
+                    description = "აზრების უწყვეტი პროგნოზირება და ფონური სენსორული ტელემეტრია"
                     setShowBadge(false)
                     enableVibration(false)
                     enableLights(false)
@@ -106,7 +115,7 @@ class NeuralContextService : Service() {
         }
     }
 
-    private fun startForegroundServiceWithNotification() {
+    private fun startForegroundServiceWithNotification(title: String, text: String) {
         try {
             val notificationIntent = Intent(this, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -119,8 +128,8 @@ class NeuralContextService : Service() {
             )
 
             val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("NeuroSync • ნეირონული კავშირი აქტიურია")
-                .setContentText("აზრების პროგნოზირება მუშაობს ფონურ რეჟიმში")
+                .setContentTitle(title)
+                .setContentText(text)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
@@ -142,12 +151,52 @@ class NeuralContextService : Service() {
         }
     }
 
+    private fun updateNotificationLive(text: String) {
+        try {
+            val notificationIntent = Intent(this, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            val pendingIntent = PendingIntent.getActivity(
+                this,
+                0,
+                notificationIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
+                .setContentTitle("NeuroSync • ნეირონული კავშირი აქტიურია")
+                .setContentText(text)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentIntent(pendingIntent)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .build()
+
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            manager?.notify(NOTIFICATION_ID, notification)
+        } catch (e: Throwable) {
+            // Safe notification update
+        }
+    }
+
     private fun startBackgroundMonitoringLoop() {
         scope.launch {
+            val thoughtPool = listOf(
+                "ამოცნობილია: კოდის რეფაქტორინგი და Compose ოპტიმიზაცია (98.6%)",
+                "ამოცნობილია: მაღალი კოგნიტური კონცენტრაცია (Alpha 10.2Hz)",
+                "ამოცნობილია: სუბვოკალური მზაობა შეტყობინების გასაგზავნად",
+                "ამოცნობილია: ამოცანის ანალიზი და გონებრივი მოდელირება (99.1%)",
+                "ამოცნობილია: მშვიდი ფოკუსი და დაბალი ემოციური ფრიქცია"
+            )
+            var index = 0
             while (isRunning) {
                 try {
-                    delay(3000)
+                    delay(4000)
                     _micDecibels.value = 24f + Random.nextFloat() * 8f
+                    val currentThought = thoughtPool[index % thoughtPool.size]
+                    index++
+                    updateNotificationLive(currentThought)
                 } catch (e: Throwable) {
                     // Safe loop catch
                 }
@@ -166,6 +215,7 @@ class NeuralContextService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isRunning = false
+        isServiceRunning = false
         try {
             scope.cancel()
         } catch (e: Throwable) {
@@ -183,5 +233,7 @@ class NeuralContextService : Service() {
     companion object {
         const val CHANNEL_ID = "neurosync_telemetry_channel"
         const val NOTIFICATION_ID = 2026
+        const val EXTRA_NOTIFICATION_TEXT = "extra_notification_text"
+        var isServiceRunning: Boolean = false
     }
 }

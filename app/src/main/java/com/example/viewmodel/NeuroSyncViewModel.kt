@@ -7,6 +7,7 @@ import com.example.BuildConfig
 import com.example.data.AppDatabase
 import com.example.data.PredictionEntity
 import com.example.data.PredictionRepository
+import com.example.util.PermissionHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -46,22 +47,22 @@ data class TelemetryState(
 )
 
 data class TimeHorizonPredictions(
-    val horizon30Sec: String = "Imminent motor reflex: Readying text cursor & IME input buffers for rapid submission.",
-    val horizon5Min: String = "Task-level goal: Refactoring core data schema and running local validation suite.",
-    val horizon30Min: String = "Energy & burnout trajectory: Maintaining sustained 10Hz Alpha flow without cognitive fatigue."
+    val horizon30Sec: String = "+30წმ: კურსორის პოზიციონირება და ტელეპათიური ავტო-შევსება.",
+    val horizon5Min: String = "+5წთ: კოდის კომპილაცია და ტესტების გაშვება 0-შეფერხებით.",
+    val horizon30Min: String = "+30წთ: უწყვეტი ალფა-ფოკუსის შენარჩუნება გადაღლის გარეშე."
 )
 
 data class MicroHesitationMetrics(
     val interTapLatencyMs: Long = 184L,
     val hesitationIndex: Float = 0.18f, // 0.0 to 1.0
     val motorJitterPct: Int = 12,
-    val typingRhythmState: String = "Fluid & Decisive"
+    val typingRhythmState: String = "მკაფიო და გადამწყვეტი რიტმი"
 )
 
 data class CircadianEnvironment(
-    val timeOfDayPeriod: String = "Afternoon Synthesis Peak",
+    val timeOfDayPeriod: String = "დღის ენერგიის პიკი",
     val batteryPct: Int = 86,
-    val thermalState: String = "Nominal (31.2°C)",
+    val thermalState: String = "ოპტიმალური (31.2°C)",
     val ambientLux: Int = 340
 )
 
@@ -105,10 +106,10 @@ data class SubvocalSpeechState(
 // 2. Mental Imagery Synthesis (Mind's Eye Visualizer)
 data class MentalImageryState(
     val isSynthesizing: Boolean = false,
-    val activeConcept: String = "Abstract Multi-Layer Neural Graph Network with Glowing Synaptic Bridges",
+    val activeConcept: String = "მრავალშრიანი ნეირონული გრაფის ქსელი სინაფსური ხიდებით",
     val visualFidelityPct: Int = 94,
     val thetaGammaCoherence: Float = 0.88f,
-    val imageryTags: List<String> = listOf("Graph Nodes", "High Dimensional", "Dark Neon Matrix", "Synaptic Flow")
+    val imageryTags: List<String> = listOf("გრაფის კვანძები", "მრავალგანზომილებიანი", "ნეონის მატრიცა", "სინაფსური ნაკადი")
 )
 
 // 3. Pre-Error ERN (Error-Related Negativity) Wave Detector
@@ -116,7 +117,7 @@ data class PreErrorDetectionState(
     val ernWaveMagnitudeUv: Float = 4.2f, // microvolts (negativity peak)
     val preErrorProbabilityPct: Int = 8, // < 25% = safe, > 60% = pre-error imminent
     val timeToImpactMs: Int = 320,
-    val suggestedIntervention: String = "Optimal typing path verified: 0 motor tremor anomalies",
+    val suggestedIntervention: String = "შემოწმებულია: მოტორული ტრემორი ნორმაშია",
     val isImminentError: Boolean = false,
     val preventedMistakesCount: Int = 7
 )
@@ -132,13 +133,13 @@ data class SemanticMindNode(
 )
 
 data class SemanticMindGraphState(
-    val centralTopic: String = "Neural UI Refactor",
+    val centralTopic: String = "ნეირონული UI რეფაქტორინგი",
     val nodes: List<SemanticMindNode> = listOf(
-        SemanticMindNode("1", "Architecture", "Core", 0.95f, 0.5f, 0.25f),
-        SemanticMindNode("2", "Performance", "Engine", 0.88f, 0.2f, 0.55f),
-        SemanticMindNode("3", "Compose Layout", "UI", 0.92f, 0.8f, 0.55f),
-        SemanticMindNode("4", "Room Database", "Persistence", 0.78f, 0.35f, 0.85f),
-        SemanticMindNode("5", "BCI Streaming", "Telemetry", 0.96f, 0.65f, 0.85f)
+        SemanticMindNode("1", "არქიტექტურა", "Core", 0.95f, 0.5f, 0.25f),
+        SemanticMindNode("2", "წარმადობა", "Engine", 0.88f, 0.2f, 0.55f),
+        SemanticMindNode("3", "Compose განლაგება", "UI", 0.92f, 0.8f, 0.55f),
+        SemanticMindNode("4", "Room მონაცემთა ბაზა", "Persistence", 0.78f, 0.35f, 0.85f),
+        SemanticMindNode("5", "BCI ნაკადი", "Telemetry", 0.96f, 0.65f, 0.85f)
     ),
     val activeNodeId: String = "1"
 )
@@ -148,8 +149,8 @@ data class EmotionalFrictionState(
     val valence: Float = 0.76f, // -1.0 (Frustrated) to +1.0 (Joy/Satisfaction)
     val arousal: Float = 0.62f, // 0.0 (Calm) to 1.0 (Excited/High Alert)
     val cognitiveFrictionPct: Int = 14, // Low friction = seamless flow
-    val dominantMood: String = "Deep Harmony & Creative Drive",
-    val recommendedAdaptation: String = "Maintain undisturbed dark mode palette; zero distraction lock."
+    val dominantMood: String = "ღრმა ჰარმონია და შემოქმედებითი მუხტი",
+    val recommendedAdaptation: String = "შენარჩუნებულია შეუფერხებელი მუქი თემა და ყურადღების ფარი."
 )
 
 // 6. Branching Cognitive Decision Tree
@@ -184,8 +185,8 @@ data class NeuroFatigueState(
     val mentalEnergyPct: Int = 84, // 0-100%
     val thetaBetaRatio: Float = 1.42f, // < 2.0 = High Clarity, > 3.0 = Brain Fog / Drowsiness
     val cognitiveEnduranceMinutes: Int = 54,
-    val clarityStatus: String = "Peak Mental Clarity • Zero Brain Fog",
-    val recoveryRecommendation: String = "Optimal focus zone active. Next micro-break recommended in 35 mins."
+    val clarityStatus: String = "მაღალი მენტალური სისხარტე • 0 გადაღლა",
+    val recoveryRecommendation: String = "აქტიურია ოპტიმალური ფოკუსის ზონა. მიკრო-შესვენება რეკომენდებულია 35 წუთში."
 )
 
 // 9. Thought Stream Timeline & Semantic Search History
@@ -201,27 +202,43 @@ data class ThoughtLogItem(
 data class ThoughtTimelineState(
     val searchQuery: String = "",
     val historyLogs: List<ThoughtLogItem> = listOf(
-        ThoughtLogItem("t1", "15:16:12", "UI Refactor & Performance Matrix", "Predicted user intention to restructure Compose hierarchy for 60fps throughput.", 98, "Coding"),
-        ThoughtLogItem("t2", "15:14:40", "Subvocal Phoneme Decoded", "Inner voice formulated variable names for tensor convergence buffer.", 94, "Inner Speech"),
-        ThoughtLogItem("t3", "15:12:05", "Pre-Error Interception Verified", "ERN wave detected motor tremor heading towards syntax typo; prevented.", 99, "Pre-Error"),
-        ThoughtLogItem("t4", "15:08:30", "Deep Flow Architecture Synthesis", "Formulating multi-layer associative neural graph for BCI streaming.", 96, "Design")
+        ThoughtLogItem("t1", "15:16:12", "UI რეფაქტორინგი და წარმადობის მატრიცა", "ამოცნობილია მომხმარებლის განზრახვა შეამციროს Compose რეკომპოზიციები.", 98, "Coding"),
+        ThoughtLogItem("t2", "15:14:40", "სუბვოკალური ფონემა დეკოდირებულია", "შინაგანი ხმა აყალიბებს ცვლადების სახელებს ტენზორული ბუფერისთვის.", 94, "Inner Speech"),
+        ThoughtLogItem("t3", "15:12:05", "შეცდომის პრევენცია (ERN)", "ERN ტალღამ დააფიქსირა მოტორული რყევა სინტაქსურ შეცდომამდე; განხორციელდა კორექცია.", 99, "Pre-Error"),
+        ThoughtLogItem("t4", "15:08:30", "ღრმა ნაკადის არქიტექტურის სინთეზი", "მრავალშრიანი ასოციაციური ნეირონული გრაფის მოდელირება BCI ნაკადისთვის.", 96, "Design")
     )
 )
 
 // 10. Audio Neuro-Entrainment Beats Generator
 data class NeuroEntrainmentState(
     val isPlaying: Boolean = true,
-    val activeFrequencyMode: String = "Alpha Flow (10 Hz)",
+    val activeFrequencyMode: String = "ალფა-ნაკადი (10 Hz)",
     val carrierFrequencyHz: Int = 432,
     val targetWaveHz: Float = 10.0f,
     val volumePct: Int = 65,
-    val entrainmentBenefit: String = "Stimulates focused relaxed attention and alpha-wave synchronization."
+    val entrainmentBenefit: String = "ასტიმულირებს მშვიდ კონცენტრაციასა და ალფა-ტალღების სინქრონიზაციას."
+)
+
+// 11. Galaxy Buds 2 & Ear-EEG In-Ear Integration
+data class EarbudSensorState(
+    val isConnected: Boolean = true,
+    val deviceName: String = "Samsung Galaxy Buds 2",
+    val batteryPct: Int = 92,
+    val vpuBoneConductionHz: Float = 142.5f, // Voice Pickup Unit / ყბის მოძრაობისა და ძვლოვანი გამტარობის ვიბრაცია
+    val headImuPitchDeg: Float = -2.8f,     // თავის დახრის კუთხე
+    val headImuRollDeg: Float = 1.4f,
+    val inEarAcousticOcclusionDb: Float = 16.4f, // ყურის არხის აკუსტიკური იზოლაცია / სუნთქვა
+    val earEegSimulatedMicrovolts: Float = 14.2f, // სიმულირებული ყურის არხის ბიო-პოტენციალი (μV)
+    val headNodDetected: Boolean = false,
+    val isEarEegStreaming: Boolean = true,
+    val earTipFitConfidencePct: Int = 98
 )
 
 data class NeuroSyncUiState(
     val isSyncing: Boolean = true,
+    val isMasterActive: Boolean = true,
     val matchPercentage: Float = 98.4f,
-    val statusText: String = "SYNAPTIC OVERLAY: 98.4% MATCH",
+    val statusText: String = "ნეირონული კავშირი: 98.4% სიზუსტე",
     val touchTapsCount: Int = 14,
     val lastTouchCoords: String = "X: 342, Y: 812",
     val touchCadenceHz: Float = 3.4f,
@@ -235,12 +252,12 @@ data class NeuroSyncUiState(
     val heartRateBpm: Int = 74,
     val stressLevelPct: Int = 28,
     val activeAppContext: String = "Developer IDE & Neural Research",
-    val currentPredictionTitle: String = "Mind Thought Prediction",
-    val currentPredictionText: String = "Predicted Thought: User is forming an intention to optimize code architecture and evaluate upcoming feature designs.",
-    val currentActionPlan: String = "• Synthesizing high-focus cognitive environment\n• Pre-allocating IDE buffers for rapid input\n• Filtering ambient audio frequencies",
-    val dominantMindThought: String = "Formulating next architecture optimization step",
+    val currentPredictionTitle: String = "აზრების პროგნოზირება (Intent Prediction)",
+    val currentPredictionText: String = "ნავარაუდევი აზრი: მომხმარებელი აყალიბებს განზრახვას გააუმჯობესოს კოდის არქიტექტურა და შეამოწმოს მომავალი დიზაინის ფუნქციონალი.",
+    val currentActionPlan: String = "• მაღალი ფოკუსის კოგნიტური გარემოს შექმნა\n• IDE ბუფერების წინასწარი მომზადება სწრაფი აკრეფისთვის\n• გარე ხმაურის ფილტრაცია და ალფა-სინქრონიზაცია",
+    val dominantMindThought: String = "კოდის არქიტექტურის ოპტიმიზაციის შემდეგი ნაბიჯის ფორმულირება",
     val thoughtCognitiveLoadPct: Int = 42,
-    val subconsciousFocusLevel: String = "Deep Flow State (Alpha 10.2 Hz)",
+    val subconsciousFocusLevel: String = "ღრმა ნაკადის მდგომარეობა (Alpha 10.2 Hz)",
     val alphaBandHz: Float = 10.2f,
     val betaBandHz: Float = 18.5f,
     val thetaBandHz: Float = 6.1f,
@@ -260,6 +277,7 @@ data class NeuroSyncUiState(
     val neuroFatigue: NeuroFatigueState = NeuroFatigueState(),
     val thoughtTimeline: ThoughtTimelineState = ThoughtTimelineState(),
     val entrainment: NeuroEntrainmentState = NeuroEntrainmentState(),
+    val earbudSensor: EarbudSensorState = EarbudSensorState(),
     val realSensors: com.example.sensor.RealHardwareSensorState = com.example.sensor.RealHardwareSensorState(),
     val cameraGaze: com.example.sensor.RealCameraGazeState = com.example.sensor.RealCameraGazeState(),
     val telemetry: TelemetryState = TelemetryState(),
@@ -268,6 +286,7 @@ data class NeuroSyncUiState(
     val isExplanationModalOpen: Boolean = false,
     val micPermissionGranted: Boolean = false,
     val cameraPermissionGranted: Boolean = false,
+    val notificationsGranted: Boolean = true,
     val usageStatsPermissionGranted: Boolean = false,
     val accessibilityPermissionGranted: Boolean = false,
     val overlayPermissionGranted: Boolean = false
@@ -298,6 +317,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             initialValue = emptyList()
         )
 
+        // Read persisted permissions immediately on startup
+        refreshPermissions()
+
         // Seed initial history safely on IO dispatcher if empty
         viewModelScope.launch(Dispatchers.IO) {
             try {
@@ -305,14 +327,14 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 if (currentList.isEmpty()) {
                     repository.insert(
                         PredictionEntity(
-                            title = "Cognitive Focus Mode",
-                            summary = "Detected deep coding activity and low audio noise. Recommending uninterrupted session.",
+                            title = "კოგნიტური ფოკუსის რეჟიმი",
+                            summary = "დაფიქსირებულია პროგრამირების აქტივობა და დაბალი აკუსტიკური ხმაური. რეკომენდებულია უწყვეტი სამუშაო სესია.",
                             matchConfidence = 98.4f,
-                            touchActivityLevel = "High Precision (4.2 Hz)",
-                            audioSpectrumDb = "28.5 dB (Quiet Ambient)",
+                            touchActivityLevel = "მაღალი სიზუსტე (4.2 Hz)",
+                            audioSpectrumDb = "28.5 dB (მშვიდი გარემო)",
                             visualContext = "Android Studio / Jetpack Compose",
                             neuralSyncRate = "98.4%",
-                            actionPlan = "Suppressed background notifications for 45 mins"
+                            actionPlan = "ფონური შეტყობინებები შეზღუდულია 45 წუთით"
                         )
                     )
                 }
@@ -343,7 +365,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         current.copy(
                             cameraGaze = gaze,
                             heartRateBpm = gaze.opticalRadiancePulseBpm,
-                            cameraPermissionGranted = gaze.hasPermission
+                            cameraPermissionGranted = gaze.hasPermission || PermissionHelper.isCameraGranted(getApplication())
                         )
                     }
                 }
@@ -353,8 +375,102 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun refreshPermissions() {
+        val app = getApplication<Application>()
+        _uiState.update {
+            it.copy(
+                micPermissionGranted = PermissionHelper.isMicGranted(app),
+                cameraPermissionGranted = PermissionHelper.isCameraGranted(app),
+                notificationsGranted = PermissionHelper.isNotificationsGranted(app),
+                usageStatsPermissionGranted = PermissionHelper.isUsageStatsGranted(app),
+                accessibilityPermissionGranted = PermissionHelper.isAccessibilityGranted(app),
+                overlayPermissionGranted = PermissionHelper.isOverlayGranted(app),
+                isMasterActive = PermissionHelper.isMasterSyncEnabled(app)
+            )
+        }
+    }
+
+    fun masterActivateAll(onNeedSystemPermissions: () -> Unit = {}) {
+        val app = getApplication<Application>()
+        PermissionHelper.setMasterSyncEnabled(app, true)
+        PermissionHelper.setNotificationsGranted(app, true)
+        
+        // Check if runtime permissions need a trigger
+        if (!PermissionHelper.isMicGranted(app) || !PermissionHelper.isCameraGranted(app)) {
+            onNeedSystemPermissions()
+        }
+
+        _uiState.update { current ->
+            current.copy(
+                isSyncing = true,
+                isMasterActive = true,
+                statusText = "ნეირონული კავშირი: 99.2% (სრული სინქრონიზაცია)",
+                matchPercentage = 99.2f,
+                ghostTyping = current.ghostTyping.copy(isEnabled = true),
+                entrainment = current.entrainment.copy(isPlaying = true),
+                subvocalSpeech = current.subvocalSpeech.copy(isStreaming = true),
+                sandboxActions = current.sandboxActions.copy(
+                    isDndActive = true,
+                    isBinauralAudioOn = true,
+                    isImePrewarmed = true
+                ),
+                earbudSensor = current.earbudSensor.copy(isConnected = true, isEarEegStreaming = true)
+            )
+        }
+
+        hardwareSensorManager.startListening()
+        runNeuralPredictionInference()
+    }
+
+    fun masterDeactivateAll() {
+        val app = getApplication<Application>()
+        PermissionHelper.setMasterSyncEnabled(app, false)
+        _uiState.update { current ->
+            current.copy(
+                isSyncing = false,
+                isMasterActive = false,
+                statusText = "ნეირონული კავშირი: შეჩერებულია",
+                entrainment = current.entrainment.copy(isPlaying = false),
+                ghostTyping = current.ghostTyping.copy(isEnabled = false)
+            )
+        }
+    }
+
+    fun toggleMasterSync(onNeedSystemPermissions: () -> Unit = {}) {
+        if (_uiState.value.isMasterActive) {
+            masterDeactivateAll()
+        } else {
+            masterActivateAll(onNeedSystemPermissions)
+        }
+    }
+
+    fun toggleEarbudsConnected() {
+        _uiState.update { current ->
+            val nextState = !current.earbudSensor.isConnected
+            current.copy(
+                earbudSensor = current.earbudSensor.copy(
+                    isConnected = nextState,
+                    isEarEegStreaming = nextState
+                )
+            )
+        }
+    }
+
+    fun recalibrateEarbuds() {
+        _uiState.update { current ->
+            current.copy(
+                earbudSensor = current.earbudSensor.copy(
+                    earTipFitConfidencePct = (96..99).random(),
+                    vpuBoneConductionHz = 135f + Random.nextFloat() * 20f,
+                    earEegSimulatedMicrovolts = 12f + Random.nextFloat() * 6f
+                )
+            )
+        }
+    }
+
     fun startCameraGazeTracking(lifecycleOwner: androidx.lifecycle.LifecycleOwner, surfaceProvider: androidx.camera.core.Preview.SurfaceProvider? = null) {
         cameraGazeAnalyzer.startCamera(lifecycleOwner, surfaceProvider)
+        PermissionHelper.setCameraGranted(getApplication(), true)
         _uiState.update { it.copy(cameraPermissionGranted = true) }
     }
 
@@ -363,7 +479,13 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun setCameraPermissionGranted(granted: Boolean) {
+        PermissionHelper.setCameraGranted(getApplication(), granted)
         _uiState.update { it.copy(cameraPermissionGranted = granted) }
+    }
+
+    fun setNotificationsPermissionGranted(granted: Boolean) {
+        PermissionHelper.setNotificationsGranted(getApplication(), granted)
+        _uiState.update { it.copy(notificationsGranted = granted) }
     }
 
     override fun onCleared() {
@@ -402,18 +524,26 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                     val newCogLoad = (30 + (newHeartRate - 60) * 0.8 + (newTremor * 10)).coerceIn(15.0, 95.0).toInt()
 
                     val focusStates = listOf(
-                        "Deep Flow State (Alpha ${String.format(java.util.Locale.US, "%.1f", newAlpha)} Hz)",
-                        "Active Problem Solving (Beta ${String.format(java.util.Locale.US, "%.1f", newBeta)} Hz)",
-                        "Subconscious Processing (Theta ${String.format(java.util.Locale.US, "%.1f", newTheta)} Hz)",
-                        "High Insight Spike (Gamma ${String.format(java.util.Locale.US, "%.1f", newGamma)} Hz)"
+                        "ღრმა ნაკადის მდგომარეობა (Alpha ${String.format(java.util.Locale.US, "%.1f", newAlpha)} Hz)",
+                        "აქტიური ამოცანის გადაჭრა (Beta ${String.format(java.util.Locale.US, "%.1f", newBeta)} Hz)",
+                        "ქვეცნობიერი დამუშავება (Theta ${String.format(java.util.Locale.US, "%.1f", newTheta)} Hz)",
+                        "მაღალი ინტუიციური პიკი (Gamma ${String.format(java.util.Locale.US, "%.1f", newGamma)} Hz)"
                     )
 
                     val matchStr = String.format(java.util.Locale.US, "%.1f", newMatch)
                     val matchVal = matchStr.toFloatOrNull() ?: 98.4f
 
+                    val earbudUpdate = _uiState.value.earbudSensor.copy(
+                        vpuBoneConductionHz = 130f + Random.nextFloat() * 25f,
+                        headImuPitchDeg = -4f + Random.nextFloat() * 8f,
+                        headImuRollDeg = -2f + Random.nextFloat() * 4f,
+                        earEegSimulatedMicrovolts = 10f + Random.nextFloat() * 8f,
+                        headNodDetected = Random.nextFloat() > 0.85f
+                    )
+
                     _uiState.value = _uiState.value.copy(
                         matchPercentage = matchVal,
-                        statusText = "SYNAPTIC OVERLAY: ${matchStr}% MATCH",
+                        statusText = "ნეირონული კავშირი: ${matchStr}% სიზუსტე",
                         cameraGazeX = newGazeX,
                         cameraGazeY = newGazeY,
                         heartRateBpm = newHeartRate,
@@ -425,6 +555,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         gammaBandHz = newGamma,
                         thoughtCognitiveLoadPct = newCogLoad,
                         subconsciousFocusLevel = focusStates.random(),
+                        earbudSensor = earbudUpdate,
                         telemetry = TelemetryState(
                             touchValue = newTouch,
                             audioValue = newAudio,
@@ -455,10 +586,10 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         val jitter = ((latency % 100) / 3).coerceIn(5L, 35L).toInt()
 
         val rhythmState = when {
-            latency < 160L -> "Ultra-Fast Continuous Burst"
-            latency < 350L -> "Fluid & Decisive Rhythm"
-            latency < 800L -> "Micro-Hesitation / Deliberation"
-            else -> "Cognitive Decision Pause"
+            latency < 160L -> "ულტრა-სწრაფი უწყვეტი ნაკადი"
+            latency < 350L -> "მკაფიო და გადამწყვეტი რიტმი"
+            latency < 800L -> "მიკრო-დაყოვნება / ფიქრი"
+            else -> "კოგნიტური გადაწყვეტილების პაუზა"
         }
 
         _uiState.update {
@@ -491,7 +622,6 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                     )
                 )
             } else {
-                // Adaptive recalibration: adjust touch and acoustic weights
                 val newConf = (current.matchPercentage - 0.5f).coerceAtLeast(88.0f)
                 current.copy(
                     matchPercentage = newConf,
@@ -529,8 +659,8 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             if (selected != null) {
                 current.copy(
                     mindGraph = graph.copy(activeNodeId = nodeId),
-                    currentPredictionTitle = "Mind Graph Focus: ${selected.label}",
-                    currentPredictionText = "Predicted Intent: Navigating associative semantic cluster for '${selected.label}' (${selected.category}) with synaptic weighting ${(selected.weight * 100).toInt()}%."
+                    currentPredictionTitle = "აზროვნების გრაფის ფოკუსი: ${selected.label}",
+                    currentPredictionText = "ნავარაუდევი განზრახვა: ასოციაციური კლასტერის ნავიგაცია '${selected.label}' (${selected.category}) სინაფსური წონით ${(selected.weight * 100).toInt()}%."
                 )
             } else current
         }
@@ -540,14 +670,14 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             _uiState.update { it.copy(mentalImagery = it.mentalImagery.copy(isSynthesizing = true)) }
             delay(800)
-            val concept = if (conceptPrompt.isNotBlank()) conceptPrompt else "Real-time High Dimensional Neural Manifold Topology"
+            val concept = if (conceptPrompt.isNotBlank()) conceptPrompt else "მრავალშრიანი ნეირონული ტოპოლოგიის ვიზუალიზაცია"
             val tags = when {
                 concept.contains("UI", ignoreCase = true) || concept.contains("დიზაინ", ignoreCase = true) ->
-                    listOf("Design System", "Compose Wireframe", "Color Palettes", "Adaptive Layout")
+                    listOf("დიზაინ სისტემა", "Compose სტრუქტურა", "ფერთა პალიტრა", "ადაპტური ბადე")
                 concept.contains("Code", ignoreCase = true) || concept.contains("კოდ", ignoreCase = true) ->
-                    listOf("AST Tree", "Coroutines Flow", "Bytecode Pipeline", "Thread Concurrency")
+                    listOf("AST ხე", "Coroutines Flow", "ბაიტკოდის პაიპლაინი", "ასინქრონულობა")
                 else ->
-                    listOf("Synaptic Nodes", "Hyper-Vector", "Quantum Manifold", "4D Latent Space")
+                    listOf("სინაფსური კვანძები", "ჰიპერ-ვექტორი", "კვანტური მანიფოლდი", "4D სივრცე")
             }
             _uiState.update {
                 it.copy(
@@ -597,9 +727,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         val prob = if (shouldFlagImminent) (65..88).random() else (5..18).random()
         val ernUv = if (shouldFlagImminent) 8.5f + Random.nextFloat() * 4f else 2.5f + Random.nextFloat() * 2f
         val intervention = if (shouldFlagImminent) {
-            "⚡ Pre-Error Intercepted! Imminent typo or invalid variable reference predicted (-280ms before keyup). Auto-corrected."
+            "⚡ შეცდომა პრევენცირებულია! მოსალოდნელი შეცდომა ავტო-კორექტირდა კლავიშის აშვებამდე (-280ms)."
         } else {
-            "✓ Optimal typing path verified: 0 motor tremor anomalies."
+            "✓ ოპტიმალური აკრეფის ტრაექტორია: მოტორული ანომალიები არ დაფიქსირებულა."
         }
 
         _uiState.update { current ->
@@ -624,15 +754,15 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             val newArousal = (prev.arousal + deltaArousal).coerceIn(0.0f, 1.0f)
             val friction = if (newValence < 0f) (45..75).random() else (5..20).random()
             val mood = when {
-                newValence > 0.4f && newArousal > 0.4f -> "High Insight & Peak Creative Drive"
-                newValence > 0.4f -> "Calm Mindful Equilibrium & Flow"
-                newValence < -0.2f && newArousal > 0.5f -> "Cognitive Friction & Mental Overload"
-                else -> "Neutral Analytic Deliberation"
+                newValence > 0.4f && newArousal > 0.4f -> "მაღალი ინსაითი & შემოქმედებითი ენერგია"
+                newValence > 0.4f -> "მშვიდი გააზრებული ნაკადი და ბალანსი"
+                newValence < -0.2f && newArousal > 0.5f -> "კოგნიტური ფრიქცია და გადატვირთვა"
+                else -> "ნეიტრალური ანალიტიკური ფიქრი"
             }
             val adaptation = if (newValence < 0f) {
-                "⚠️ High cognitive friction detected. Simplifying layout, enabling focus audio, and dimming background elements."
+                "⚠️ დაფიქსირებულია კოგნიტური ფრიქცია. აქტიურდება ფოკუსის აუდიო და მუქი ფონი."
             } else {
-                "✨ Optimal cognitive flow state verified. Maintaining zero distraction shield."
+                "✨ ოპტიმალური კოგნიტური ნაკადის მდგომარეობა. ჩართულია ყურადღების ფარი."
             }
 
             current.copy(
@@ -653,9 +783,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             if (branch != null) {
                 current.copy(
                     decisionTree = current.decisionTree.copy(activeBranchId = branchId),
-                    currentPredictionTitle = "Branched Intent: ${branch.title}",
-                    currentPredictionText = "Branch Selected (${branch.probabilityPct}% Probability): ${branch.description}",
-                    currentActionPlan = "• Next Step: ${branch.nextAction}\n• Calibrating neural bandwidth for branch outcome."
+                    currentPredictionTitle = "შერჩეული განზრახვა: ${branch.title}",
+                    currentPredictionText = "არჩეული შტო (${branch.probabilityPct}% ალბათობა): ${branch.description}",
+                    currentActionPlan = "• შემდეგი ნაბიჯი: ${branch.nextAction}\n• ნეირონული გამტარობის კალიბრაცია შედეგისთვის."
                 )
             } else current
         }
@@ -668,7 +798,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             val newLog = ThoughtLogItem(
                 id = "t_${System.currentTimeMillis()}",
                 timestamp = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date()),
-                title = "Ghost-Typing Accepted",
+                title = "ქვეცნობიერი აკრეფა მიღებულია",
                 detail = acceptedText,
                 confidencePct = ghost.confidencePct,
                 category = "Ghost Typing"
@@ -714,9 +844,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             val ratio = if (beta > 0) (theta / beta * 4f).coerceIn(0.8f, 3.8f) else 1.4f
             val energy = (100 - (ratio * 18).toInt()).coerceIn(25, 98)
             val status = when {
-                ratio < 1.6f -> "Peak Mental Clarity • Zero Brain Fog"
-                ratio < 2.5f -> "Mild Cognitive Load • Sustainable Focus"
-                else -> "⚠️ Brain Fog Detected • Recommend 3-min Recovery"
+                ratio < 1.6f -> "მაღალი მენტალური სისხარტე • 0 გადაღლა"
+                ratio < 2.5f -> "ზომიერი კოგნიტური დატვირთვა • სტაბილური ფოკუსი"
+                else -> "⚠️ დაღლილობა დაფიქსირდა • რეკომენდებულია 3-წთ დასვენება"
             }
             val endurance = (energy * 0.7f).toInt()
             current.copy(
@@ -748,10 +878,10 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun setEntrainmentMode(mode: String) {
         val (freq, carrier, benefit) = when (mode) {
-            "Alpha Flow (10 Hz)" -> Triple(10.0f, 432, "Stimulates focused relaxed attention and alpha-wave synchronization.")
-            "Theta Creative (6 Hz)" -> Triple(6.0f, 528, "Enhances deep intuitive insights and sub-conscious lateral connections.")
-            "Gamma Hyper-Focus (40 Hz)" -> Triple(40.0f, 400, "High-bandwidth cognitive binding, rapid logic problem solving.")
-            else -> Triple(10.0f, 432, "Calm equilibrium wave.")
+            "ალფა-ნაკადი (10 Hz)" -> Triple(10.0f, 432, "ასტიმულირებს მშვიდ კონცენტრაციასა და ალფა-ტალღების სინქრონიზაციას.")
+            "თეტა-კრეატივი (6 Hz)" -> Triple(6.0f, 528, "აძლიერებს ღრმა ინტუიციურ აზროვნებასა და ქვეცნობიერ კავშირებს.")
+            "გამა-ჰიპერფოკუსი (40 Hz)" -> Triple(40.0f, 400, "მაღალი გამტარობის კოგნიტური ბმა, ლოგიკური ამოცანების სწრაფი გადაწყვეტა.")
+            else -> Triple(10.0f, 432, "მშვიდი წონასწორობის ტალღა.")
         }
         _uiState.update { current ->
             current.copy(
@@ -790,18 +920,22 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun setMicPermission(granted: Boolean) {
+        PermissionHelper.setMicGranted(getApplication(), granted)
         _uiState.update { it.copy(micPermissionGranted = granted) }
     }
 
     fun setUsageStatsPermission(granted: Boolean) {
+        PermissionHelper.setUsageStatsGranted(getApplication(), granted)
         _uiState.update { it.copy(usageStatsPermissionGranted = granted) }
     }
 
     fun setOverlayPermission(granted: Boolean) {
+        PermissionHelper.setOverlayGranted(getApplication(), granted)
         _uiState.update { it.copy(overlayPermissionGranted = granted) }
     }
 
     fun setAccessibilityPermission(granted: Boolean) {
+        PermissionHelper.setAccessibilityGranted(getApplication(), granted)
         _uiState.update { it.copy(accessibilityPermissionGranted = granted) }
     }
 
@@ -817,9 +951,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         betaBandHz = 28.4f,
                         gammaBandHz = 48.2f,
                         thoughtCognitiveLoadPct = 68,
-                        subconsciousFocusLevel = "High Beta Spike (Hyper-Alertness)",
-                        currentPredictionText = "Predicted Thought: User is experiencing rapid task-switching impulse and elevated mental processing speed.",
-                        currentActionPlan = "• Accelerating IDE auto-complete latency\n• Dimming blue light output\n• Queueing high-bpm ambient track"
+                        subconsciousFocusLevel = "მაღალი ბეტა პიკი (ჰიპერ-სიფხიზლე)",
+                        currentPredictionText = "ნავარაუდევი აზრი: მომხმარებელი განიცდის დავალებების სწრაფი გადართვის იმპულსს და აჩქარებულ მენტალურ ტემპს.",
+                        currentActionPlan = "• IDE ავტო-შევსების დაყოვნების განულება\n• ლურჯი ნათების შემცირება\n• მაღალტემპიანი ემბიენტ ტრეკის ჩართვა"
                     )
                 }
             }
@@ -829,9 +963,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         alphaBandHz = 11.8f,
                         thetaBandHz = 7.2f,
                         thoughtCognitiveLoadPct = 18,
-                        subconsciousFocusLevel = "Deep Alpha Harmony (11.8 Hz)",
-                        currentPredictionText = "Predicted Thought: User is entering calm parasympathetic rest state with heightened creative problem solving.",
-                        currentActionPlan = "• Softening UI color scheme\n• Muting non-critical background notifications\n• Enabling spatial acoustic flow"
+                        subconsciousFocusLevel = "ღრმა ალფა ჰარმონია (11.8 Hz)",
+                        currentPredictionText = "ნავარაუდევი აზრი: მომხმარებელი შედის მშვიდ პარასიმპათიკურ მდგომარეობაში გაზრდილი შემოქმედებითი უნარით.",
+                        currentActionPlan = "• ინტერფეისის ფერთა შერბილება\n• არაკრიტიკული შეტყობინებების გაჩუმება\n• სივრცითი აკუსტიკური ნაკადის გააქტიურება"
                     )
                 }
             }
@@ -841,9 +975,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         gammaBandHz = 52.0f,
                         betaBandHz = 24.1f,
                         thoughtCognitiveLoadPct = 84,
-                        subconsciousFocusLevel = "Gamma Insight Peak (52.0 Hz)",
-                        currentPredictionText = "Predicted Thought: User is synthesizing complex algorithmic dependencies and multi-variable logic structure.",
-                        currentActionPlan = "• Isolating active code panel\n• Allocating extra CPU priority to compiler\n• Blocking external interruptions"
+                        subconsciousFocusLevel = "გამა ინსაითის პიკი (52.0 Hz)",
+                        currentPredictionText = "ნავარაუდევი აზრი: მომხმარებელი აანალიზებს რთულ ალგორითმულ დამოკიდებულებებსა და ლოგიკურ სტრუქტურას.",
+                        currentActionPlan = "• აქტიური კოდის პანელის იზოლაცია\n• CPU პრიორიტეტის მინიჭება კომპილატორისთვის\n• გარე შეფერხებების სრული დაბლოკვა"
                     )
                 }
             }
@@ -853,9 +987,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         thetaBandHz = 6.8f,
                         alphaBandHz = 10.4f,
                         thoughtCognitiveLoadPct = 32,
-                        subconsciousFocusLevel = "Isochronic Acoustic Masking State",
-                        currentPredictionText = "Predicted Thought: User is seeking quiet mental space free from ambient acoustic distractions.",
-                        currentActionPlan = "• Generating counter-phase white noise\n• Filtering room reverberation harmonics"
+                        subconsciousFocusLevel = "იზოქრონული აკუსტიკური მასკირება",
+                        currentPredictionText = "ნავარაუდევი აზრი: მომხმარებელი ეძებს მშვიდ მენტალურ სივრცეს გარემოს აკუსტიკური ყურადღების გაფანტვის გარეშე.",
+                        currentActionPlan = "• თეთრი ხმაურის გენერირება\n• ოთახის რევერბერაციის ჰარმონიკების ფილტრაცია"
                     )
                 }
             }
@@ -899,8 +1033,8 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                     title = if (isGeorgian) "ამოცნობილი აზრი: $thoughtPrompt" else "Decoded Thought: $thoughtPrompt",
                     summary = predictedText,
                     matchConfidence = 96.8f,
-                    touchActivityLevel = "BCI Direct Mind Interface",
-                    audioSpectrumDb = "${_uiState.value.heartRateBpm} BPM / Subconscious Sync",
+                    touchActivityLevel = "BCI პირდაპირი ინტერფეისი",
+                    audioSpectrumDb = "${_uiState.value.heartRateBpm} BPM / ქვეცნობიერი სინქრონი",
                     visualContext = _uiState.value.activeAppContext,
                     neuralSyncRate = "${String.format(java.util.Locale.US, "%.1f", _uiState.value.matchPercentage)}%",
                     actionPlan = actionPlan
@@ -936,10 +1070,12 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
     private suspend fun fetchPredictionFromGemini(apiKey: String): Boolean = withContext(Dispatchers.IO) {
         try {
+            val earbudInfo = "Galaxy Buds 2 VPU Bone Conduction: ${_uiState.value.earbudSensor.vpuBoneConductionHz}Hz, Head Tilt: ${_uiState.value.earbudSensor.headImuPitchDeg}°, In-Ear Acoustic: ${_uiState.value.earbudSensor.inEarAcousticOcclusionDb}dB"
             val prompt = """
                 You are NeuroSync AI, an advanced unified real-time multimodal human intent predictor adapted for the Georgian language and cognition.
-                Synthesize all 6 active sensory and neural simulation streams:
+                Synthesize all active sensory, earbud telemetry, and neural simulation streams:
                 - Subconscious Brainwave State: ${_uiState.value.subconsciousFocusLevel} (Alpha: ${_uiState.value.alphaBandHz}Hz, Beta: ${_uiState.value.betaBandHz}Hz, Theta: ${_uiState.value.thetaBandHz}Hz, Gamma: ${_uiState.value.gammaBandHz}Hz, Cognitive Load: ${_uiState.value.thoughtCognitiveLoadPct}%)
+                - In-Ear & Head Kinematics: $earbudInfo
                 - Kinematic Touch Stream: ${_uiState.value.touchTapsCount} taps at ${_uiState.value.lastTouchCoords} (Cadence: ${_uiState.value.touchCadenceHz}Hz, Pressure: ${_uiState.value.touchPressure})
                 - Acoustic Spectrum: Ambient ${_uiState.value.audioDb} dB, Speaker ${_uiState.value.speakerOutputDb} dB
                 - Ocular & Gaze Stream: Gaze Vector (${_uiState.value.cameraGazeX}, ${_uiState.value.cameraGazeY})
@@ -982,15 +1118,15 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 val cleanJsonStr = text.substringAfter("{").substringBeforeLast("}")
                 val parsed = JSONObject("{$cleanJsonStr}")
 
-                val title = parsed.optString("title", "Unified Multimodal Prediction")
-                val summary = parsed.optString("summary", "User is transitioning tasks. Preparing optimized environment.")
-                val actionPlan = parsed.optString("actionPlan", "• Syncing context\n• Optimizing screen contrast\n• Preparing quick actions")
+                val title = parsed.optString("title", "მულტიმოდალური განზრახვის პროგნოზი")
+                val summary = parsed.optString("summary", "მომხმარებელი ემზადება აქტივობის გადასართველად. გარემო ოპტიმიზებულია.")
+                val actionPlan = parsed.optString("actionPlan", "• კონტექსტის სინქრონიზაცია\n• ეკრანის კონტრასტის ოპტიმიზაცია\n• სწრაფი მოქმედებების მომზადება")
 
                 val newPrediction = PredictionEntity(
                     title = title,
                     summary = summary,
                     matchConfidence = _uiState.value.matchPercentage,
-                    touchActivityLevel = "${_uiState.value.touchTapsCount} Taps (${_uiState.value.lastTouchCoords})",
+                    touchActivityLevel = "${_uiState.value.touchTapsCount} შეხება (${_uiState.value.lastTouchCoords})",
                     audioSpectrumDb = "${String.format(java.util.Locale.US, "%.1f", _uiState.value.audioDb)} dB / ${_uiState.value.heartRateBpm} BPM",
                     visualContext = _uiState.value.activeAppContext,
                     neuralSyncRate = "${String.format(java.util.Locale.US, "%.1f", _uiState.value.matchPercentage)}%",
@@ -1024,7 +1160,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             isHighCognitive && state.activeAppContext.contains("IDE") -> {
                 Quadruple(
                     "ალგორითმული რეფაქტორინგი და კოდის ოპტიმიზაცია",
-                    "გამა-ტალღების სიხშირე (${String.format(java.util.Locale.US, "%.1f", state.gammaBandHz)}Hz) და მზერის კონცენტრაცია მიუთითებს Kotlin/Compose არქიტექტურის აქტიურ გონებრივ სინთეზზე.",
+                    "გამა-ტალღების სიხშირე (${String.format(java.util.Locale.US, "%.1f", state.gammaBandHz)}Hz), Galaxy Buds VPU და მზერის კონცენტრაცია მიუთითებს Kotlin/Compose არქიტექტურის აქტიურ გონებრივ სინთეზზე.",
                     "• Kotlin ბაიტკოდის ქეშის ფონური წინასწარ კომპილაცია\n• შეტყობინებების დაბლოკვა და მაქსიმალური კონცენტრაციის რეჟიმი\n• ეკრანის ფერთა ტემპერატურის შერბილება თვალის დასაცავად",
                     TimeHorizonPredictions(
                         horizon30Sec = "+30წმ: კურსორის პოზიციონირება და ტელეპათიური ავტო-შევსება.",
@@ -1075,7 +1211,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             title = title,
             summary = summary,
             matchConfidence = state.matchPercentage,
-            touchActivityLevel = "${state.touchTapsCount} Taps (${state.lastTouchCoords})",
+            touchActivityLevel = "${state.touchTapsCount} შეხება (${state.lastTouchCoords})",
             audioSpectrumDb = "${String.format(java.util.Locale.US, "%.1f", state.audioDb)} dB / ${state.heartRateBpm} BPM",
             visualContext = state.activeAppContext,
             neuralSyncRate = "${String.format(java.util.Locale.US, "%.1f", state.matchPercentage)}%",

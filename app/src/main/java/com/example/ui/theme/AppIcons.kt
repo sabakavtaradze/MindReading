@@ -96,4 +96,6 @@ object AppIcons {
     val BatteryChargingFull: ImageVector = Icons.Default.Favorite
     val Timeline: ImageVector = Icons.Default.DateRange
     val Waves: ImageVector = Icons.Default.PlayArrow
+    val Notifications: ImageVector = Icons.Default.Notifications
+    val Layers: ImageVector = Icons.Default.Menu
 }

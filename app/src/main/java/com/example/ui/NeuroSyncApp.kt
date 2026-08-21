@@ -63,7 +63,8 @@ enum class NeuroTab { UNIFIED_MATRIX, MIND_LAB, SENSORS, LOGS }
 
 @Composable
 fun NeuroSyncApp(
-    viewModel: NeuroSyncViewModel
+    viewModel: NeuroSyncViewModel,
+    onRequestMasterPermissions: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val historyList by viewModel.history.collectAsStateWithLifecycle()
@@ -108,8 +109,14 @@ fun NeuroSyncApp(
                     .padding(bottom = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Top Header
-                HeaderView(isSyncing = uiState.isSyncing)
+                // Top Header with Master 1-Button Toggle
+                HeaderView(
+                    isSyncing = uiState.isSyncing,
+                    onMasterToggleClick = { 
+                        viewModel.masterActivateAll()
+                        onRequestMasterPermissions()
+                    }
+                )
 
                 // Hero Synaptic Overlay Visualizer
                 HeroNeuralOverlay(
@@ -177,6 +184,7 @@ fun NeuroSyncApp(
                                 entrainment = uiState.entrainment,
                                 realSensors = uiState.realSensors,
                                 cameraGaze = uiState.cameraGaze,
+                                earbudSensor = uiState.earbudSensor,
                                 isGeneratingPrediction = uiState.isGeneratingPrediction,
                                 onRunUnifiedInference = { viewModel.runNeuralPredictionInference() },
                                 onInjectStimulus = { viewModel.injectStimulus(it) },
@@ -197,6 +205,8 @@ fun NeuroSyncApp(
                                 onSearchThoughtHistory = { query -> viewModel.searchThoughtTimeline(query) },
                                 onToggleEntrainment = { viewModel.toggleEntrainmentPlay() },
                                 onSetEntrainmentMode = { mode -> viewModel.setEntrainmentMode(mode) },
+                                onToggleEarbuds = { viewModel.toggleEarbudsConnected() },
+                                onRecalibrateEarbuds = { viewModel.recalibrateEarbuds() },
                                 onToggleCamera = {
                                     if (uiState.cameraGaze.isCameraActive) {
                                         viewModel.stopCameraGazeTracking()
