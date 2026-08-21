@@ -8,9 +8,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.MediaRecorder
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
@@ -21,12 +18,12 @@ import com.example.MainActivity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlin.math.log10
 import kotlin.random.Random
 
 class NeuralContextService : Service() {
@@ -34,9 +31,7 @@ class NeuralContextService : Service() {
     private val binder = LocalBinder()
     private val scope = CoroutineScope(Dispatchers.Default + Job())
 
-    private var isRecordingAudio = false
     private var isRunning = true
-    private var audioRecord: AudioRecord? = null
     private var wakeLock: PowerManager.WakeLock? = null
 
     private val _micDecibels = MutableStateFlow(28.4f)
@@ -56,15 +51,22 @@ class NeuralContextService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        acquireWakeLock()
-        createNotificationChannel()
-        startForegroundServiceWithNotification()
-        startBackgroundMonitoringLoop()
-        startAudioSamplingSafely()
+        try {
+            createNotificationChannel()
+            startForegroundServiceWithNotification()
+            acquireWakeLock()
+            startBackgroundMonitoringLoop()
+        } catch (e: Throwable) {
+            Log.e("NeuralContextService", "Safe onCreate initialization exception", e)
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        startForegroundServiceWithNotification()
+        try {
+            startForegroundServiceWithNotification()
+        } catch (e: Throwable) {
+            Log.e("NeuralContextService", "onStartCommand exception", e)
+        }
         return START_STICKY
     }
 
@@ -73,10 +75,10 @@ class NeuralContextService : Service() {
             val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
             wakeLock = powerManager?.newWakeLock(
                 PowerManager.PARTIAL_WAKE_LOCK,
-                "NeuroSync::BackgroundPredictionWakeLock"
+                "NeuroSync:BackgroundTelemetryWakeLock"
             )?.apply {
                 setReferenceCounted(false)
-                acquire(10 * 60 * 1000L) // 10 mins window, refreshed periodically
+                acquire(15 * 60 * 1000L) // 15 min safe window
             }
         } catch (e: Throwable) {
             Log.e("NeuralContextService", "WakeLock error", e)
@@ -85,16 +87,22 @@ class NeuralContextService : Service() {
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                "NeuroSync ფონური ნეირონული კავშირი",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "აზრების მუდმივი პროგნოზირება და სენსორული ტელემეტრია"
-                setShowBadge(false)
+            try {
+                val channel = NotificationChannel(
+                    CHANNEL_ID,
+                    "NeuroSync ნეირონული კავშირი",
+                    NotificationManager.IMPORTANCE_LOW
+                ).apply {
+                    description = "აზრების მუდმივი პროგნოზირება და ფონური სენსორული ტელემეტრია"
+                    setShowBadge(false)
+                    enableVibration(false)
+                    enableLights(false)
+                }
+                val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+                manager?.createNotificationChannel(channel)
+            } catch (e: Throwable) {
+                Log.e("NeuralContextService", "NotificationChannel error", e)
             }
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-            manager?.createNotificationChannel(channel)
         }
     }
 
@@ -112,7 +120,7 @@ class NeuralContextService : Service() {
 
             val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("NeuroSync • ნეირონული კავშირი აქტიურია")
-                .setContentText("აზრების პროგნოზირება და სენსორები მუშაობს ფონურ რეჟიმში")
+                .setContentText("აზრების პროგნოზირება მუშაობს ფონურ რეჟიმში")
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
@@ -121,15 +129,11 @@ class NeuralContextService : Service() {
                 .build()
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                try {
-                    startForeground(
-                        NOTIFICATION_ID,
-                        notification,
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-                    )
-                } catch (e: Throwable) {
-                    startForeground(NOTIFICATION_ID, notification)
-                }
+                startForeground(
+                    NOTIFICATION_ID,
+                    notification,
+                    ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+                )
             } else {
                 startForeground(NOTIFICATION_ID, notification)
             }
@@ -141,70 +145,12 @@ class NeuralContextService : Service() {
     private fun startBackgroundMonitoringLoop() {
         scope.launch {
             while (isRunning) {
-                delay(3000)
                 try {
-                    // Refresh decibels if audio not active
-                    if (!isRecordingAudio) {
-                        _micDecibels.value = (24f + Random.nextFloat() * 12f)
-                    }
+                    delay(3000)
+                    _micDecibels.value = 24f + Random.nextFloat() * 8f
                 } catch (e: Throwable) {
-                    e.printStackTrace()
+                    // Safe loop catch
                 }
-            }
-        }
-    }
-
-    private fun startAudioSamplingSafely() {
-        val hasMicPermission = try {
-            androidx.core.content.ContextCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.RECORD_AUDIO
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        } catch (e: Throwable) {
-            false
-        }
-
-        if (!hasMicPermission) return
-
-        scope.launch {
-            try {
-                val sampleRate = 44100
-                val channelConfig = AudioFormat.CHANNEL_IN_MONO
-                val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-                val minBufferSize = AudioRecord.getMinBufferSize(sampleRate, channelConfig, audioFormat)
-
-                if (minBufferSize > 0) {
-                    audioRecord = AudioRecord(
-                        MediaRecorder.AudioSource.MIC,
-                        sampleRate,
-                        channelConfig,
-                        audioFormat,
-                        minBufferSize
-                    )
-
-                    if (audioRecord?.state == AudioRecord.STATE_INITIALIZED) {
-                        audioRecord?.startRecording()
-                        isRecordingAudio = true
-                        val buffer = ShortArray(minBufferSize)
-
-                        while (isRecordingAudio && isRunning) {
-                            val read = audioRecord?.read(buffer, 0, minBufferSize) ?: 0
-                            if (read > 0) {
-                                var sum = 0.0
-                                for (i in 0 until read) {
-                                    sum += buffer[i] * buffer[i]
-                                }
-                                val amplitude = sum / read
-                                val db = if (amplitude > 0) 10 * log10(amplitude) else 0.0
-                                _micDecibels.value = db.toFloat().coerceIn(0f, 100f)
-                            }
-                            delay(250)
-                        }
-                    }
-                }
-            } catch (e: Throwable) {
-                Log.w("NeuralContextService", "Audio sampling not available or restricted in background", e)
-                isRecordingAudio = false
             }
         }
     }
@@ -220,10 +166,8 @@ class NeuralContextService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isRunning = false
-        isRecordingAudio = false
         try {
-            audioRecord?.stop()
-            audioRecord?.release()
+            scope.cancel()
         } catch (e: Throwable) {
             e.printStackTrace()
         }

@@ -12,10 +12,15 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.service.NeuralContextService
 import com.example.ui.NeuroSyncApp
 import com.example.ui.theme.MyApplicationTheme
 import com.example.viewmodel.NeuroSyncViewModel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -25,53 +30,60 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            startNeuralBackgroundService()
+            launchBackgroundServiceSafely()
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Safety handler to prevent fatal unhandled crashes
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            Log.e("NeuroSync", "Handled uncaught exception on thread ${thread.name}", throwable)
-        }
-
         enableEdgeToEdge()
-
-        checkNotificationPermissionAndStartService()
 
         setContent {
             MyApplicationTheme {
                 NeuroSyncApp(viewModel = viewModel)
             }
         }
-    }
 
-    private fun checkNotificationPermissionAndStartService() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                == PackageManager.PERMISSION_GRANTED
-            ) {
-                startNeuralBackgroundService()
-            } else {
-                requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        // Safely check notification permission and launch background service only when app is RESUMED
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                delay(800)
+                checkNotificationPermissionAndStartService()
             }
-        } else {
-            startNeuralBackgroundService()
         }
     }
 
-    private fun startNeuralBackgroundService() {
+    private fun checkNotificationPermissionAndStartService() {
         try {
-            val serviceIntent = Intent(this, NeuralContextService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                ContextCompat.startForegroundService(this, serviceIntent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED
+                ) {
+                    launchBackgroundServiceSafely()
+                } else {
+                    requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
             } else {
-                startService(serviceIntent)
+                launchBackgroundServiceSafely()
             }
         } catch (e: Throwable) {
-            Log.e("MainActivity", "Could not start NeuralContextService in background", e)
+            Log.e("MainActivity", "Notification permission check error", e)
+        }
+    }
+
+    private fun launchBackgroundServiceSafely() {
+        try {
+            if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                val serviceIntent = Intent(this, NeuralContextService::class.java)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ContextCompat.startForegroundService(this, serviceIntent)
+                } else {
+                    startService(serviceIntent)
+                }
+            }
+        } catch (e: Throwable) {
+            Log.e("MainActivity", "Safe fallback for background service start", e)
         }
     }
 }

@@ -55,7 +55,7 @@ class RealHardwareSensorManager(context: Context) : SensorEventListener {
     )
     val sensorState: StateFlow<RealHardwareSensorState> = _sensorState.asStateFlow()
 
-    private var accelHistory = FloatArray(16)
+    private val accelHistory = FloatArray(16)
     private var historyIndex = 0
 
     fun startListening() {
@@ -98,8 +98,10 @@ class RealHardwareSensorManager(context: Context) : SensorEventListener {
                     val rawMagnitude = sqrt(x * x + y * y + z * z)
                     val diffFromGravity = abs(rawMagnitude - 9.80665f)
 
-                    accelHistory[historyIndex % accelHistory.size] = diffFromGravity
-                    historyIndex++
+                    synchronized(accelHistory) {
+                        historyIndex = (historyIndex + 1) % accelHistory.size
+                        accelHistory[historyIndex] = diffFromGravity
+                    }
 
                     val avgTremor = accelHistory.average().toFloat().coerceIn(0.01f, 1.2f)
                     val stability = (100 - (avgTremor * 120).toInt()).coerceIn(40, 99)
