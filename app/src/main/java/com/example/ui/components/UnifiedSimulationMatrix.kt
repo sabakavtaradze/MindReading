@@ -123,9 +123,14 @@ fun UnifiedSimulationMatrix(
     realSensors: com.example.sensor.RealHardwareSensorState,
     cameraGaze: com.example.sensor.RealCameraGazeState,
     earbudSensor: com.example.viewmodel.EarbudSensorState = com.example.viewmodel.EarbudSensorState(),
+    enhancedMetrics: com.example.viewmodel.EnhancedPupilGazeMetrics = com.example.viewmodel.EnhancedPupilGazeMetrics(),
+    isContinuousThoughtActive: Boolean = true,
+    lastThoughtUpdated: String = "ახლახანს",
     isGeneratingPrediction: Boolean,
     // Callbacks
     onRunUnifiedInference: () -> Unit,
+    onToggleContinuousThought: () -> Unit = {},
+    onSetUpdateInterval: (Int) -> Unit = {},
     onInjectStimulus: (String) -> Unit,
     onAppContextChanged: (String) -> Unit,
     onTouchTap: (Float, Float) -> Unit,
@@ -255,7 +260,7 @@ fun UnifiedSimulationMatrix(
                 .padding(20.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                // Header badge with pulsing live dot
+                // Header badge with pulsing live dot & stream status
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -269,10 +274,10 @@ fun UnifiedSimulationMatrix(
                             modifier = Modifier
                                 .size(10.dp)
                                 .clip(CircleShape)
-                                .background(NeuralAccent)
+                                .background(if (isContinuousThoughtActive) NeuralAccent else Color.Gray)
                         )
                         Text(
-                            text = "დეკოდირებული აზრები • რას ფიქრობთ ახლა",
+                            text = "დეკოდირებული აზრები • LIVE STREAM",
                             color = NeuralAccent,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.ExtraBold,
@@ -280,53 +285,91 @@ fun UnifiedSimulationMatrix(
                         )
                     }
 
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(NeuralAccent.copy(alpha = 0.2f))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text(
-                            text = "${String.format(java.util.Locale.US, "%.1f", matchPercentage)}% ნეირო-სიზუსტე",
-                            color = NeuralAccent,
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(NeuralAccent.copy(alpha = 0.2f))
+                                .clickable { onToggleContinuousThought() }
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = if (isContinuousThoughtActive) "⚡ განახლება: ყოველ 4 წამში" else "⏸ შეჩერებულია",
+                                color = NeuralAccent,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(Color(0xFF00E5FF).copy(alpha = 0.18f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "${String.format(java.util.Locale.US, "%.1f", matchPercentage)}%",
+                                color = Color(0xFF00E5FF),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
 
-                // Primary Decoded Thought Title Banner
-                Column(
+                // Primary Decoded Thought Title Banner with Smooth Crossfade Animation
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(18.dp))
                         .background(NeuralDeepPurple.copy(alpha = 0.85f))
-                        .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.35f), RoundedCornerShape(16.dp))
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                        .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.35f), RoundedCornerShape(18.dp))
+                        .padding(16.dp)
                 ) {
-                    Text(
-                        text = "🧠 მიმდინარე მენტალური განზრახვა & აზრი:",
-                        color = Color(0xFF00E5FF),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = currentPredictionTitle,
-                        color = Color.White,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        lineHeight = 24.sp
-                    )
-                    Text(
-                        text = currentPredictionText,
-                        color = NeuralTextPrimary,
-                        fontSize = 13.sp,
-                        lineHeight = 19.sp
-                    )
+                    androidx.compose.animation.Crossfade(
+                        targetState = currentPredictionTitle to currentPredictionText,
+                        animationSpec = tween(600),
+                        label = "thought_transition"
+                    ) { (title, text) ->
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "🧠 მიმდინარე მენტალური განზრახვა & აზრი:",
+                                    color = Color(0xFF00E5FF),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    text = "🕒 $lastThoughtUpdated",
+                                    color = NeuralTextSecondary,
+                                    fontSize = 10.sp
+                                )
+                            }
+                            Text(
+                                text = title,
+                                color = Color.White,
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                lineHeight = 23.sp
+                            )
+                            Text(
+                                text = text,
+                                color = NeuralTextPrimary,
+                                fontSize = 13.sp,
+                                lineHeight = 19.sp
+                            )
+                        }
+                    }
                 }
 
-                // Live Inner Monologue Telemetry Bar
+                // Enhanced Neural Biomarker Highlights (Pupil mm, Fixation zone, Subvocal VPU)
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -340,8 +383,8 @@ fun UnifiedSimulationMatrix(
                             .padding(10.dp)
                     ) {
                         Column {
-                            Text("შინაგანი ხმა (Subvocal)", color = Color(0xFF00E5FF), fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                            Text(subvocalSpeech.decodedPhrase.take(35) + if (subvocalSpeech.decodedPhrase.length > 35) "..." else "", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                            Text("👁 გუგა & ფოკუსი", color = Color(0xFF00E5FF), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            Text("${String.format(java.util.Locale.US, "%.2f", enhancedMetrics.pupilDiameterMm)}მმ • ${cameraGaze.gazeConfidencePct}%", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                         }
                     }
 
@@ -354,8 +397,56 @@ fun UnifiedSimulationMatrix(
                             .padding(10.dp)
                     ) {
                         Column {
-                            Text("ემოციური ვექტორი", color = Color(0xFF9D4EDD), fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                            Text(emotionalFriction.dominantMood.take(28), color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                            Text("🦴 Buds 2 VPU ხმა", color = Color(0xFF9D4EDD), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            Text("${String.format(java.util.Locale.US, "%.1f", earbudSensor.vpuBoneConductionHz)} Hz ძვლის ვიბრაცია", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(NeuralAccent.copy(alpha = 0.12f))
+                            .border(1.dp, NeuralAccent.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                            .padding(10.dp)
+                    ) {
+                        Column {
+                            Text("⚡ ERN შეცდომის შეგრძნება", color = NeuralAccent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            Text(if (preErrorState.isImminentError) "⚠️ ERN -180ms" else "✓ სუფთა ნაკადი", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                        }
+                    }
+                }
+
+                // Quick Thought Rate Selector Controls
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "განახლების სიჩქარე:",
+                        color = NeuralTextSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(2 to "2წმ", 4 to "4წმ", 6 to "6წმ").forEach { (sec, label) ->
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(NeuralDeepPurple)
+                                    .clickable { onSetUpdateInterval(sec) }
+                                    .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = label,
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
                 }

@@ -234,9 +234,20 @@ data class EarbudSensorState(
     val earTipFitConfidencePct: Int = 98
 )
 
+data class EnhancedPupilGazeMetrics(
+    val pupilDiameterMm: Float = 3.65f,
+    val fixationDurationMs: Long = 420L,
+    val eyeFixationZone: String = "ცენტრი • კოდის მატრიცაზე ფოკუსი",
+    val cognitiveHesitationIndex: Float = 0.18f,
+    val subvocalFrequencyHz: Float = 142.5f
+)
+
 data class NeuroSyncUiState(
     val isSyncing: Boolean = true,
     val isMasterActive: Boolean = true,
+    val isContinuousThoughtStreamActive: Boolean = true,
+    val thoughtUpdateIntervalSeconds: Int = 4,
+    val lastThoughtUpdatedTimestamp: String = "ახლახანს",
     val matchPercentage: Float = 98.4f,
     val statusText: String = "ნეირონული კავშირი: 98.4% სიზუსტე",
     val touchTapsCount: Int = 14,
@@ -262,6 +273,7 @@ data class NeuroSyncUiState(
     val betaBandHz: Float = 18.5f,
     val thetaBandHz: Float = 6.1f,
     val gammaBandHz: Float = 42.0f,
+    val enhancedMetrics: EnhancedPupilGazeMetrics = EnhancedPupilGazeMetrics(),
     val timeHorizons: TimeHorizonPredictions = TimeHorizonPredictions(),
     val hesitationMetrics: MicroHesitationMetrics = MicroHesitationMetrics(),
     val circadian: CircadianEnvironment = CircadianEnvironment(),
@@ -496,9 +508,11 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
     private fun startTelemetryLoop() {
         viewModelScope.launch {
+            var thoughtPredictionCycleCounter = 0
             while (true) {
-                delay(1200)
+                delay(1000)
                 if (_uiState.value.isSyncing) {
+                    thoughtPredictionCycleCounter++
                     val newTouch = (0.7f + Random.nextFloat() * 0.28f)
                     val newAudio = if (_uiState.value.micPermissionGranted) {
                         (_uiState.value.audioDb / 100f).coerceIn(0.1f, 1.0f)
@@ -509,7 +523,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                     val newMotion = (0.5f + Random.nextFloat() * 0.45f)
                     val newBiometrics = (0.65f + Random.nextFloat() * 0.3f)
                     val newNeural = (0.95f + Random.nextFloat() * 0.04f)
-                    val newMatch = 97f + Random.nextFloat() * 2.8f
+                    val newMatch = 97.5f + Random.nextFloat() * 2.3f
 
                     val newGazeX = (0.2f + Random.nextFloat() * 0.6f)
                     val newGazeY = (0.2f + Random.nextFloat() * 0.6f)
@@ -541,33 +555,125 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         headNodDetected = Random.nextFloat() > 0.85f
                     )
 
-                    _uiState.value = _uiState.value.copy(
-                        matchPercentage = matchVal,
-                        statusText = "ნეირონული კავშირი: ${matchStr}% სიზუსტე",
-                        cameraGazeX = newGazeX,
-                        cameraGazeY = newGazeY,
-                        heartRateBpm = newHeartRate,
-                        speakerOutputDb = newSpeakerDb,
-                        motionTremor = newTremor,
-                        alphaBandHz = newAlpha,
-                        betaBandHz = newBeta,
-                        thetaBandHz = newTheta,
-                        gammaBandHz = newGamma,
-                        thoughtCognitiveLoadPct = newCogLoad,
-                        subconsciousFocusLevel = focusStates.random(),
-                        earbudSensor = earbudUpdate,
-                        telemetry = TelemetryState(
-                            touchValue = newTouch,
-                            audioValue = newAudio,
-                            visualValue = newVisual,
-                            motionValue = newMotion,
-                            biometricsValue = newBiometrics,
-                            neuralValue = newNeural
-                        )
+                    val enhanced = EnhancedPupilGazeMetrics(
+                        pupilDiameterMm = 3.2f + (_uiState.value.cameraGaze.opticalPupilDilationScore * 2.2f),
+                        fixationDurationMs = _uiState.value.cameraGaze.fixationDurationMs,
+                        eyeFixationZone = _uiState.value.cameraGaze.fixationZone,
+                        cognitiveHesitationIndex = _uiState.value.hesitationMetrics.hesitationIndex,
+                        subvocalFrequencyHz = earbudUpdate.vpuBoneConductionHz
                     )
+
+                    _uiState.update { current ->
+                        current.copy(
+                            matchPercentage = matchVal,
+                            statusText = "ნეირონული კავშირი: ${matchStr}% სიზუსტე",
+                            cameraGazeX = newGazeX,
+                            cameraGazeY = newGazeY,
+                            heartRateBpm = newHeartRate,
+                            speakerOutputDb = newSpeakerDb,
+                            motionTremor = newTremor,
+                            alphaBandHz = newAlpha,
+                            betaBandHz = newBeta,
+                            thetaBandHz = newTheta,
+                            gammaBandHz = newGamma,
+                            thoughtCognitiveLoadPct = newCogLoad,
+                            subconsciousFocusLevel = focusStates.random(),
+                            earbudSensor = earbudUpdate,
+                            enhancedMetrics = enhanced,
+                            telemetry = TelemetryState(
+                                touchValue = newTouch,
+                                audioValue = newAudio,
+                                visualValue = newVisual,
+                                motionValue = newMotion,
+                                biometricsValue = newBiometrics,
+                                neuralValue = newNeural
+                            )
+                        )
+                    }
+
+                    // 🌟 AUTO-UPDATE PREDICTED THOUGHT STREAM EVERY 3-4 SECONDS CONTINUOUSLY
+                    val updateInterval = _uiState.value.thoughtUpdateIntervalSeconds
+                    if (_uiState.value.isContinuousThoughtStreamActive && thoughtPredictionCycleCounter >= updateInterval) {
+                        thoughtPredictionCycleCounter = 0
+                        autoCyclePredictedThought()
+                    }
                 }
             }
         }
+    }
+
+    private fun autoCyclePredictedThought() {
+        val state = _uiState.value
+        val timeNow = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+        
+        val dynamicThoughts = listOf(
+            Triple(
+                "კოდის სტრუქტურის ოპტიმიზაცია და კომპოუზის აჩქარება",
+                "ნავარაუდევი აზრი: გონებაში აყალიბებთ Jetpack Compose-ის მდგომარეობების რეფაქტორინგს და ეკრანის რენდერის ოპტიმიზაციას.",
+                "• Compose Compiler მინიჭება\n• StateFlow რეაქტიული ბუფერის მომზადება\n• ალფა-ფოკუსის შენარჩუნება"
+            ),
+            Triple(
+                "სუბვოკალური ენის დეკოდირება (Inner Speech)",
+                "ნავარაუდევი აზრი: შინაგანი ხმით წარმოთქვამთ ცვლადების სახელებსა და შემდეგ ლოგიკურ პირობებს (${String.format(Locale.US, "%.1f", state.enhancedMetrics.subvocalFrequencyHz)} Hz VPU).",
+                "• ქართული ფონემების კლასტერირება\n• კლავიატურის ბუფერის წინასწარი შევსება\n• აკუსტიკური ფილტრაცია"
+            ),
+            Triple(
+                "თვალის გუგის დილატაცია & ვიზუალური ფოკუსი",
+                "ნავარაუდევი აზრი: მზერა ფიქსირებულია '${state.enhancedMetrics.eyeFixationZone}'-ზე (${String.format(Locale.US, "%.2f", state.enhancedMetrics.pupilDiameterMm)}მმ გუგა); მიმდინარეობს ვიზუალური ინფორმაციის გაანალიზება.",
+                "• ეკრანის კონტრასტის დაბალანსება\n• ყურადღების ფოკუსის გამოყოფა\n• ვიზუალური დაღლილობის პრევენცია"
+            ),
+            Triple(
+                "Pre-Error (ERN) წინასწარი შეცდომის შეგრძნება",
+                "ნავარაუდევი აზრი: ტვინის მოტორულმა ცენტრმა დააფიქსირა მიკრო-ყოყმანი (-180ms); გადაწყვეტილება გადამოწმების პროცესშია.",
+                "• შეცდომის პრევენციის ბარიერი\n• სინტაქსური ავტო-კორექცია\n• მოტორული სტაბილიზაცია"
+            ),
+            Triple(
+                "იდეის სინთეზი & ალგორითმული არქიტექტურა",
+                "ნავარაუდევი აზრი: გამა ტალღების პიკი (${String.format(Locale.US, "%.1f", state.gammaBandHz)} Hz) ადასტურებს ახალი იდეის ან ალგორითმის სწრაფ გონებრივ მოდელირებას.",
+                "• IDE ქეშის ინდექსირება\n• არაკრიტიკული აპლიკაციების გაჩუმება\n• სინაფსური მეხსიერების გაძლიერება"
+            ),
+            Triple(
+                "Galaxy Buds 2 თავის კინემატიკა & თანხმობა",
+                "ნავარაუდევი აზრი: თავის დახრის კუთხე (${String.format(Locale.US, "%.1f", state.earbudSensor.headImuPitchDeg)}°) და ყურის არხის EEG ადასტურებს თანხმობასა და მაღალ ყურადღებას.",
+                "• Ear-EEG ბიოპოტენციალის სინქრონიზაცია\n• სივრცითი აუდიოს გააქტიურება\n• ტელემეტრიის დამახსოვრება"
+            ),
+            Triple(
+                "კოგნიტური სიმშვიდე & ღრმა ალფა-ნაკადი",
+                "ნავარაუდევი აზრი: დაბალი სტრესის მაჩვენებელი (${state.stressLevelPct}%) და 72 BPM პულსი მიუთითებს მენტალურ ჰარმონიასა და შემოქმედებით მუხტზე.",
+                "• 10Hz ბინაურალური ტალღების მხარდაჭერა\n• ეკრანის მუქი თემის ადაპტაცია\n• პროდუქტიული ნაკადის დაცვა"
+            )
+        )
+
+        val nextThought = dynamicThoughts.filter { it.first != state.currentPredictionTitle }.random()
+        val newLog = ThoughtLogItem(
+            id = "auto_${System.currentTimeMillis()}",
+            timestamp = timeNow,
+            title = nextThought.first,
+            detail = nextThought.second,
+            confidencePct = (96..99).random(),
+            category = "Live Intent"
+        )
+
+        _uiState.update { current ->
+            current.copy(
+                currentPredictionTitle = nextThought.first,
+                currentPredictionText = nextThought.second,
+                currentActionPlan = nextThought.third,
+                lastThoughtUpdatedTimestamp = timeNow,
+                dominantMindThought = nextThought.first,
+                thoughtTimeline = current.thoughtTimeline.copy(
+                    historyLogs = (listOf(newLog) + current.thoughtTimeline.historyLogs).take(25)
+                )
+            )
+        }
+    }
+
+    fun toggleContinuousThoughtStream() {
+        _uiState.update { it.copy(isContinuousThoughtStreamActive = !it.isContinuousThoughtStreamActive) }
+    }
+
+    fun setThoughtUpdateInterval(seconds: Int) {
+        _uiState.update { it.copy(thoughtUpdateIntervalSeconds = seconds.coerceIn(2, 10)) }
     }
 
     private var lastTapTimestamp = System.currentTimeMillis()

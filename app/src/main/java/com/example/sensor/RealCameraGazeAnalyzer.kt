@@ -19,12 +19,15 @@ data class RealCameraGazeState(
     val isCameraActive: Boolean = false,
     val hasPermission: Boolean = false,
     val faceDetected: Boolean = true,
-    val gazeDirection: String = "Focused Center (Code Matrix)",
+    val gazeDirection: String = "ცენტრი • კოდის მატრიცაზე ფოკუსი",
     val eyeBlinkRatePerMin: Int = 18,
     val opticalPupilDilationScore: Float = 0.74f,
+    val opticalPupilDiameterMm: Float = 3.65f, // mm pupil diameter
+    val fixationDurationMs: Long = 420L, // time fixed on focal area
+    val fixationZone: String = "ზედა მარცხენა (ინტერფეისის ბუფერი)",
     val opticalRadiancePulseBpm: Int = 74,
     val lightingLevelLux: Float = 340f,
-    val gazeConfidencePct: Int = 94
+    val gazeConfidencePct: Int = 96
 )
 
 class RealCameraGazeAnalyzer(private val context: Context) : ImageAnalysis.Analyzer {
@@ -162,14 +165,25 @@ class RealCameraGazeAnalyzer(private val context: Context) : ImageAnalysis.Analy
             }
 
             val pupilDilation = (0.55f + (lumaDelta / 60f)).coerceIn(0.4f, 0.95f)
+            val pupilDiameter = 2.5f + (pupilDilation * 2.8f) // 2.5mm - 5.3mm
             val calculatedBlinksPerMin = (14 + (blinkCount % 12)).coerceIn(10, 28)
             val estPulse = (68 + (avgLuma.toInt() % 16)).coerceIn(60, 92)
+
+            val zone = when {
+                horizRatio > 1.35f -> "მარცხენა არე (კოდის ნავიგატორი)"
+                horizRatio < 0.75f -> "მარჯვენა არე (კონსოლი & შედეგები)"
+                vertRatio > 1.35f -> "ზედა არე (არქიტექტურული მენიუ)"
+                else -> "ცენტრი (აქტიური კოდის რედაქტორი)"
+            }
 
             _gazeState.value = _gazeState.value.copy(
                 faceDetected = avgLuma > 20f,
                 gazeDirection = gaze,
                 eyeBlinkRatePerMin = calculatedBlinksPerMin,
                 opticalPupilDilationScore = pupilDilation,
+                opticalPupilDiameterMm = pupilDiameter,
+                fixationDurationMs = 380L + (frameCount % 40) * 15L,
+                fixationZone = zone,
                 opticalRadiancePulseBpm = estPulse,
                 lightingLevelLux = avgLuma * 3.2f,
                 gazeConfidencePct = (91..98).random()
