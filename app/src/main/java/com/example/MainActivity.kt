@@ -69,8 +69,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        viewModel.refreshPermissions()
-        checkAndLaunchBackgroundService()
+        try {
+            viewModel.refreshPermissions()
+        } catch (e: Throwable) {
+            Log.e("MainActivity", "onResume refresh error", e)
+        }
     }
 
     fun requestAllCorePermissions() {

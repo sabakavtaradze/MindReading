@@ -644,7 +644,8 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             )
         )
 
-        val nextThought = dynamicThoughts.filter { it.first != state.currentPredictionTitle }.random()
+        val filtered = dynamicThoughts.filter { it.first != state.currentPredictionTitle }
+        val nextThought = if (filtered.isNotEmpty()) filtered.random() else dynamicThoughts.random()
         val newLog = ThoughtLogItem(
             id = "auto_${System.currentTimeMillis()}",
             timestamp = timeNow,
