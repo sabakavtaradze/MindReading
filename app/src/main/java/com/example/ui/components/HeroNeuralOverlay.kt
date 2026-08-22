@@ -28,7 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
@@ -64,16 +64,6 @@ fun HeroNeuralOverlay(
             repeatMode = RepeatMode.Reverse
         ),
         label = "scale"
-    )
-
-    val alphaPulse by infiniteTransition.animateFloat(
-        initialValue = 0.4f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(800, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "alpha"
     )
 
     Box(
@@ -129,7 +119,11 @@ fun HeroNeuralOverlay(
                     Box(
                         modifier = Modifier
                             .size(68.dp)
-                            .scale(if (isSyncing) scalePulse else 1.0f)
+                            .graphicsLayer {
+                                val s = if (isSyncing) scalePulse else 1.0f
+                                scaleX = s
+                                scaleY = s
+                            }
                             .clip(CircleShape)
                             .background(NeuralAccent),
                         contentAlignment = Alignment.Center
@@ -167,43 +161,31 @@ fun HeroNeuralOverlay(
             TelemetryBarItem(
                 label = "შეხება",
                 value = touchValue,
-                isPulse = isSyncing,
-                alpha = alphaPulse,
                 modifier = Modifier.weight(1f)
             )
             TelemetryBarItem(
                 label = "აუდიო",
                 value = audioValue,
-                isPulse = isSyncing,
-                alpha = alphaPulse,
                 modifier = Modifier.weight(1f)
             )
             TelemetryBarItem(
                 label = "კამერა",
                 value = visualValue,
-                isPulse = isSyncing,
-                alpha = alphaPulse,
                 modifier = Modifier.weight(1f)
             )
             TelemetryBarItem(
                 label = "მოძრაობა",
                 value = motionValue,
-                isPulse = isSyncing,
-                alpha = alphaPulse,
                 modifier = Modifier.weight(1f)
             )
             TelemetryBarItem(
                 label = "ბიო",
                 value = biometricsValue,
-                isPulse = isSyncing,
-                alpha = alphaPulse,
                 modifier = Modifier.weight(1f)
             )
             TelemetryBarItem(
                 label = "ნეირო",
                 value = neuralValue,
-                isPulse = isSyncing,
-                alpha = alphaPulse,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -214,8 +196,6 @@ fun HeroNeuralOverlay(
 private fun TelemetryBarItem(
     label: String,
     value: Float,
-    isPulse: Boolean,
-    alpha: Float,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -235,10 +215,7 @@ private fun TelemetryBarItem(
                     .fillMaxWidth(value.coerceIn(0.1f, 1.0f))
                     .height(4.dp)
                     .clip(RoundedCornerShape(2.dp))
-                    .background(
-                        if (isPulse && label == "Neural") NeuralAccent.copy(alpha = alpha)
-                        else NeuralAccent
-                    )
+                    .background(NeuralAccent)
             )
         }
         Text(

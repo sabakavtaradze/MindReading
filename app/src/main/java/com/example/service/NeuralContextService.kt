@@ -54,14 +54,25 @@ class NeuralContextService : Service() {
         try {
             createNotificationChannel()
             startForegroundServiceWithNotification(
-                title = "NeuroSync • ნეირონული კავშირი აქტიურია",
-                text = "აზრების პროგნოზირება მუშაობს უწყვეტ ფონურ რეჟიმში (98.4%)"
+                title = "NeuroSync • ნეირონული კავშირი",
+                text = "აზრების პროგნოზირების ფონური სერვისი აქტიურია"
             )
             acquireWakeLock()
             startBackgroundMonitoringLoop()
             isServiceRunning = true
+            com.example.receiver.BootReceiver.schedulePerpetualWatchdog(this)
         } catch (e: Throwable) {
             Log.e("NeuralContextService", "Safe onCreate initialization exception", e)
+        }
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        Log.d("NeuralContextService", "onTaskRemoved triggered - scheduling perpetual watchdog")
+        try {
+            com.example.receiver.BootReceiver.schedulePerpetualWatchdog(applicationContext)
+        } catch (e: Throwable) {
+            Log.w("NeuralContextService", "onTaskRemoved watchdog schedule failed", e)
         }
     }
 

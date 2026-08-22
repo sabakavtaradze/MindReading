@@ -1,63 +1,11 @@
 package com.example.ui.theme
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Send
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.PathBuilder
-import androidx.compose.ui.graphics.vector.path
-import androidx.compose.ui.unit.dp
 
 object AppIcons {
-    private inline fun buildIcon(name: String, crossinline block: PathBuilder.() -> Unit): ImageVector {
-        return ImageVector.Builder(
-            name = name,
-            defaultWidth = 24.dp,
-            defaultHeight = 24.dp,
-            viewportWidth = 24f,
-            viewportHeight = 24f
-        ).apply {
-            path(fill = SolidColor(Color.White)) {
-                block()
-            }
-        }.build()
-    }
-
-    val Psychology: ImageVector by lazy {
-        buildIcon("Psychology") {
-            moveTo(12f, 3f)
-            curveTo(7.03f, 3f, 3f, 7.03f, 3f, 12f)
-            curveTo(3f, 16.97f, 7.03f, 21f, 12f, 21f)
-            curveTo(16.97f, 21f, 21f, 16.97f, 21f, 12f)
-            curveTo(21f, 7.03f, 16.97f, 3f, 12f, 3f)
-            close()
-            moveTo(12f, 7f)
-            curveTo(13.66f, 7f, 15f, 8.34f, 15f, 10f)
-            curveTo(15f, 11.66f, 13.66f, 13f, 12f, 13f)
-            curveTo(10.34f, 13f, 9f, 11.66f, 9f, 10f)
-            curveTo(9f, 8.34f, 10.34f, 7f, 12f, 7f)
-            close()
-        }
-    }
-
+    val Psychology: ImageVector = Icons.Default.Favorite
     val AccessTime: ImageVector = Icons.Default.DateRange
     val WbSunny: ImageVector = Icons.Default.Star
     val Build: ImageVector = Icons.Default.Settings
@@ -98,4 +46,5 @@ object AppIcons {
     val Waves: ImageVector = Icons.Default.PlayArrow
     val Notifications: ImageVector = Icons.Default.Notifications
     val Layers: ImageVector = Icons.Default.Menu
+    val Bolt: ImageVector = Icons.Default.Star
 }

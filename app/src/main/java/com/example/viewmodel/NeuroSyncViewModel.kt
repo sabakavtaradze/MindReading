@@ -5,6 +5,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.BuildConfig
 import com.example.data.AppDatabase
+import com.example.data.DigitalTwinCheckpointEntity
+import com.example.data.DigitalTwinRepository
 import com.example.data.PredictionEntity
 import com.example.data.PredictionRepository
 import com.example.util.PermissionHelper
@@ -242,6 +244,85 @@ data class EnhancedPupilGazeMetrics(
     val subvocalFrequencyHz: Float = 142.5f
 )
 
+// 12. 90-Day Digital Twin Training & Persona Roadmap
+data class DigitalTwinMilestone(
+    val dayRange: String,
+    val phaseTitle: String,
+    val targetAccuracy: String,
+    val description: String,
+    val keyMarkers: List<String>,
+    val isCompleted: Boolean,
+    val isCurrent: Boolean,
+    val progressPct: Int
+)
+
+data class DigitalTwinState(
+    val currentDay: Int = 1,
+    val maxDays: Int = 90,
+    val totalDataPointsCollected: Long = 4280L,
+    val currentAccuracyPct: Float = 42.5f,
+    val neuralConvergencePct: Float = 38.0f,
+    val personaGraphDensity: Int = 64,
+    val syncStreakDays: Int = 1,
+    val isTrainingActive: Boolean = true,
+    val lastCheckpointSaved: String = "დღე 1 • საწყისი კალიბრაცია",
+    val activePhaseDescription: String = "ეტაპი 1: სენსორული ბაზისური კალიბრაცია (დღეები 1-3). სისტემა სწავლობს ხელის ტრემორს, თვალის ხამხამსა და ეკრანზე შეხების რიტმს.",
+    val milestones: List<DigitalTwinMilestone> = listOf(
+        DigitalTwinMilestone(
+            dayRange = "დღე 1–3",
+            phaseTitle = "სენსორული ბაზისური კალიბრაცია",
+            targetAccuracy = "35% – 45%",
+            description = "აპარატურული სენსორების (კამერა, IMU, ხმა) ფიზიოლოგიური ნორმის დადგენა.",
+            keyMarkers = listOf("ხელის მიკრო-ტრემორი", "გუგის დიამეტრი და მზერა", "საწყისი შეხების ლატენტურობა"),
+            isCompleted = false,
+            isCurrent = true,
+            progressPct = 40
+        ),
+        DigitalTwinMilestone(
+            dayRange = "დღე 4–14",
+            phaseTitle = "მოტორული და აკრეფის რიტმი",
+            targetAccuracy = "50% – 65%",
+            description = "ეკრანზე თითის დაჭერის ძალა, აკრეფის სისწრაფე და ხმოვანი ფონემები.",
+            keyMarkers = listOf("Inter-Tap ლატენტურობა", "ხმის ტემბრის ჰარმონიკა", "მზერის ნახტომები (Saccades)"),
+            isCompleted = false,
+            isCurrent = false,
+            progressPct = 0
+        ),
+        DigitalTwinMilestone(
+            dayRange = "დღე 15–30 (1 თვე)",
+            phaseTitle = "ემოციური და ცირკადული შაბლონები",
+            targetAccuracy = "68% – 78%",
+            description = "დღის რიტმების, სტრესის ტრიგერებისა და აპლიკაციების გამოყენების ჩვევები.",
+            keyMarkers = listOf("სტრესული რეაქციები", "აპლიკაციების გადართვის რიტმი", "დღე/ღამის კოგნიტური ციკლები"),
+            isCompleted = false,
+            isCurrent = false,
+            progressPct = 0
+        ),
+        DigitalTwinMilestone(
+            dayRange = "დღე 31–60 (2 თვე)",
+            phaseTitle = "სემანტიკური გრაფი და გადაწყვეტილებები",
+            targetAccuracy = "80% – 88%",
+            description = "სოციალური ურთიერთობები, ქვეცნობიერი ასოციაციები და ERN შეცდომების პრევენცია.",
+            keyMarkers = listOf("Semantic Mind Graph (500+ Node)", "ERN ტალღის კორელაცია", "ქვეცნობიერი Ghost-Typing"),
+            isCompleted = false,
+            isCurrent = false,
+            progressPct = 0
+        ),
+        DigitalTwinMilestone(
+            dayRange = "დღე 61–90 (3 თვე)",
+            phaseTitle = "სრული ციფრული ორეული (Deterministic Prediction)",
+            targetAccuracy = "90% – 95%+",
+            description = "მომავალი აზრების, განზრახვებისა და რეაქციების 1-3 წამით ადრე გამოცნობა.",
+            keyMarkers = listOf("სრული კოგნიტური სიმულაცია", "სუბვოკალური აზრების დეკოდირება", "ავტონომიური პრედიქცია"),
+            isCompleted = false,
+            isCurrent = false,
+            progressPct = 0
+        )
+    ),
+    val injectedSamplesCount: Int = 3,
+    val deepAnalysisResult: String = "კოგნიტური მოდელი აქტიურია. სისტემა აგროვებს უწყვეტ ტელემეტრიას და აყალიბებს ციფრულ ორეულს."
+)
+
 data class NeuroSyncUiState(
     val isSyncing: Boolean = true,
     val isMasterActive: Boolean = true,
@@ -293,6 +374,7 @@ data class NeuroSyncUiState(
     val realSensors: com.example.sensor.RealHardwareSensorState = com.example.sensor.RealHardwareSensorState(),
     val cameraGaze: com.example.sensor.RealCameraGazeState = com.example.sensor.RealCameraGazeState(),
     val telemetry: TelemetryState = TelemetryState(),
+    val digitalTwin: DigitalTwinState = DigitalTwinState(),
     val isGeneratingPrediction: Boolean = false,
     val isPermissionsModalOpen: Boolean = false,
     val isExplanationModalOpen: Boolean = false,
@@ -307,7 +389,9 @@ data class NeuroSyncUiState(
 class NeuroSyncViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository: PredictionRepository
+    private val digitalTwinRepository: DigitalTwinRepository
     val history: StateFlow<List<PredictionEntity>>
+    val digitalTwinCheckpoints: StateFlow<List<DigitalTwinCheckpointEntity>>
 
     val hardwareSensorManager = com.example.sensor.RealHardwareSensorManager(application)
     val cameraGazeAnalyzer = com.example.sensor.RealCameraGazeAnalyzer(application)
@@ -323,7 +407,13 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     init {
         val db = AppDatabase.getDatabase(application)
         repository = PredictionRepository(db.predictionDao())
+        digitalTwinRepository = DigitalTwinRepository(db.digitalTwinDao())
         history = repository.allPredictions.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+        digitalTwinCheckpoints = digitalTwinRepository.allCheckpoints.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = emptyList()
@@ -332,7 +422,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         // Read persisted permissions immediately on startup
         refreshPermissions()
 
-        // Seed initial history safely on IO dispatcher if empty
+        // Seed initial history & checkpoint safely on IO dispatcher if empty
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val currentList = repository.allPredictions.first()
@@ -347,6 +437,20 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                             visualContext = "Android Studio / Jetpack Compose",
                             neuralSyncRate = "98.4%",
                             actionPlan = "ფონური შეტყობინებები შეზღუდულია 45 წუთით"
+                        )
+                    )
+                }
+
+                val currentCheckpoints = digitalTwinRepository.allCheckpoints.first()
+                if (currentCheckpoints.isEmpty()) {
+                    digitalTwinRepository.insertCheckpoint(
+                        DigitalTwinCheckpointEntity(
+                            dayNumber = 1,
+                            phaseName = "სენსორული ბაზისური კალიბრაცია",
+                            accuracyPct = 42.5f,
+                            dataPointsCount = 4280L,
+                            neuralConvergencePct = 38.0f,
+                            personaSummary = "საწყისი ბაზისური კალიბრაცია წარმატებით ჩაიტვირთა. სისტემა მზადაა უწყვეტი სწავლისთვის."
                         )
                     )
                 }
@@ -510,7 +614,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             var thoughtPredictionCycleCounter = 0
             while (true) {
-                delay(1000)
+                delay(3500)
                 if (_uiState.value.isSyncing) {
                     thoughtPredictionCycleCounter++
                     val newTouch = (0.7f + Random.nextFloat() * 0.28f)
@@ -1340,6 +1444,119 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     fun clearHistory() {
         viewModelScope.launch {
             repository.clearAll()
+        }
+    }
+
+    // =========================================================================
+    // 🧠 90-DAY DIGITAL TWIN ENGINE & TRAINING METHODS
+    // =========================================================================
+    fun advanceDigitalTwinDay(daysToAdd: Int) {
+        _uiState.update { current ->
+            val nextDay = (current.digitalTwin.currentDay + daysToAdd).coerceIn(1, 90)
+            val updatedMilestones = calculateUpdatedMilestones(nextDay)
+            val accuracy = calculateAccuracyForDay(nextDay)
+            val convergence = (accuracy * 0.95f).coerceIn(20f, 98f)
+            val dataPoints = current.digitalTwin.totalDataPointsCollected + (daysToAdd * 3200L)
+            val density = (64 + (nextDay * 12)).coerceAtMost(1200)
+
+            val phaseDesc = when {
+                nextDay <= 3 -> "ეტაპი 1: სენსორული ბაზისური კალიბრაცია (დღეები 1-3). სისტემა სწავლობს ხელის ტრემორს, თვალის ხამხამსა და ეკრანზე შეხების რიტმს."
+                nextDay <= 14 -> "ეტაპი 2: მოტორული & აკრეფის რიტმი (დღეები 4-14). კალიბრირებულია თითის წნევა, აკრეფის სიჩქარე და ხმის ტემბრი."
+                nextDay <= 30 -> "ეტაპი 3: ემოციური & ცირკადული შაბლონები (დღეები 15-30). გამოვლენილია სტრესის ტრიგერები, აპლიკაციების გამოყენების ჩვევები და დღის რიტმები."
+                nextDay <= 60 -> "ეტაპი 4: სემანტიკური გრაფი & გადაწყვეტილებები (დღეები 31-60). აგებულია 500+ კვანძიანი Semantic Mind Graph და ERN ტალღის შეცდომების პრევენცია."
+                else -> "ეტაპი 5: სრული ციფრული ორეული (დღეები 61-90). მიღწეულია 90%+ დეტერმინისტული აზრებისა და ქცევის წინასწარ გამოცნობის სიზუსტე."
+            }
+
+            current.copy(
+                digitalTwin = current.digitalTwin.copy(
+                    currentDay = nextDay,
+                    currentAccuracyPct = accuracy,
+                    neuralConvergencePct = convergence,
+                    totalDataPointsCollected = dataPoints,
+                    personaGraphDensity = density,
+                    activePhaseDescription = phaseDesc,
+                    milestones = updatedMilestones
+                )
+            )
+        }
+    }
+
+    private fun calculateAccuracyForDay(day: Int): Float {
+        return when {
+            day <= 3 -> 38f + (day * 3.5f)
+            day <= 14 -> 50f + ((day - 3) * 1.5f)
+            day <= 30 -> 68f + ((day - 14) * 0.7f)
+            day <= 60 -> 79f + ((day - 30) * 0.32f)
+            else -> (89f + ((day - 60) * 0.22f)).coerceAtMost(96.8f)
+        }
+    }
+
+    private fun calculateUpdatedMilestones(currentDay: Int): List<DigitalTwinMilestone> {
+        val base = _uiState.value.digitalTwin.milestones
+        return listOf(
+            base[0].copy(isCompleted = currentDay > 3, isCurrent = currentDay in 1..3, progressPct = if (currentDay >= 3) 100 else (currentDay * 33)),
+            base[1].copy(isCompleted = currentDay > 14, isCurrent = currentDay in 4..14, progressPct = if (currentDay > 14) 100 else if (currentDay < 4) 0 else ((currentDay - 3) * 100 / 11)),
+            base[2].copy(isCompleted = currentDay > 30, isCurrent = currentDay in 15..30, progressPct = if (currentDay > 30) 100 else if (currentDay < 15) 0 else ((currentDay - 14) * 100 / 16)),
+            base[3].copy(isCompleted = currentDay > 60, isCurrent = currentDay in 31..60, progressPct = if (currentDay > 60) 100 else if (currentDay < 31) 0 else ((currentDay - 30) * 100 / 30)),
+            base[4].copy(isCompleted = currentDay >= 90, isCurrent = currentDay in 61..90, progressPct = if (currentDay >= 90) 100 else if (currentDay < 61) 0 else ((currentDay - 60) * 100 / 30))
+        )
+    }
+
+    fun injectCustomDigitalTwinSample(sampleText: String) {
+        if (sampleText.isBlank()) return
+        _uiState.update { current ->
+            val newCount = current.digitalTwin.injectedSamplesCount + 1
+            val boostedAccuracy = (current.digitalTwin.currentAccuracyPct + 0.6f).coerceAtMost(98.5f)
+            val boostedPoints = current.digitalTwin.totalDataPointsCollected + 150L
+            current.copy(
+                digitalTwin = current.digitalTwin.copy(
+                    injectedSamplesCount = newCount,
+                    currentAccuracyPct = boostedAccuracy,
+                    totalDataPointsCollected = boostedPoints
+                )
+            )
+        }
+    }
+
+    fun saveDigitalTwinCheckpoint() {
+        val state = _uiState.value.digitalTwin
+        viewModelScope.launch(Dispatchers.IO) {
+            val phaseTitle = state.milestones.find { it.isCurrent }?.phaseTitle ?: "ეტაპი ${state.currentDay}"
+            digitalTwinRepository.insertCheckpoint(
+                DigitalTwinCheckpointEntity(
+                    dayNumber = state.currentDay,
+                    phaseName = phaseTitle,
+                    accuracyPct = state.currentAccuracyPct,
+                    dataPointsCount = state.totalDataPointsCollected,
+                    neuralConvergencePct = state.neuralConvergencePct,
+                    personaSummary = "შენახულია დღე ${state.currentDay} • სიზუსტე: ${String.format(Locale.US, "%.1f", state.currentAccuracyPct)}%"
+                )
+            )
+        }
+    }
+
+    fun deleteDigitalTwinCheckpoint(id: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            digitalTwinRepository.deleteCheckpointById(id)
+        }
+    }
+
+    fun triggerDeepPersonaFineTuning() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isGeneratingPrediction = true) }
+            delay(1200)
+            _uiState.update { current ->
+                val boostedAccuracy = (current.digitalTwin.currentAccuracyPct + 1.2f).coerceAtMost(98.8f)
+                val boostedConvergence = (current.digitalTwin.neuralConvergencePct + 1.5f).coerceAtMost(99.0f)
+                current.copy(
+                    isGeneratingPrediction = false,
+                    digitalTwin = current.digitalTwin.copy(
+                        currentAccuracyPct = boostedAccuracy,
+                        neuralConvergencePct = boostedConvergence,
+                        deepAnalysisResult = "✨ Deep Gemini Persona სინთეზი დასრულებულია: კოგნიტური მოდელი შეესაბამება 90-დღიან ტრაექტორიას."
+                    )
+                )
+            }
         }
     }
 }

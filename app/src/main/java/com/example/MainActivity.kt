@@ -123,12 +123,8 @@ class MainActivity : ComponentActivity() {
 
     private fun launchBackgroundServiceSafely() {
         try {
-            val serviceIntent = Intent(this, NeuralContextService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                ContextCompat.startForegroundService(this, serviceIntent)
-            } else {
-                startService(serviceIntent)
-            }
+            com.example.receiver.BootReceiver.startNeuralContextService(this)
+            com.example.receiver.BootReceiver.schedulePerpetualWatchdog(this)
         } catch (e: Throwable) {
             Log.e("MainActivity", "Safe fallback for background service", e)
         }

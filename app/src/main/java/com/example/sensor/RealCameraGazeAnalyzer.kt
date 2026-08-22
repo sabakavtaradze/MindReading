@@ -42,6 +42,7 @@ class RealCameraGazeAnalyzer(private val context: Context) : ImageAnalysis.Analy
     private var blinkCount: Int = 0
     private var lastBlinkTime: Long = System.currentTimeMillis()
     private var frameCount: Int = 0
+    private var lastAnalysisTimestamp: Long = 0L
 
     fun startCamera(
         lifecycleOwner: LifecycleOwner,
@@ -109,6 +110,13 @@ class RealCameraGazeAnalyzer(private val context: Context) : ImageAnalysis.Analy
     }
 
     override fun analyze(image: ImageProxy) {
+        val now = System.currentTimeMillis()
+        if (now - lastAnalysisTimestamp < 600L) {
+            image.close()
+            return
+        }
+        lastAnalysisTimestamp = now
+
         try {
             val plane = image.planes.firstOrNull() ?: return
             val buffer = plane.buffer

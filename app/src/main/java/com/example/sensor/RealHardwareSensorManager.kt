@@ -57,18 +57,19 @@ class RealHardwareSensorManager(context: Context) : SensorEventListener {
 
     private val accelHistory = FloatArray(16)
     private var historyIndex = 0
+    private var lastEmittedTimestamp = 0L
 
     fun startListening() {
         if (sensorManager == null) return
         try {
             accelerometer?.let {
-                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
             }
             gyroscope?.let {
-                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
             }
             linearAccel?.let {
-                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
+                sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_NORMAL)
             }
             _sensorState.value = _sensorState.value.copy(isTracking = true)
         } catch (e: Throwable) {
@@ -87,6 +88,12 @@ class RealHardwareSensorManager(context: Context) : SensorEventListener {
 
     override fun onSensorChanged(event: SensorEvent?) {
         if (event == null) return
+
+        val now = System.currentTimeMillis()
+        if (now - lastEmittedTimestamp < 500L) {
+            return
+        }
+        lastEmittedTimestamp = now
 
         try {
             when (event.sensor.type) {

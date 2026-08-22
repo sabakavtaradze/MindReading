@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -75,85 +77,112 @@ import com.example.viewmodel.StreamCalibrationWeights
 import com.example.viewmodel.SubvocalSpeechState
 import com.example.viewmodel.ThoughtTimelineState
 import com.example.viewmodel.TimeHorizonPredictions
+import com.example.viewmodel.NeuroSyncUiState
 import kotlin.math.cos
 import kotlin.math.sin
 
+data class UnifiedSimulationActions(
+    val onRunUnifiedInference: () -> Unit = {},
+    val onToggleContinuousThought: () -> Unit = {},
+    val onSetUpdateInterval: (Int) -> Unit = {},
+    val onInjectStimulus: (String) -> Unit = {},
+    val onAppContextChanged: (String) -> Unit = {},
+    val onTouchTap: (Float, Float) -> Unit = { _, _ -> },
+    val onDecodeCustomThought: (String) -> Unit = {},
+    val onApplyFeedback: (Boolean) -> Unit = {},
+    val onToggleSandboxAction: (String) -> Unit = {},
+    val onTriggerSubvocal: () -> Unit = {},
+    val onSynthesizeImagery: (String) -> Unit = {},
+    val onCheckPreError: () -> Unit = {},
+    val onSelectGraphNode: (String) -> Unit = {},
+    val onModulateMood: (Float, Float) -> Unit = { _, _ -> },
+    val onSelectDecisionBranch: (String) -> Unit = {},
+    val onAcceptGhostTyping: () -> Unit = {},
+    val onCycleGhostSuggestion: () -> Unit = {},
+    val onRefreshFatigue: () -> Unit = {},
+    val onSearchThoughtHistory: (String) -> Unit = {},
+    val onToggleEntrainment: () -> Unit = {},
+    val onSetEntrainmentMode: (String) -> Unit = {},
+    val onToggleCamera: () -> Unit = {},
+    val onToggleEarbuds: () -> Unit = {},
+    val onRecalibrateEarbuds: () -> Unit = {}
+)
+
 @Composable
 fun UnifiedSimulationMatrix(
-    isSyncing: Boolean,
-    matchPercentage: Float,
-    statusText: String,
-    // Neural Streams
-    alphaBandHz: Float,
-    betaBandHz: Float,
-    thetaBandHz: Float,
-    gammaBandHz: Float,
-    cognitiveLoadPct: Int,
-    subconsciousFocusLevel: String,
-    // Sensory Streams
-    touchTapsCount: Int,
-    lastTouchCoords: String,
-    audioDb: Float,
-    speakerOutputDb: Float,
-    cameraGazeX: Float,
-    cameraGazeY: Float,
-    motionTremor: Float,
-    heartRateBpm: Int,
-    activeAppContext: String,
-    // Prediction Output
-    currentPredictionTitle: String,
-    currentPredictionText: String,
-    currentActionPlan: String,
-    timeHorizons: TimeHorizonPredictions,
-    hesitationMetrics: MicroHesitationMetrics,
-    circadian: CircadianEnvironment,
-    calibrationWeights: StreamCalibrationWeights,
-    sandboxActions: ActionSandboxState,
-    // 10 Advanced Thought Prediction Modules
-    subvocalSpeech: SubvocalSpeechState,
-    mentalImagery: MentalImageryState,
-    preErrorState: PreErrorDetectionState,
-    mindGraph: SemanticMindGraphState,
-    emotionalFriction: EmotionalFrictionState,
-    decisionTree: CognitiveDecisionTreeState,
-    ghostTyping: GhostTypingState,
-    neuroFatigue: NeuroFatigueState,
-    thoughtTimeline: ThoughtTimelineState,
-    entrainment: NeuroEntrainmentState,
-    realSensors: com.example.sensor.RealHardwareSensorState,
-    cameraGaze: com.example.sensor.RealCameraGazeState,
-    earbudSensor: com.example.viewmodel.EarbudSensorState = com.example.viewmodel.EarbudSensorState(),
-    enhancedMetrics: com.example.viewmodel.EnhancedPupilGazeMetrics = com.example.viewmodel.EnhancedPupilGazeMetrics(),
-    isContinuousThoughtActive: Boolean = true,
-    lastThoughtUpdated: String = "ახლახანს",
-    isGeneratingPrediction: Boolean,
-    // Callbacks
-    onRunUnifiedInference: () -> Unit,
-    onToggleContinuousThought: () -> Unit = {},
-    onSetUpdateInterval: (Int) -> Unit = {},
-    onInjectStimulus: (String) -> Unit,
-    onAppContextChanged: (String) -> Unit,
-    onTouchTap: (Float, Float) -> Unit,
-    onDecodeCustomThought: (String) -> Unit,
-    onApplyFeedback: (Boolean) -> Unit,
-    onToggleSandboxAction: (String) -> Unit,
-    onTriggerSubvocal: () -> Unit,
-    onSynthesizeImagery: (String) -> Unit,
-    onCheckPreError: () -> Unit,
-    onSelectGraphNode: (String) -> Unit,
-    onModulateMood: (Float, Float) -> Unit,
-    onSelectDecisionBranch: (String) -> Unit,
-    onAcceptGhostTyping: () -> Unit,
-    onCycleGhostSuggestion: () -> Unit,
-    onRefreshFatigue: () -> Unit,
-    onSearchThoughtHistory: (String) -> Unit,
-    onToggleEntrainment: () -> Unit,
-    onSetEntrainmentMode: (String) -> Unit,
-    onToggleCamera: () -> Unit,
-    onToggleEarbuds: () -> Unit = {},
-    onRecalibrateEarbuds: () -> Unit = {},
+    uiState: NeuroSyncUiState,
+    actions: UnifiedSimulationActions,
     modifier: Modifier = Modifier
 ) {
+    val isSyncing = uiState.isSyncing
+    val matchPercentage = uiState.matchPercentage
+    val statusText = uiState.statusText
+    val alphaBandHz = uiState.alphaBandHz
+    val betaBandHz = uiState.betaBandHz
+    val thetaBandHz = uiState.thetaBandHz
+    val gammaBandHz = uiState.gammaBandHz
+    val cognitiveLoadPct = uiState.thoughtCognitiveLoadPct
+    val subconsciousFocusLevel = uiState.subconsciousFocusLevel
+    val touchTapsCount = uiState.touchTapsCount
+    val lastTouchCoords = uiState.lastTouchCoords
+    val audioDb = uiState.audioDb
+    val speakerOutputDb = uiState.speakerOutputDb
+    val cameraGazeX = uiState.cameraGazeX
+    val cameraGazeY = uiState.cameraGazeY
+    val motionTremor = uiState.motionTremor
+    val heartRateBpm = uiState.heartRateBpm
+    val activeAppContext = uiState.activeAppContext
+    val currentPredictionTitle = uiState.currentPredictionTitle
+    val currentPredictionText = uiState.currentPredictionText
+    val currentActionPlan = uiState.currentActionPlan
+    val timeHorizons = uiState.timeHorizons
+    val hesitationMetrics = uiState.hesitationMetrics
+    val circadian = uiState.circadian
+    val calibrationWeights = uiState.calibrationWeights
+    val sandboxActions = uiState.sandboxActions
+    val subvocalSpeech = uiState.subvocalSpeech
+    val mentalImagery = uiState.mentalImagery
+    val preErrorState = uiState.preErrorState
+    val mindGraph = uiState.mindGraph
+    val emotionalFriction = uiState.emotionalFriction
+    val decisionTree = uiState.decisionTree
+    val ghostTyping = uiState.ghostTyping
+    val neuroFatigue = uiState.neuroFatigue
+    val thoughtTimeline = uiState.thoughtTimeline
+    val entrainment = uiState.entrainment
+    val realSensors = uiState.realSensors
+    val cameraGaze = uiState.cameraGaze
+    val earbudSensor = uiState.earbudSensor
+    val enhancedMetrics = uiState.enhancedMetrics
+    val isContinuousThoughtActive = uiState.isContinuousThoughtStreamActive
+    val lastThoughtUpdated = uiState.lastThoughtUpdatedTimestamp
+    val isGeneratingPrediction = uiState.isGeneratingPrediction
+
+    val onRunUnifiedInference = actions.onRunUnifiedInference
+    val onToggleContinuousThought = actions.onToggleContinuousThought
+    val onSetUpdateInterval = actions.onSetUpdateInterval
+    val onInjectStimulus = actions.onInjectStimulus
+    val onAppContextChanged = actions.onAppContextChanged
+    val onTouchTap = actions.onTouchTap
+    val onDecodeCustomThought = actions.onDecodeCustomThought
+    val onApplyFeedback = actions.onApplyFeedback
+    val onToggleSandboxAction = actions.onToggleSandboxAction
+    val onTriggerSubvocal = actions.onTriggerSubvocal
+    val onSynthesizeImagery = actions.onSynthesizeImagery
+    val onCheckPreError = actions.onCheckPreError
+    val onSelectGraphNode = actions.onSelectGraphNode
+    val onModulateMood = actions.onModulateMood
+    val onSelectDecisionBranch = actions.onSelectDecisionBranch
+    val onAcceptGhostTyping = actions.onAcceptGhostTyping
+    val onCycleGhostSuggestion = actions.onCycleGhostSuggestion
+    val onRefreshFatigue = actions.onRefreshFatigue
+    val onSearchThoughtHistory = actions.onSearchThoughtHistory
+    val onToggleEntrainment = actions.onToggleEntrainment
+    val onSetEntrainmentMode = actions.onSetEntrainmentMode
+    val onToggleCamera = actions.onToggleCamera
+    val onToggleEarbuds = actions.onToggleEarbuds
+    val onRecalibrateEarbuds = actions.onRecalibrateEarbuds
+
     var customThoughtPrompt by remember { mutableStateOf("") }
     var isActionExecuted by remember { mutableStateOf(false) }
     var selectedFeedback by remember { mutableStateOf<Boolean?>(null) }
@@ -465,123 +494,186 @@ fun UnifiedSimulationMatrix(
             onCoreClicked = onRunUnifiedInference
         )
 
-        // -------------------------------------------------------------
-        // 1. Silent Subvocal Speech Stream Card (Inner Monologue Decoder)
-        // -------------------------------------------------------------
-        SubvocalSpeechCard(
-            subvocal = subvocalSpeech,
-            onTriggerNewWord = onTriggerSubvocal
+        // Stream Category Filter Selector
+        var selectedCategory by remember { mutableStateOf("ALL") }
+        val categoryChips = listOf(
+            "ALL" to "⚡ ყველა (11 ნაკადი)",
+            "BCI" to "🧠 BCI & სუბვოკალი",
+            "SENSORS" to "📡 სენსორები & კამერა",
+            "COGNITION" to "🧬 სემანტიკური გრაფი",
+            "ACTIONS" to "🔮 პროგნოზები & SandBox"
         )
 
-        // -------------------------------------------------------------
-        // 1.1 Georgian Subvocal Phoneme Matrix & EMG Resonance
-        // -------------------------------------------------------------
-        GeorgianPhonemeMatrixCard()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            categoryChips.forEach { (catKey, catLabel) ->
+                val isSelected = selectedCategory == catKey
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (isSelected) NeuralAccent else NeuralSurface)
+                        .border(
+                            1.dp,
+                            if (isSelected) NeuralAccent else Color.White.copy(alpha = 0.12f),
+                            RoundedCornerShape(12.dp)
+                        )
+                        .clickable { selectedCategory = catKey }
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        text = catLabel,
+                        color = if (isSelected) NeuralDeepPurple else NeuralTextPrimary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
 
-        // -------------------------------------------------------------
-        // 1.2 Samsung Galaxy Buds 2 & Ear-EEG Telemetry Card
-        // -------------------------------------------------------------
-        GalaxyBuds2EarEegCard(
-            earbud = earbudSensor,
-            onRecalibrate = onRecalibrateEarbuds,
-            onToggle = onToggleEarbuds
-        )
+        if (selectedCategory == "ALL" || selectedCategory == "BCI") {
+            // -------------------------------------------------------------
+            // 1. Silent Subvocal Speech Stream Card (Inner Monologue Decoder)
+            // -------------------------------------------------------------
+            SubvocalSpeechCard(
+                subvocal = subvocalSpeech,
+                onTriggerNewWord = onTriggerSubvocal
+            )
 
-        // -------------------------------------------------------------
-        // 2. Pre-Error ERN (Error-Related Negativity) Wave Detector Card
-        // -------------------------------------------------------------
-        PreErrorErnDetectorCard(
-            preError = preErrorState,
-            onSimulateCheck = onCheckPreError
-        )
+            // -------------------------------------------------------------
+            // 1.1 Georgian Subvocal Phoneme Matrix & EMG Resonance
+            // -------------------------------------------------------------
+            GeorgianPhonemeMatrixCard()
 
-        // -------------------------------------------------------------
-        // 3. Semantic Mind Graph Card (Associative Thought Map)
-        // -------------------------------------------------------------
-        SemanticMindGraphCard(
-            mindGraph = mindGraph,
-            onSelectNode = onSelectGraphNode
-        )
+            // -------------------------------------------------------------
+            // 1.2 Samsung Galaxy Buds 2 & Ear-EEG Telemetry Card
+            // -------------------------------------------------------------
+            GalaxyBuds2EarEegCard(
+                earbud = earbudSensor,
+                onRecalibrate = onRecalibrateEarbuds,
+                onToggle = onToggleEarbuds
+            )
 
-        // -------------------------------------------------------------
-        // 4. Mental Imagery Synthesis Card (Mind's Eye Visualizer)
-        // -------------------------------------------------------------
-        MentalImageryCard(
-            imagery = mentalImagery,
-            onSynthesize = onSynthesizeImagery
-        )
+            // -------------------------------------------------------------
+            // 2. Pre-Error ERN (Error-Related Negativity) Wave Detector Card
+            // -------------------------------------------------------------
+            PreErrorErnDetectorCard(
+                preError = preErrorState,
+                onSimulateCheck = onCheckPreError
+            )
+        }
 
-        // -------------------------------------------------------------
-        // 5. Emotional Resonance & Cognitive Friction Vector Card
-        // -------------------------------------------------------------
-        EmotionalFrictionCard(
-            friction = emotionalFriction,
-            onModulate = onModulateMood
-        )
+        if (selectedCategory == "ALL" || selectedCategory == "COGNITION") {
+            // -------------------------------------------------------------
+            // 3. Semantic Mind Graph Card (Associative Thought Map)
+            // -------------------------------------------------------------
+            SemanticMindGraphCard(
+                mindGraph = mindGraph,
+                onSelectNode = onSelectGraphNode
+            )
 
-        // -------------------------------------------------------------
-        // 6. Branching Cognitive Decision Tree Card
-        // -------------------------------------------------------------
-        CognitiveDecisionTreeCard(
-            decisionTree = decisionTree,
-            onSelectBranch = onSelectDecisionBranch
-        )
+            // -------------------------------------------------------------
+            // 4. Mental Imagery Synthesis Card (Mind's Eye Visualizer)
+            // -------------------------------------------------------------
+            MentalImageryCard(
+                imagery = mentalImagery,
+                onSynthesize = onSynthesizeImagery
+            )
 
-        // -------------------------------------------------------------
-        // 7. Subconscious Ghost-Typing Engine Card
-        // -------------------------------------------------------------
-        GhostTypingEngineCard(
-            ghostTyping = ghostTyping,
-            onAccept = onAcceptGhostTyping,
-            onCycle = onCycleGhostSuggestion
-        )
+            // -------------------------------------------------------------
+            // 5. Emotional Resonance & Cognitive Friction Vector Card
+            // -------------------------------------------------------------
+            EmotionalFrictionCard(
+                friction = emotionalFriction,
+                onModulate = onModulateMood
+            )
 
-        // -------------------------------------------------------------
-        // 8. Neuro-Fatigue & Clarity Spectrum Card (Brain Fog Early Warning)
-        // -------------------------------------------------------------
-        NeuroFatigueClarityCard(
-            fatigue = neuroFatigue,
-            onRefresh = onRefreshFatigue
-        )
+            // -------------------------------------------------------------
+            // 6. Branching Cognitive Decision Tree Card
+            // -------------------------------------------------------------
+            CognitiveDecisionTreeCard(
+                decisionTree = decisionTree,
+                onSelectBranch = onSelectDecisionBranch
+            )
 
-        // -------------------------------------------------------------
-        // 9. Thought Stream Timeline & Semantic Search History Card
-        // -------------------------------------------------------------
-        ThoughtStreamTimelineCard(
-            timeline = thoughtTimeline,
-            onSearch = onSearchThoughtHistory
-        )
+            // -------------------------------------------------------------
+            // 7. Subconscious Ghost-Typing Engine Card
+            // -------------------------------------------------------------
+            GhostTypingEngineCard(
+                ghostTyping = ghostTyping,
+                onAccept = onAcceptGhostTyping,
+                onCycle = onCycleGhostSuggestion
+            )
 
-        // -------------------------------------------------------------
-        // 10. Audio Neuro-Entrainment Beats Generator Card
-        // -------------------------------------------------------------
-        AudioNeuroEntrainmentCard(
-            entrainment = entrainment,
-            onTogglePlay = onToggleEntrainment,
-            onSelectMode = onSetEntrainmentMode
-        )
+            // -------------------------------------------------------------
+            // 9. Thought Stream Timeline & Semantic Search History Card
+            // -------------------------------------------------------------
+            ThoughtStreamTimelineCard(
+                timeline = thoughtTimeline,
+                onSearch = onSearchThoughtHistory
+            )
+        }
 
-        // -------------------------------------------------------------
-        // 11. LIVE HARDWARE SENSORS & ACCELEROMETER CARD (Real Tremor & Stability)
-        // -------------------------------------------------------------
-        RealHardwareSensorsCard(
-            sensors = realSensors
-        )
+        if (selectedCategory == "ALL" || selectedCategory == "BCI") {
+            // -------------------------------------------------------------
+            // 8. Neuro-Fatigue & Clarity Spectrum Card (Brain Fog Early Warning)
+            // -------------------------------------------------------------
+            NeuroFatigueClarityCard(
+                fatigue = neuroFatigue,
+                onRefresh = onRefreshFatigue
+            )
 
-        // -------------------------------------------------------------
-        // 12. LIVE CAMERA-X GAZE & FACIAL RADIANCE HUD (Real Gaze Tracking)
-        // -------------------------------------------------------------
-        RealCameraGazeHUDCard(
-            gaze = cameraGaze,
-            onToggleCamera = onToggleCamera
-        )
+            // -------------------------------------------------------------
+            // 10. Audio Neuro-Entrainment Beats Generator Card
+            // -------------------------------------------------------------
+            AudioNeuroEntrainmentCard(
+                entrainment = entrainment,
+                onTogglePlay = onToggleEntrainment,
+                onSelectMode = onSetEntrainmentMode
+            )
+        }
 
-        // Time Horizon Predictions Card (+30s / +5m / +30m)
-        TimeHorizonsPredictionCard(
-            horizons = timeHorizons,
-            activeTab = activeHorizonTab,
-            onTabSelected = { activeHorizonTab = it }
-        )
+        if (selectedCategory == "ALL" || selectedCategory == "SENSORS") {
+            // -------------------------------------------------------------
+            // 11. LIVE HARDWARE SENSORS & ACCELEROMETER CARD (Real Tremor & Stability)
+            // -------------------------------------------------------------
+            RealHardwareSensorsCard(
+                sensors = realSensors
+            )
+
+            // -------------------------------------------------------------
+            // 12. LIVE CAMERA-X GAZE & FACIAL RADIANCE HUD (Real Gaze Tracking)
+            // -------------------------------------------------------------
+            RealCameraGazeHUDCard(
+                gaze = cameraGaze,
+                onToggleCamera = onToggleCamera
+            )
+
+            // Micro-Hesitation & Motor Latency Analysis Card
+            MicroHesitationCard(
+                metrics = hesitationMetrics,
+                touchCount = touchTapsCount,
+                lastTouchCoords = lastTouchCoords
+            )
+
+            // Circadian & Environmental Dynamics Card
+            CircadianDynamicsCard(
+                circadian = circadian,
+                heartRate = heartRateBpm,
+                activeAppContext = activeAppContext
+            )
+        }
+
+        if (selectedCategory == "ALL" || selectedCategory == "ACTIONS") {
+            // Time Horizon Predictions Card (+30s / +5m / +30m)
+            TimeHorizonsPredictionCard(
+                horizons = timeHorizons,
+                activeTab = activeHorizonTab,
+                onTabSelected = { activeHorizonTab = it }
+            )
 
         // Master Multimodal Inference Action Card (PREDICT Section)
         Box(
@@ -800,118 +892,105 @@ fun UnifiedSimulationMatrix(
             }
         }
 
-        // Micro-Hesitation & Motor Latency Analysis Card
-        MicroHesitationCard(
-            metrics = hesitationMetrics,
-            touchCount = touchTapsCount,
-            lastTouchCoords = lastTouchCoords
-        )
-
-        // Circadian & Environmental Dynamics Card
-        CircadianDynamicsCard(
-            circadian = circadian,
-            heartRate = heartRateBpm,
-            activeAppContext = activeAppContext
-        )
-
         // Interactive Proactive OS Sandbox (Action Sandbox)
-        ProactiveActionSandboxCard(
-            sandbox = sandboxActions,
-            onToggle = onToggleSandboxAction
-        )
+            ProactiveActionSandboxCard(
+                sandbox = sandboxActions,
+                onToggle = onToggleSandboxAction
+            )
 
-        // Direct Subconscious Thought Decoder Input
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(20.dp))
-                .background(NeuralSurface)
-                .border(1.dp, NeuralAccent.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
-                .padding(14.dp)
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = "DIRECT MIND THOUGHT INJECTION & DECODER",
-                    color = NeuralAccent,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    OutlinedTextField(
-                        value = customThoughtPrompt,
-                        onValueChange = { customThoughtPrompt = it },
-                        placeholder = { Text("შეიყვანეთ აზრი (e.g. კოდის რეფაქტორინგი)...", color = NeuralTextSecondary, fontSize = 11.sp) },
-                        modifier = Modifier.weight(1f),
-                        singleLine = true,
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = NeuralDeepPurple,
-                            unfocusedContainerColor = NeuralDeepPurple,
-                            focusedTextColor = NeuralTextPrimary,
-                            unfocusedTextColor = NeuralTextPrimary,
-                            focusedIndicatorColor = NeuralAccent,
-                            unfocusedIndicatorColor = Color.White.copy(alpha = 0.1f)
-                        )
+            // Direct Subconscious Thought Decoder Input
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(NeuralSurface)
+                    .border(1.dp, NeuralAccent.copy(alpha = 0.25f), RoundedCornerShape(20.dp))
+                    .padding(14.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "DIRECT MIND THOUGHT INJECTION & DECODER",
+                        color = NeuralAccent,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
                     )
 
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(NeuralAccent)
-                            .clickable {
-                                if (customThoughtPrompt.isNotBlank()) {
-                                    onDecodeCustomThought(customThoughtPrompt)
-                                }
-                            },
-                        contentAlignment = Alignment.Center
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = AppIcons.SendIcon,
-                            contentDescription = "Decode",
-                            tint = NeuralDeepPurple,
-                            modifier = Modifier.size(20.dp)
+                        OutlinedTextField(
+                            value = customThoughtPrompt,
+                            onValueChange = { customThoughtPrompt = it },
+                            placeholder = { Text("შეიყვანეთ აზრი (e.g. კოდის რეფაქტორინგი)...", color = NeuralTextSecondary, fontSize = 11.sp) },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = NeuralDeepPurple,
+                                unfocusedContainerColor = NeuralDeepPurple,
+                                focusedTextColor = NeuralTextPrimary,
+                                unfocusedTextColor = NeuralTextPrimary,
+                                focusedIndicatorColor = NeuralAccent,
+                                unfocusedIndicatorColor = Color.White.copy(alpha = 0.1f)
+                            )
                         )
+
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(NeuralAccent)
+                                .clickable {
+                                    if (customThoughtPrompt.isNotBlank()) {
+                                        onDecodeCustomThought(customThoughtPrompt)
+                                    }
+                                },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = AppIcons.SendIcon,
+                                contentDescription = "Decode",
+                                tint = NeuralDeepPurple,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    // Quick Thought Presets
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        PresetThoughtChip("⚡ UI ოპტიმიზაცია", "UI Optimization and Refactor", onDecodeCustomThought, Modifier.weight(1f))
+                        PresetThoughtChip("☕ შესვენება", "Take a short break and relax", onDecodeCustomThought, Modifier.weight(1f))
+                        PresetThoughtChip("🧠 ღრმა ფოკუსი", "Deep Focus Architecture Session", onDecodeCustomThought, Modifier.weight(1f))
                     }
                 }
-
-                // Quick Thought Presets
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    PresetThoughtChip("⚡ UI ოპტიმიზაცია", "UI Optimization and Refactor", onDecodeCustomThought, Modifier.weight(1f))
-                    PresetThoughtChip("☕ შესვენება", "Take a short break and relax", onDecodeCustomThought, Modifier.weight(1f))
-                    PresetThoughtChip("🧠 ღრმა ფოკუსი", "Deep Focus Architecture Session", onDecodeCustomThought, Modifier.weight(1f))
-                }
             }
-        }
 
-        // Multimodal Stream Controls Matrix
-        StreamControlMatrixSection(
-            alphaBandHz = alphaBandHz,
-            betaBandHz = betaBandHz,
-            thetaBandHz = thetaBandHz,
-            gammaBandHz = gammaBandHz,
-            cognitiveLoadPct = cognitiveLoadPct,
-            subconsciousFocusLevel = subconsciousFocusLevel,
-            touchTapsCount = touchTapsCount,
-            lastTouchCoords = lastTouchCoords,
-            audioDb = audioDb,
-            speakerOutputDb = speakerOutputDb,
-            cameraGazeX = cameraGazeX,
-            cameraGazeY = cameraGazeY,
-            motionTremor = motionTremor,
-            heartRateBpm = heartRateBpm,
-            activeAppContext = activeAppContext,
-            onInjectStimulus = onInjectStimulus,
-            onAppContextChanged = onAppContextChanged,
-            onTouchTap = onTouchTap
-        )
+            // Multimodal Stream Controls Matrix
+            StreamControlMatrixSection(
+                alphaBandHz = alphaBandHz,
+                betaBandHz = betaBandHz,
+                thetaBandHz = thetaBandHz,
+                gammaBandHz = gammaBandHz,
+                cognitiveLoadPct = cognitiveLoadPct,
+                subconsciousFocusLevel = subconsciousFocusLevel,
+                touchTapsCount = touchTapsCount,
+                lastTouchCoords = lastTouchCoords,
+                audioDb = audioDb,
+                speakerOutputDb = speakerOutputDb,
+                cameraGazeX = cameraGazeX,
+                cameraGazeY = cameraGazeY,
+                motionTremor = motionTremor,
+                heartRateBpm = heartRateBpm,
+                activeAppContext = activeAppContext,
+                onInjectStimulus = onInjectStimulus,
+                onAppContextChanged = onAppContextChanged,
+                onTouchTap = onTouchTap
+            )
+        }
     }
 }
 

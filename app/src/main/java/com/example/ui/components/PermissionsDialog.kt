@@ -244,6 +244,26 @@ fun PermissionsDialog(
                     }
                 )
 
+                // 7. Battery Optimization Exemption for Months-Long Background Run
+                val isBatteryIgnored = androidx.compose.runtime.remember {
+                    androidx.compose.runtime.mutableStateOf(PermissionHelper.isBatteryOptimizationIgnored(context))
+                }
+                PermissionRowItem(
+                    icon = AppIcons.Bolt,
+                    title = "ბატარეის შეუზღუდავი რეჟიმი (24/7 თვეობით)",
+                    description = "Doze Mode-ის და ენერგოდამზოგის გამორთვა თვეობით უწყვეტი ფონური მუშაობისთვის",
+                    isChecked = isBatteryIgnored.value,
+                    onCheckedChange = {
+                        isBatteryIgnored.value = it
+                        PermissionHelper.setBatteryOptimizationIgnored(context, it)
+                        if (it) {
+                            PermissionHelper.requestIgnoreBatteryOptimization(context)
+                            com.example.receiver.BootReceiver.schedulePerpetualWatchdog(context)
+                            com.example.receiver.BootReceiver.startNeuralContextService(context)
+                        }
+                    }
+                )
+
                 // Direct Button to System App Settings
                 OutlinedButton(
                     onClick = {

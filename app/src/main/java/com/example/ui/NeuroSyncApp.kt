@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.components.DigitalTwinView
 import com.example.ui.components.ExplanationModal
 import com.example.ui.components.HeaderView
 import com.example.ui.components.HeroNeuralOverlay
@@ -50,6 +51,7 @@ import com.example.ui.components.InteractiveTouchPad
 import com.example.ui.components.MindLabView
 import com.example.ui.components.PermissionsDialog
 import com.example.ui.components.SynapticHistoryView
+import com.example.ui.components.UnifiedSimulationActions
 import com.example.ui.components.UnifiedSimulationMatrix
 import com.example.ui.theme.AppIcons
 import com.example.ui.theme.NeuralAccent
@@ -59,7 +61,7 @@ import com.example.ui.theme.NeuralDeepPurple
 import com.example.ui.theme.NeuralSurface
 import com.example.viewmodel.NeuroSyncViewModel
 
-enum class NeuroTab { UNIFIED_MATRIX, MIND_LAB, SENSORS, LOGS }
+enum class NeuroTab { UNIFIED_MATRIX, DIGITAL_TWIN, MIND_LAB, SENSORS, LOGS }
 
 @Composable
 fun NeuroSyncApp(
@@ -68,6 +70,7 @@ fun NeuroSyncApp(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val historyList by viewModel.history.collectAsStateWithLifecycle()
+    val savedCheckpoints by viewModel.digitalTwinCheckpoints.collectAsStateWithLifecycle()
     var activeTab by remember { mutableStateOf(NeuroTab.UNIFIED_MATRIX) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
@@ -146,79 +149,50 @@ fun NeuroSyncApp(
                     when (activeTab) {
                         NeuroTab.UNIFIED_MATRIX -> {
                             UnifiedSimulationMatrix(
-                                isSyncing = uiState.isSyncing,
-                                matchPercentage = uiState.matchPercentage,
-                                statusText = uiState.statusText,
-                                alphaBandHz = uiState.alphaBandHz,
-                                betaBandHz = uiState.betaBandHz,
-                                thetaBandHz = uiState.thetaBandHz,
-                                gammaBandHz = uiState.gammaBandHz,
-                                cognitiveLoadPct = uiState.thoughtCognitiveLoadPct,
-                                subconsciousFocusLevel = uiState.subconsciousFocusLevel,
-                                touchTapsCount = uiState.touchTapsCount,
-                                lastTouchCoords = uiState.lastTouchCoords,
-                                audioDb = uiState.audioDb,
-                                speakerOutputDb = uiState.speakerOutputDb,
-                                cameraGazeX = uiState.cameraGazeX,
-                                cameraGazeY = uiState.cameraGazeY,
-                                motionTremor = uiState.motionTremor,
-                                heartRateBpm = uiState.heartRateBpm,
-                                activeAppContext = uiState.activeAppContext,
-                                currentPredictionTitle = uiState.currentPredictionTitle,
-                                currentPredictionText = uiState.currentPredictionText,
-                                currentActionPlan = uiState.currentActionPlan,
-                                timeHorizons = uiState.timeHorizons,
-                                hesitationMetrics = uiState.hesitationMetrics,
-                                circadian = uiState.circadian,
-                                calibrationWeights = uiState.calibrationWeights,
-                                sandboxActions = uiState.sandboxActions,
-                                subvocalSpeech = uiState.subvocalSpeech,
-                                mentalImagery = uiState.mentalImagery,
-                                preErrorState = uiState.preErrorState,
-                                mindGraph = uiState.mindGraph,
-                                emotionalFriction = uiState.emotionalFriction,
-                                decisionTree = uiState.decisionTree,
-                                ghostTyping = uiState.ghostTyping,
-                                neuroFatigue = uiState.neuroFatigue,
-                                thoughtTimeline = uiState.thoughtTimeline,
-                                entrainment = uiState.entrainment,
-                                realSensors = uiState.realSensors,
-                                cameraGaze = uiState.cameraGaze,
-                                earbudSensor = uiState.earbudSensor,
-                                enhancedMetrics = uiState.enhancedMetrics,
-                                isContinuousThoughtActive = uiState.isContinuousThoughtStreamActive,
-                                lastThoughtUpdated = uiState.lastThoughtUpdatedTimestamp,
-                                isGeneratingPrediction = uiState.isGeneratingPrediction,
-                                onRunUnifiedInference = { viewModel.runNeuralPredictionInference() },
-                                onToggleContinuousThought = { viewModel.toggleContinuousThoughtStream() },
-                                onSetUpdateInterval = { viewModel.setThoughtUpdateInterval(it) },
-                                onInjectStimulus = { viewModel.injectStimulus(it) },
-                                onAppContextChanged = { viewModel.setAppContext(it) },
-                                onTouchTap = { x, y -> viewModel.registerTouchTap(x, y) },
-                                onDecodeCustomThought = { viewModel.decodeCustomThought(it) },
-                                onApplyFeedback = { isAccurate -> viewModel.applyFeedbackCalibration(isAccurate) },
-                                onToggleSandboxAction = { actionKey -> viewModel.toggleSandboxAction(actionKey) },
-                                onTriggerSubvocal = { viewModel.triggerSubvocalSpeechWord() },
-                                onSynthesizeImagery = { prompt -> viewModel.synthesizeMentalImagery(prompt) },
-                                onCheckPreError = { viewModel.simulateErnPreErrorCheck() },
-                                onSelectGraphNode = { nodeId -> viewModel.selectMindGraphNode(nodeId) },
-                                onModulateMood = { dValence, dArousal -> viewModel.modulateEmotionalValence(dValence, dArousal) },
-                                onSelectDecisionBranch = { branchId -> viewModel.selectDecisionBranch(branchId) },
-                                onAcceptGhostTyping = { viewModel.acceptGhostTyping() },
-                                onCycleGhostSuggestion = { viewModel.cycleGhostSuggestion() },
-                                onRefreshFatigue = { viewModel.refreshNeuroFatigueCheck() },
-                                onSearchThoughtHistory = { query -> viewModel.searchThoughtTimeline(query) },
-                                onToggleEntrainment = { viewModel.toggleEntrainmentPlay() },
-                                onSetEntrainmentMode = { mode -> viewModel.setEntrainmentMode(mode) },
-                                onToggleEarbuds = { viewModel.toggleEarbudsConnected() },
-                                onRecalibrateEarbuds = { viewModel.recalibrateEarbuds() },
-                                onToggleCamera = {
-                                    if (uiState.cameraGaze.isCameraActive) {
-                                        viewModel.stopCameraGazeTracking()
-                                    } else {
-                                        cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                                uiState = uiState,
+                                actions = UnifiedSimulationActions(
+                                    onRunUnifiedInference = { viewModel.runNeuralPredictionInference() },
+                                    onToggleContinuousThought = { viewModel.toggleContinuousThoughtStream() },
+                                    onSetUpdateInterval = { viewModel.setThoughtUpdateInterval(it) },
+                                    onInjectStimulus = { viewModel.injectStimulus(it) },
+                                    onAppContextChanged = { viewModel.setAppContext(it) },
+                                    onTouchTap = { x, y -> viewModel.registerTouchTap(x, y) },
+                                    onDecodeCustomThought = { viewModel.decodeCustomThought(it) },
+                                    onApplyFeedback = { isAccurate -> viewModel.applyFeedbackCalibration(isAccurate) },
+                                    onToggleSandboxAction = { actionKey -> viewModel.toggleSandboxAction(actionKey) },
+                                    onTriggerSubvocal = { viewModel.triggerSubvocalSpeechWord() },
+                                    onSynthesizeImagery = { prompt -> viewModel.synthesizeMentalImagery(prompt) },
+                                    onCheckPreError = { viewModel.simulateErnPreErrorCheck() },
+                                    onSelectGraphNode = { nodeId -> viewModel.selectMindGraphNode(nodeId) },
+                                    onModulateMood = { dValence, dArousal -> viewModel.modulateEmotionalValence(dValence, dArousal) },
+                                    onSelectDecisionBranch = { branchId -> viewModel.selectDecisionBranch(branchId) },
+                                    onAcceptGhostTyping = { viewModel.acceptGhostTyping() },
+                                    onCycleGhostSuggestion = { viewModel.cycleGhostSuggestion() },
+                                    onRefreshFatigue = { viewModel.refreshNeuroFatigueCheck() },
+                                    onSearchThoughtHistory = { query -> viewModel.searchThoughtTimeline(query) },
+                                    onToggleEntrainment = { viewModel.toggleEntrainmentPlay() },
+                                    onSetEntrainmentMode = { mode -> viewModel.setEntrainmentMode(mode) },
+                                    onToggleEarbuds = { viewModel.toggleEarbudsConnected() },
+                                    onRecalibrateEarbuds = { viewModel.recalibrateEarbuds() },
+                                    onToggleCamera = {
+                                        if (uiState.cameraGaze.isCameraActive) {
+                                            viewModel.stopCameraGazeTracking()
+                                        } else {
+                                            cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                                        }
                                     }
-                                }
+                                )
+                            )
+                        }
+                        NeuroTab.DIGITAL_TWIN -> {
+                            DigitalTwinView(
+                                twinState = uiState.digitalTwin,
+                                savedCheckpoints = savedCheckpoints,
+                                onAdvanceDay = { viewModel.advanceDigitalTwinDay(it) },
+                                onInjectSample = { viewModel.injectCustomDigitalTwinSample(it) },
+                                onSaveCheckpoint = { viewModel.saveDigitalTwinCheckpoint() },
+                                onTriggerDeepFineTuning = { viewModel.triggerDeepPersonaFineTuning() },
+                                onDeleteCheckpoint = { viewModel.deleteDigitalTwinCheckpoint(it) }
                             )
                         }
                         NeuroTab.MIND_LAB -> {
@@ -310,19 +284,22 @@ private fun TabSelectorBar(
             .background(NeuralSurface)
             .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
             .padding(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         TabPillItem("მატრიცა", activeTab == NeuroTab.UNIFIED_MATRIX, modifier = Modifier.weight(1f)) {
             onTabSelected(NeuroTab.UNIFIED_MATRIX)
         }
-        TabPillItem("ნეირო-ლაბი", activeTab == NeuroTab.MIND_LAB, modifier = Modifier.weight(1f)) {
+        TabPillItem("90 დღე", activeTab == NeuroTab.DIGITAL_TWIN, modifier = Modifier.weight(1f)) {
+            onTabSelected(NeuroTab.DIGITAL_TWIN)
+        }
+        TabPillItem("ლაბი", activeTab == NeuroTab.MIND_LAB, modifier = Modifier.weight(0.9f)) {
             onTabSelected(NeuroTab.MIND_LAB)
         }
-        TabPillItem("სენსორები", activeTab == NeuroTab.SENSORS, modifier = Modifier.weight(1f)) {
+        TabPillItem("სენსორები", activeTab == NeuroTab.SENSORS, modifier = Modifier.weight(1.1f)) {
             onTabSelected(NeuroTab.SENSORS)
         }
-        TabPillItem("ისტორია", activeTab == NeuroTab.LOGS, modifier = Modifier.weight(1f)) {
+        TabPillItem("ლოგი", activeTab == NeuroTab.LOGS, modifier = Modifier.weight(0.9f)) {
             onTabSelected(NeuroTab.LOGS)
         }
 
