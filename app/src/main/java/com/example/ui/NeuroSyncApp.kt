@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ui.components.DigitalTwinView
+import com.example.ui.components.DirectWordDecoderView
 import com.example.ui.components.ExplanationModal
 import com.example.ui.components.HeaderView
 import com.example.ui.components.HeroNeuralOverlay
@@ -61,7 +62,7 @@ import com.example.ui.theme.NeuralDeepPurple
 import com.example.ui.theme.NeuralSurface
 import com.example.viewmodel.NeuroSyncViewModel
 
-enum class NeuroTab { UNIFIED_MATRIX, DIGITAL_TWIN, MIND_LAB, SENSORS, LOGS }
+enum class NeuroTab { WORDS, UNIFIED_MATRIX, DIGITAL_TWIN, MIND_LAB, SENSORS, LOGS }
 
 @Composable
 fun NeuroSyncApp(
@@ -115,6 +116,7 @@ fun NeuroSyncApp(
                 // Top Header with Master 1-Button Toggle
                 HeaderView(
                     isSyncing = uiState.isSyncing,
+                    subjectState = uiState.subjectRecognition,
                     onMasterToggleClick = { 
                         viewModel.masterActivateAll()
                         onRequestMasterPermissions()
@@ -147,6 +149,31 @@ fun NeuroSyncApp(
                 // Tab Content Switcher
                 Box(modifier = Modifier.padding(horizontal = 24.dp)) {
                     when (activeTab) {
+                        NeuroTab.WORDS -> {
+                            DirectWordDecoderView(
+                                wordDecoderState = uiState.wordDecoder,
+                                subjectState = uiState.subjectRecognition,
+                                predictionState = uiState.wordPrediction,
+                                onToggleLiveDecoding = { viewModel.toggleWordDecoding() },
+                                onSetCategory = { viewModel.setWordDecoderLexiconCategory(it) },
+                                onInjectWord = { word, cat -> viewModel.injectDecodedWord(word, cat) },
+                                onClearSentence = { viewModel.clearDecodedSentence() },
+                                onCycleNextWord = { viewModel.cycleNextDecodedWord() },
+                                onSelectActiveSubject = { viewModel.setActiveSubject(it) },
+                                onToggleTargetLock = { viewModel.toggleTargetLock() },
+                                onToggleContaminationShield = { viewModel.toggleContaminationShield() },
+                                onToggleAutoSwitch = { viewModel.toggleAutoSwitchSubject() },
+                                onSimulateDetectedChange = { viewModel.simulateDetectedSubjectChange(it) },
+                                onAddNewSubject = { name, title -> viewModel.addNewSubjectProfile(name, title) },
+                                onTogglePreMotorPredictor = { viewModel.togglePreMotorPredictor() },
+                                onApplyBranchPrediction = { viewModel.applyBranchPrediction(it) },
+                                onRegeneratePredictionBranches = { viewModel.regenerateWordPredictionBranches() },
+                                onToggleMarkovContext = { viewModel.toggleMarkovContextLearning() },
+                                onToggleGazeDwell = { viewModel.toggleGazeDwellSelection() },
+                                onToggleBilingual = { viewModel.toggleBilingualAutoFlip() },
+                                onLearnMarkovPair = { prev, next -> viewModel.learnNewMarkovTransition(prev, next) }
+                            )
+                        }
                         NeuroTab.UNIFIED_MATRIX -> {
                             UnifiedSimulationMatrix(
                                 uiState = uiState,
@@ -174,6 +201,24 @@ fun NeuroSyncApp(
                                     onSetEntrainmentMode = { mode -> viewModel.setEntrainmentMode(mode) },
                                     onToggleEarbuds = { viewModel.toggleEarbudsConnected() },
                                     onRecalibrateEarbuds = { viewModel.recalibrateEarbuds() },
+                                    onToggleWordDecoding = { viewModel.toggleWordDecoding() },
+                                    onSetWordDecoderCategory = { viewModel.setWordDecoderLexiconCategory(it) },
+                                    onInjectWordDecoderItem = { word, cat -> viewModel.injectDecodedWord(word, cat) },
+                                    onClearWordDecoderSentence = { viewModel.clearDecodedSentence() },
+                                    onCycleNextWordDecoderItem = { viewModel.cycleNextDecodedWord() },
+                                    onSelectActiveSubject = { viewModel.setActiveSubject(it) },
+                                    onToggleTargetLock = { viewModel.toggleTargetLock() },
+                                    onToggleContaminationShield = { viewModel.toggleContaminationShield() },
+                                    onToggleAutoSwitch = { viewModel.toggleAutoSwitchSubject() },
+                                    onSimulateDetectedChange = { viewModel.simulateDetectedSubjectChange(it) },
+                                    onAddNewSubject = { name, title -> viewModel.addNewSubjectProfile(name, title) },
+                                    onTogglePreMotorPredictor = { viewModel.togglePreMotorPredictor() },
+                                    onApplyBranchPrediction = { viewModel.applyBranchPrediction(it) },
+                                    onRegeneratePredictionBranches = { viewModel.regenerateWordPredictionBranches() },
+                                    onToggleMarkovContext = { viewModel.toggleMarkovContextLearning() },
+                                    onToggleGazeDwell = { viewModel.toggleGazeDwellSelection() },
+                                    onToggleBilingual = { viewModel.toggleBilingualAutoFlip() },
+                                    onLearnMarkovPair = { prev, next -> viewModel.learnNewMarkovTransition(prev, next) },
                                     onToggleCamera = {
                                         if (uiState.cameraGaze.isCameraActive) {
                                             viewModel.stopCameraGazeTracking()
@@ -287,19 +332,22 @@ private fun TabSelectorBar(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        TabPillItem("სიტყვები", activeTab == NeuroTab.WORDS, modifier = Modifier.weight(1.1f)) {
+            onTabSelected(NeuroTab.WORDS)
+        }
         TabPillItem("მატრიცა", activeTab == NeuroTab.UNIFIED_MATRIX, modifier = Modifier.weight(1f)) {
             onTabSelected(NeuroTab.UNIFIED_MATRIX)
         }
-        TabPillItem("90 დღე", activeTab == NeuroTab.DIGITAL_TWIN, modifier = Modifier.weight(1f)) {
+        TabPillItem("90 დღე", activeTab == NeuroTab.DIGITAL_TWIN, modifier = Modifier.weight(0.9f)) {
             onTabSelected(NeuroTab.DIGITAL_TWIN)
         }
-        TabPillItem("ლაბი", activeTab == NeuroTab.MIND_LAB, modifier = Modifier.weight(0.9f)) {
+        TabPillItem("ლაბი", activeTab == NeuroTab.MIND_LAB, modifier = Modifier.weight(0.8f)) {
             onTabSelected(NeuroTab.MIND_LAB)
         }
-        TabPillItem("სენსორები", activeTab == NeuroTab.SENSORS, modifier = Modifier.weight(1.1f)) {
+        TabPillItem("სენსორები", activeTab == NeuroTab.SENSORS, modifier = Modifier.weight(1f)) {
             onTabSelected(NeuroTab.SENSORS)
         }
-        TabPillItem("ლოგი", activeTab == NeuroTab.LOGS, modifier = Modifier.weight(0.9f)) {
+        TabPillItem("ლოგი", activeTab == NeuroTab.LOGS, modifier = Modifier.weight(0.8f)) {
             onTabSelected(NeuroTab.LOGS)
         }
 

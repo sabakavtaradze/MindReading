@@ -323,6 +323,146 @@ data class DigitalTwinState(
     val deepAnalysisResult: String = "კოგნიტური მოდელი აქტიურია. სისტემა აგროვებს უწყვეტ ტელემეტრიას და აყალიბებს ციფრულ ორეულს."
 )
 
+data class DecodedWordCandidate(
+    val word: String,
+    val probabilityPct: Int,
+    val category: String,
+    val phonemes: String,
+    val latencyMs: Int
+)
+
+data class DecodedWordHistoryItem(
+    val id: String,
+    val timestamp: String,
+    val word: String,
+    val language: String,
+    val confidencePct: Int,
+    val category: String,
+    val phonemeTrace: String
+)
+
+data class DirectWordDecoderState(
+    val isLiveDecoding: Boolean = true,
+    val currentDecodedWord: String = "გამარჯობა",
+    val confidencePct: Int = 98,
+    val currentPhonemes: List<String> = listOf("გ", "ა", "მ", "ა", "რ", "ჯ", "ო", "ბ", "ა"),
+    val candidateWords: List<DecodedWordCandidate> = listOf(
+        DecodedWordCandidate("გამარჯობა", 98, "COMMON", "გ-ა-მ-ა-რ-ჯ-ო-ბ-ა", -120),
+        DecodedWordCandidate("გასაგებია", 84, "COMMON", "გ-ა-ს-ა-გ-ე-ბ-ი-ა", -80),
+        DecodedWordCandidate("გაგრძელება", 72, "COMMANDS", "გ-ა-გ-რ-ძ-ე-ლ-ე-ბ-ა", -45),
+        DecodedWordCandidate("გაჩერება", 35, "COMMANDS", "გ-ა-ჩ-ე-რ-ე-ბ-ა", 10)
+    ),
+    val activeLexiconCategory: String = "ALL", // "ALL", "COMMON", "DEV", "COMMANDS", "EMOTIONS", "ENGLISH"
+    val accumulatedSentence: String = "გამარჯობა მინდა დავიწყო კოდის რეფაქტორინგი",
+    val recentWords: List<DecodedWordHistoryItem> = listOf(
+        DecodedWordHistoryItem("w1", "15:20:11", "გამარჯობა", "GEORGIAN", 98, "COMMON", "გ-ა-მ-ა-რ-ჯ-ო-ბ-ა"),
+        DecodedWordHistoryItem("w2", "15:19:45", "მინდა", "GEORGIAN", 96, "COMMON", "მ-ი-ნ-დ-ა"),
+        DecodedWordHistoryItem("w3", "15:19:12", "დავიწყო", "GEORGIAN", 94, "COMMANDS", "დ-ა-ვ-ი-წ-ყ-ო"),
+        DecodedWordHistoryItem("w4", "15:18:30", "კოდის", "GEORGIAN", 97, "DEV", "კ-ო-დ-ი-ს"),
+        DecodedWordHistoryItem("w5", "15:17:50", "რეფაქტორინგი", "GEORGIAN", 99, "DEV", "რ-ე-ფ-ა-ქ-ტ-ო-რ-ი-ნ-გ-ი")
+    ),
+    val activeLanguage: String = "GEORGIAN", // "GEORGIAN", "ENGLISH", "BILINGUAL"
+    val internalSpeechVpuFrequencyHz: Float = 142.8f,
+    val laryngealEffortIndex: Float = 0.88f,
+    val lastActionExecuted: String = "სიტყვა დეკოდირებულია და დამატებულია ნაკადში"
+)
+
+data class WordBranchPrediction(
+    val id: String,
+    val word: String,
+    val probabilityPct: Int,
+    val phonemeLookaheadMs: Int = -280, // Negative means detected 280ms before voice articulation
+    val category: String = "DEV", // "DEV", "COMMANDS", "DAILY", "EMOTIONS"
+    val linguisticGrammarRole: String = "ზმნა (მოქმედება)",
+    val semanticContextTrigger: String = "სუბვოკალური 142Hz რეზონანსი + წინა სიტყვა",
+    val cognitiveLoadRequirementPct: Int = 34
+)
+
+data class MarkovLearnedTransition(
+    val previousWord: String,
+    val predictedNextWord: String,
+    val frequencyScore: Int,
+    val confidencePct: Int,
+    val averageLeadTimeMs: Int
+)
+
+data class CognitiveFatigueHeatmapItem(
+    val timeSlot: String,
+    val accuracyPct: Int,
+    val fatigueLevel: String, // "LOW", "OPTIMAL", "FATIGUED"
+    val predictedSpeedGainWpm: Int
+)
+
+data class WordPredictionAnalyticsState(
+    val isPreMotorPredictorActive: Boolean = true,
+    val isMarkovContextLearningActive: Boolean = true,
+    val isGazeDwellSelectionActive: Boolean = true,
+    val isBilingualAutoFlipActive: Boolean = true,
+    val readinessPotentialLeadTimeMs: Int = 320, // 320ms ahead of time
+    val currentReadinessSpikeMicroVolts: Float = -18.4f,
+    val predictionConfidenceScorePct: Int = 96,
+    val phonemeEntropyIndex: Float = 0.16f,
+    val cognitiveSpeedupGainWpm: Int = 42, // +42 WPM speedup
+    val subconsciousHesitationLatencyMs: Int = 112, // 112ms hesitation detected
+    val cognitiveFatiguePct: Int = 24, // 24% fatigue
+    val totalWordsPredictedAhead: Int = 342,
+    val activeFocusWordCandidate: String = "შევამოწმოთ",
+    val branches: List<WordBranchPrediction> = listOf(
+        WordBranchPrediction("b1", "შევამოწმოთ", 94, -320, "DEV", "ზმნა (შემოწმება)", "ფოკუსირებული კოდის ანალიზი", 38),
+        WordBranchPrediction("b2", "დავაკომიტოთ", 87, -290, "DEV", "ზმნა (Git მოქმედება)", "ბოლო ცვლილებების ფიქსაცია", 42),
+        WordBranchPrediction("b3", "გავუშვათ", 78, -250, "COMMANDS", "ზმნა (გაშვება)", "კომპილაციის განზრახვა", 29),
+        WordBranchPrediction("b4", "შევინახოთ", 64, -210, "COMMANDS", "ზმნა (შენახვა)", "ფაილის შენახვის იმპულსი", 25)
+    ),
+    val markovMemoryChain: List<MarkovLearnedTransition> = listOf(
+        MarkovLearnedTransition("კოდის", "რეფაქტორინგი", 142, 98, -340),
+        MarkovLearnedTransition("შევამოწმოთ", "არქიტექტურა", 98, 94, -310),
+        MarkovLearnedTransition("გავუშვათ", "კომპილაცია", 86, 91, -290),
+        MarkovLearnedTransition("მონაცემთა", "ანალიტიკა", 114, 96, -330)
+    ),
+    val fatigueHeatmap: List<CognitiveFatigueHeatmapItem> = listOf(
+        CognitiveFatigueHeatmapItem("10:00 - 12:00", 99, "OPTIMAL", 48),
+        CognitiveFatigueHeatmapItem("12:00 - 15:00", 95, "OPTIMAL", 42),
+        CognitiveFatigueHeatmapItem("15:00 - 18:00", 91, "LOW", 36),
+        CognitiveFatigueHeatmapItem("18:00 - 21:00", 86, "FATIGUED", 28)
+    ),
+    val accuracyTrajectory: List<Int> = listOf(86, 89, 91, 94, 96, 98),
+    val topPredictedContexts: List<String> = listOf("კოდის რეფაქტორინგი", "ნეირონული სინქრონიზაცია", "არქიტექტურის გაუმჯობესება"),
+    val lastAppliedPrediction: String = "შევამოწმოთ (ავტო-დასრულებულია 320 მწ-ით ადრე)"
+)
+
+data class PersonProfile(
+    val id: String, // "person_1", "person_2", "person_3"
+    val name: String,
+    val title: String,
+    val avatarEmoji: String,
+    val isTargetLocked: Boolean = true,
+    val baseEmgFrequencyHz: Float = 142.0f,
+    val dominantHemisphere: String = "მარცხენა (დომინანტური)",
+    val touchPressureBaselineGrams: Float = 42.5f,
+    val gazeBlinkRatePerMin: Int = 16,
+    val alphaBetaRatio: Float = 1.34f,
+    val totalWordsDecoded: Int = 128,
+    val lastSeenTimestamp: String = "ახლახანს"
+)
+
+data class SubjectRecognitionState(
+    val activePersonId: String = "person_1",
+    val detectedPersonId: String = "person_1",
+    val isLockActive: Boolean = true,
+    val recognitionConfidencePct: Int = 98,
+    val isContaminationShieldActive: Boolean = true,
+    val autoSwitchSubjectEnabled: Boolean = false,
+    val biometricGripMatchPct: Int = 97,
+    val faceGazeMatchPct: Int = 99,
+    val inEarImpedanceMatchPct: Int = 96,
+    val vocalTractResonanceMatchPct: Int = 98,
+    val profiles: List<PersonProfile> = listOf(
+        PersonProfile("person_1", "Person 1 (თქვენ)", "მთავარი სუბიექტი", "👤", true, 142.0f, "მარცხენა (დომინანტური)", 42.5f, 16, 1.34f, 184),
+        PersonProfile("person_2", "Person 2 (სტუმარი A)", "მეორე სუბიექტი", "🧑‍🔬", false, 168.0f, "მარჯვენა (ვიზუალური)", 56.0f, 21, 0.98f, 42),
+        PersonProfile("person_3", "Person 3 (სტუმარი B)", "ექსპერიმენტული სუბიექტი", "👨‍💻", false, 126.5f, "სიმეტრიული", 38.0f, 14, 1.62f, 19)
+    )
+)
+
 data class NeuroSyncUiState(
     val isSyncing: Boolean = true,
     val isMasterActive: Boolean = true,
@@ -371,6 +511,9 @@ data class NeuroSyncUiState(
     val thoughtTimeline: ThoughtTimelineState = ThoughtTimelineState(),
     val entrainment: NeuroEntrainmentState = NeuroEntrainmentState(),
     val earbudSensor: EarbudSensorState = EarbudSensorState(),
+    val subjectRecognition: SubjectRecognitionState = SubjectRecognitionState(),
+    val wordDecoder: DirectWordDecoderState = DirectWordDecoderState(),
+    val wordPrediction: WordPredictionAnalyticsState = WordPredictionAnalyticsState(),
     val realSensors: com.example.sensor.RealHardwareSensorState = com.example.sensor.RealHardwareSensorState(),
     val cameraGaze: com.example.sensor.RealCameraGazeState = com.example.sensor.RealCameraGazeState(),
     val telemetry: TelemetryState = TelemetryState(),
@@ -700,6 +843,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                     if (_uiState.value.isContinuousThoughtStreamActive && thoughtPredictionCycleCounter >= updateInterval) {
                         thoughtPredictionCycleCounter = 0
                         autoCyclePredictedThought()
+                        if (_uiState.value.wordDecoder.isLiveDecoding) {
+                            cycleNextDecodedWord()
+                        }
                     }
                 }
             }
@@ -779,6 +925,363 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun setThoughtUpdateInterval(seconds: Int) {
         _uiState.update { it.copy(thoughtUpdateIntervalSeconds = seconds.coerceIn(2, 10)) }
+    }
+
+    // --- DIRECT WORD DECODER & LEXICON ENGINE METHODS ---
+
+    fun toggleWordDecoding(enabled: Boolean? = null) {
+        _uiState.update { current ->
+            val nextState = enabled ?: !current.wordDecoder.isLiveDecoding
+            current.copy(
+                wordDecoder = current.wordDecoder.copy(isLiveDecoding = nextState)
+            )
+        }
+    }
+
+    fun setWordDecoderLexiconCategory(category: String) {
+        _uiState.update { current ->
+            current.copy(
+                wordDecoder = current.wordDecoder.copy(activeLexiconCategory = category)
+            )
+        }
+    }
+
+    fun setWordDecoderLanguage(language: String) {
+        _uiState.update { current ->
+            current.copy(
+                wordDecoder = current.wordDecoder.copy(activeLanguage = language)
+            )
+        }
+    }
+
+    fun injectDecodedWord(word: String, category: String = "CUSTOM") {
+        if (word.isBlank()) return
+        val timeNow = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
+        val phonemes = com.example.service.GeorgianNeuroLinguisticEngine.getPhonemesForString(word)
+        val phonemeTrace = phonemes.joinToString("-")
+        val entry = com.example.service.GeorgianNeuroLinguisticEngine.MIND_LEXICON_DATABASE.find { it.word.equals(word, ignoreCase = true) }
+        val emgHz = entry?.emgFrequencyHz ?: (135f + (word.length * 2.5f))
+        val conf = (95..99).random()
+
+        _uiState.update { current ->
+            val prevDecoder = current.wordDecoder
+            val newAcc = if (prevDecoder.accumulatedSentence.isBlank()) {
+                word
+            } else {
+                "${prevDecoder.accumulatedSentence} $word"
+            }
+            val newHistoryItem = DecodedWordHistoryItem(
+                id = "word_${System.currentTimeMillis()}",
+                timestamp = timeNow,
+                word = word,
+                language = entry?.language ?: if (word.any { it in 'ა'..'ჰ' }) "GEORGIAN" else "ENGLISH",
+                confidencePct = conf,
+                category = category,
+                phonemeTrace = phonemeTrace
+            )
+
+            val candidates = generateWordCandidates(word, category)
+
+            current.copy(
+                wordDecoder = prevDecoder.copy(
+                    currentDecodedWord = word,
+                    confidencePct = conf,
+                    currentPhonemes = phonemes,
+                    candidateWords = candidates,
+                    accumulatedSentence = newAcc,
+                    recentWords = (listOf(newHistoryItem) + prevDecoder.recentWords).take(30),
+                    internalSpeechVpuFrequencyHz = emgHz,
+                    lastActionExecuted = "დეკოდირებულია: '$word' (${conf}%)"
+                )
+            )
+        }
+    }
+
+    fun clearDecodedSentence() {
+        _uiState.update { current ->
+            current.copy(
+                wordDecoder = current.wordDecoder.copy(
+                    accumulatedSentence = "",
+                    lastActionExecuted = "ნაკადი გასუფთავებულია"
+                )
+            )
+        }
+    }
+
+    private fun generateWordCandidates(targetWord: String, category: String): List<DecodedWordCandidate> {
+        val database = com.example.service.GeorgianNeuroLinguisticEngine.MIND_LEXICON_DATABASE
+        val pool = database.filter { it.word != targetWord && (category == "ALL" || it.category == category) }
+            .ifEmpty { database.filter { it.word != targetWord } }
+            .shuffled()
+            .take(3)
+
+        val topCandidate = DecodedWordCandidate(
+            word = targetWord,
+            probabilityPct = (94..99).random(),
+            category = category,
+            phonemes = com.example.service.GeorgianNeuroLinguisticEngine.getPhonemesForString(targetWord).joinToString("-"),
+            latencyMs = -120
+        )
+
+        var remainingProb = 100 - topCandidate.probabilityPct
+        val otherCandidates = pool.mapIndexed { index, item ->
+            val prob = if (index == pool.size - 1) remainingProb.coerceAtLeast(1) else (remainingProb * 0.6).toInt().coerceAtLeast(1)
+            remainingProb -= prob
+            DecodedWordCandidate(
+                word = item.word,
+                probabilityPct = prob,
+                category = item.category,
+                phonemes = item.phonemes.joinToString("-"),
+                latencyMs = (index + 1) * 35
+            )
+        }
+
+        return listOf(topCandidate) + otherCandidates
+    }
+
+    fun cycleNextDecodedWord() {
+        val category = _uiState.value.wordDecoder.activeLexiconCategory
+        val database = com.example.service.GeorgianNeuroLinguisticEngine.MIND_LEXICON_DATABASE
+        val pool = database.filter { category == "ALL" || it.category == category }
+            .ifEmpty { database }
+        val randomEntry = pool.random()
+        injectDecodedWord(randomEntry.word, randomEntry.category)
+    }
+
+    // --- SUBJECT RECOGNITION & ISOLATION METHODS ---
+
+    fun setActiveSubject(personId: String) {
+        _uiState.update { current ->
+            val profile = current.subjectRecognition.profiles.find { it.id == personId }
+            val updatedProfiles = current.subjectRecognition.profiles.map {
+                it.copy(isTargetLocked = (it.id == personId))
+            }
+            val newVpuHz = profile?.baseEmgFrequencyHz ?: 142.0f
+
+            current.copy(
+                subjectRecognition = current.subjectRecognition.copy(
+                    activePersonId = personId,
+                    detectedPersonId = personId,
+                    recognitionConfidencePct = (96..99).random(),
+                    profiles = updatedProfiles
+                ),
+                wordDecoder = current.wordDecoder.copy(
+                    internalSpeechVpuFrequencyHz = newVpuHz,
+                    lastActionExecuted = "ფოკუსი გადაერთო სუბიექტზე: ${profile?.name ?: personId}"
+                )
+            )
+        }
+    }
+
+    fun toggleTargetLock() {
+        _uiState.update { current ->
+            val nextLock = !current.subjectRecognition.isLockActive
+            current.copy(
+                subjectRecognition = current.subjectRecognition.copy(
+                    isLockActive = nextLock
+                )
+            )
+        }
+    }
+
+    fun toggleContaminationShield() {
+        _uiState.update { current ->
+            val nextState = !current.subjectRecognition.isContaminationShieldActive
+            current.copy(
+                subjectRecognition = current.subjectRecognition.copy(
+                    isContaminationShieldActive = nextState
+                )
+            )
+        }
+    }
+
+    fun toggleAutoSwitchSubject() {
+        _uiState.update { current ->
+            val nextState = !current.subjectRecognition.autoSwitchSubjectEnabled
+            current.copy(
+                subjectRecognition = current.subjectRecognition.copy(
+                    autoSwitchSubjectEnabled = nextState
+                )
+            )
+        }
+    }
+
+    fun simulateDetectedSubjectChange(detectedPersonId: String) {
+        _uiState.update { current ->
+            val isMatching = (detectedPersonId == current.subjectRecognition.activePersonId)
+            val confidence = if (isMatching) (95..99).random() else (65..82).random()
+            val profile = current.subjectRecognition.profiles.find { it.id == detectedPersonId }
+
+            val newActive = if (current.subjectRecognition.autoSwitchSubjectEnabled) detectedPersonId else current.subjectRecognition.activePersonId
+
+            current.copy(
+                subjectRecognition = current.subjectRecognition.copy(
+                    detectedPersonId = detectedPersonId,
+                    activePersonId = newActive,
+                    recognitionConfidencePct = confidence,
+                    biometricGripMatchPct = if (isMatching) (94..99).random() else (45..70).random(),
+                    faceGazeMatchPct = if (isMatching) (96..99).random() else (50..75).random(),
+                    inEarImpedanceMatchPct = if (isMatching) (93..98).random() else (40..65).random(),
+                    vocalTractResonanceMatchPct = if (isMatching) (95..99).random() else (42..68).random()
+                ),
+                wordDecoder = current.wordDecoder.copy(
+                    lastActionExecuted = if (isMatching) {
+                        "სუბიექტი დადასტურებულია: ${profile?.name}"
+                    } else {
+                        "⚠️ აღმოჩენილია უცხო სუბიექტი: ${profile?.name} (მონაცემთა ფარი აქტიურია)"
+                    }
+                )
+            )
+        }
+    }
+
+    fun addNewSubjectProfile(name: String, title: String) {
+        if (name.isBlank()) return
+        val newId = "person_${System.currentTimeMillis()}"
+        val emojis = listOf("👩‍💼", "👨‍💻", "🧑‍🔬", "👩‍🎨", "🧑‍🚀", "👤")
+        val randomEmoji = emojis.random()
+        val newProfile = PersonProfile(
+            id = newId,
+            name = name,
+            title = if (title.isBlank()) "დამატებითი სუბიექტი" else title,
+            avatarEmoji = randomEmoji,
+            isTargetLocked = false,
+            baseEmgFrequencyHz = (120..175).random().toFloat()
+        )
+        _uiState.update { current ->
+            current.copy(subjectRecognition = current.subjectRecognition.copy(profiles = current.subjectRecognition.profiles + newProfile))
+        }
+    }
+
+    // --- PRE-MOTOR WORD PREDICTION & DATA ANALYTICS METHODS ---
+
+    fun togglePreMotorPredictor() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isPreMotorPredictorActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isPreMotorPredictorActive = nextState,
+                    lastAppliedPrediction = if (nextState) "პრემოტორული წინასწარმეტყველება გააქტიურდა (-320ms)" else "პრემოტორული ძრავი დაპაუზებულია"
+                )
+            )
+        }
+    }
+
+    fun applyBranchPrediction(branchId: String) {
+        val current = _uiState.value
+        val branch = current.wordPrediction.branches.find { it.id == branchId } ?: return
+        
+        injectDecodedWord(branch.word, branch.category)
+
+        // Generate next branches following the applied word
+        val pool = listOf(
+            WordBranchPrediction("b_${System.currentTimeMillis()}_1", "შემდეგი_ეტაპი", (90..98).random(), -(280..340).random(), "DEV", "არსებითი სახელი", "ნაკადის ლოგიკური გაგრძელება", (25..40).random()),
+            WordBranchPrediction("b_${System.currentTimeMillis()}_2", "დადასტურებულია", (82..92).random(), -(260..310).random(), "COMMANDS", "შედეგი", "მაღალი ალბათობის ფონემა", (20..35).random()),
+            WordBranchPrediction("b_${System.currentTimeMillis()}_3", "ოპტიმიზაცია", (75..88).random(), -(220..280).random(), "DEV", "მოქმედება", "სუბვოკალური იმპულსი", (30..45).random()),
+            WordBranchPrediction("b_${System.currentTimeMillis()}_4", "სწრაფად", (68..80).random(), -(190..240).random(), "COMMON", "ზმნიზედა", "კოგნიტური აჩქარება", (15..28).random())
+        )
+
+        _uiState.update { state ->
+            val newTotal = state.wordPrediction.totalWordsPredictedAhead + 1
+            val newHistory = (state.wordPrediction.accuracyTrajectory + (95..99).random()).takeLast(6)
+            state.copy(
+                wordPrediction = state.wordPrediction.copy(
+                    branches = pool,
+                    activeFocusWordCandidate = pool.first().word,
+                    totalWordsPredictedAhead = newTotal,
+                    accuracyTrajectory = newHistory,
+                    lastAppliedPrediction = "⚡ ავტო-დასრულება: '${branch.word}' (${branch.phonemeLookaheadMs}ms წინასწარ)"
+                )
+            )
+        }
+    }
+
+    fun regenerateWordPredictionBranches() {
+        val wordSets = listOf(
+            listOf(
+                WordBranchPrediction("b1", "დავიწყოთ", 96, -340, "COMMANDS", "ზმნა (დაწყება)", "სუბვოკალური 142Hz პიკი", 28),
+                WordBranchPrediction("b2", "გავაანალიზოთ", 89, -300, "DEV", "ზმნა (ანალიზი)", "ტვინის ალფა/ბეტა კორელაცია", 44),
+                WordBranchPrediction("b3", "შევინახოთ", 81, -260, "COMMANDS", "ზმნა (შენახვა)", "მზერის ფიქსაცია ეკრანზე", 22),
+                WordBranchPrediction("b4", "დავაექსპორტოთ", 73, -210, "DEV", "მოქმედება", "ხელის მიკრო-ტრემორის იმპულსი", 35)
+            ),
+            listOf(
+                WordBranchPrediction("b1", "არქიტექტურა", 95, -330, "DEV", "არსებითი სახელი", "ღრმა ფოკუსის კონტექსტი", 46),
+                WordBranchPrediction("b2", "გავასუფთაოთ", 88, -290, "COMMANDS", "მოქმედება", "ხორხის კუნთის მიკრო-დაჭიმულობა", 31),
+                WordBranchPrediction("b3", "შედეგი", 82, -250, "COMMON", "შედეგი", "სემანტიკური მარკოვის ჯაჭვი", 19),
+                WordBranchPrediction("b4", "გადავამოწმოთ", 75, -200, "DEV", "ვერიფიკაცია", "პრემოტორული მზაობის პოტენციალი", 38)
+            )
+        )
+        val selectedSet = wordSets.random()
+        _uiState.update { current ->
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    branches = selectedSet,
+                    activeFocusWordCandidate = selectedSet.first().word,
+                    readinessPotentialLeadTimeMs = (300..360).random(),
+                    currentReadinessSpikeMicroVolts = -(16.0f + (0..60).random() / 10f),
+                    predictionConfidenceScorePct = (94..99).random()
+                )
+            )
+        }
+    }
+
+    fun toggleMarkovContextLearning() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isMarkovContextLearningActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isMarkovContextLearningActive = nextState,
+                    lastAppliedPrediction = if (nextState) "🧠 მარკოვის კონტექსტური დასწავლა გააქტიურებულია" else "მარკოვის მეხსიერება დაპაუზებულია"
+                )
+            )
+        }
+    }
+
+    fun toggleGazeDwellSelection() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isGazeDwellSelectionActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isGazeDwellSelectionActive = nextState,
+                    lastAppliedPrediction = if (nextState) "👁️ მზერით ფიქსაციის ავტო-არჩევა (200ms Dwell) ჩართულია" else "მზერით არჩევა გამორთულია"
+                )
+            )
+        }
+    }
+
+    fun toggleBilingualAutoFlip() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isBilingualAutoFlipActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isBilingualAutoFlipActive = nextState,
+                    lastAppliedPrediction = if (nextState) "🌐 ორენოვანი (GE/EN) ავტო-ადაპტაცია აქტიურია" else "ორენოვანი ფლიპი გამორთულია"
+                )
+            )
+        }
+    }
+
+    fun learnNewMarkovTransition(previousWord: String, nextWord: String) {
+        if (previousWord.isBlank() || nextWord.isBlank()) return
+        _uiState.update { current ->
+            val existingList = current.wordPrediction.markovMemoryChain
+            val found = existingList.find { it.previousWord == previousWord && it.predictedNextWord == nextWord }
+            val updatedList = if (found != null) {
+                existingList.map {
+                    if (it.previousWord == previousWord && it.predictedNextWord == nextWord) {
+                        it.copy(frequencyScore = it.frequencyScore + 1, confidencePct = minOf(99, it.confidencePct + 1))
+                    } else it
+                }
+            } else {
+                existingList + MarkovLearnedTransition(previousWord, nextWord, 1, 88, -(280..340).random())
+            }
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    markovMemoryChain = updatedList,
+                    lastAppliedPrediction = "🔗 მარკოვის ჯაჭვი დასწავლილია: '$previousWord' ➔ '$nextWord'"
+                )
+            )
+        }
     }
 
     private var lastTapTimestamp = System.currentTimeMillis()

@@ -43,9 +43,12 @@ import com.example.ui.theme.NeuralSurface
 import com.example.ui.theme.NeuralTextPrimary
 import com.example.ui.theme.NeuralTextSecondary
 
+import com.example.viewmodel.SubjectRecognitionState
+
 @Composable
 fun HeaderView(
     isSyncing: Boolean,
+    subjectState: SubjectRecognitionState? = null,
     onMasterToggleClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
@@ -71,13 +74,33 @@ fun HeaderView(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = if (isSyncing) "● ნეირონული კავშირი აქტიურია (ფონური რეჟიმი)" else "○ ნეირონული კავშირი მოლოდინში",
-                    color = if (isSyncing) NeuralAccent else NeuralTextSecondary,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.8.sp
-                )
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = if (isSyncing) "● ნეირონული კავშირი აქტიურია" else "○ მოლოდინში",
+                        color = if (isSyncing) NeuralAccent else NeuralTextSecondary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.8.sp
+                    )
+
+                    if (subjectState != null) {
+                        val activeP = subjectState.profiles.find { it.id == subjectState.activePersonId }
+                        val isMatched = subjectState.activePersonId == subjectState.detectedPersonId
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(if (isMatched) Color(0xFF00FFB2).copy(alpha = 0.15f) else Color(0xFFFF9800).copy(alpha = 0.2f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = if (isMatched) "🔒 ${activeP?.name?.take(10)}" else "⚠️ MISMATCH",
+                                color = if (isMatched) Color(0xFF00FFB2) else Color(0xFFFF9800),
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(2.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(

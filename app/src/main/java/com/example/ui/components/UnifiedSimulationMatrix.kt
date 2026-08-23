@@ -105,7 +105,25 @@ data class UnifiedSimulationActions(
     val onSetEntrainmentMode: (String) -> Unit = {},
     val onToggleCamera: () -> Unit = {},
     val onToggleEarbuds: () -> Unit = {},
-    val onRecalibrateEarbuds: () -> Unit = {}
+    val onRecalibrateEarbuds: () -> Unit = {},
+    val onToggleWordDecoding: () -> Unit = {},
+    val onSetWordDecoderCategory: (String) -> Unit = {},
+    val onInjectWordDecoderItem: (String, String) -> Unit = { _, _ -> },
+    val onClearWordDecoderSentence: () -> Unit = {},
+    val onCycleNextWordDecoderItem: () -> Unit = {},
+    val onSelectActiveSubject: (String) -> Unit = {},
+    val onToggleTargetLock: () -> Unit = {},
+    val onToggleContaminationShield: () -> Unit = {},
+    val onToggleAutoSwitch: () -> Unit = {},
+    val onSimulateDetectedChange: (String) -> Unit = {},
+    val onAddNewSubject: (String, String) -> Unit = { _, _ -> },
+    val onTogglePreMotorPredictor: () -> Unit = {},
+    val onApplyBranchPrediction: (String) -> Unit = {},
+    val onRegeneratePredictionBranches: () -> Unit = {},
+    val onToggleMarkovContext: () -> Unit = {},
+    val onToggleGazeDwell: () -> Unit = {},
+    val onToggleBilingual: () -> Unit = {},
+    val onLearnMarkovPair: (String, String) -> Unit = { _, _ -> }
 )
 
 @Composable
@@ -153,6 +171,7 @@ fun UnifiedSimulationMatrix(
     val realSensors = uiState.realSensors
     val cameraGaze = uiState.cameraGaze
     val earbudSensor = uiState.earbudSensor
+    val wordDecoder = uiState.wordDecoder
     val enhancedMetrics = uiState.enhancedMetrics
     val isContinuousThoughtActive = uiState.isContinuousThoughtStreamActive
     val lastThoughtUpdated = uiState.lastThoughtUpdatedTimestamp
@@ -182,6 +201,26 @@ fun UnifiedSimulationMatrix(
     val onToggleCamera = actions.onToggleCamera
     val onToggleEarbuds = actions.onToggleEarbuds
     val onRecalibrateEarbuds = actions.onRecalibrateEarbuds
+    val onToggleWordDecoding = actions.onToggleWordDecoding
+    val onSetWordDecoderCategory = actions.onSetWordDecoderCategory
+    val onInjectWordDecoderItem = actions.onInjectWordDecoderItem
+    val onClearWordDecoderSentence = actions.onClearWordDecoderSentence
+    val onCycleNextWordDecoderItem = actions.onCycleNextWordDecoderItem
+    val onSelectActiveSubject = actions.onSelectActiveSubject
+    val onToggleTargetLock = actions.onToggleTargetLock
+    val onToggleContaminationShield = actions.onToggleContaminationShield
+    val onToggleAutoSwitch = actions.onToggleAutoSwitch
+    val onSimulateDetectedChange = actions.onSimulateDetectedChange
+    val onAddNewSubject = actions.onAddNewSubject
+    val onTogglePreMotorPredictor = actions.onTogglePreMotorPredictor
+    val onApplyBranchPrediction = actions.onApplyBranchPrediction
+    val onRegeneratePredictionBranches = actions.onRegeneratePredictionBranches
+    val onToggleMarkovContext = actions.onToggleMarkovContext
+    val onToggleGazeDwell = actions.onToggleGazeDwell
+    val onToggleBilingual = actions.onToggleBilingual
+    val onLearnMarkovPair = actions.onLearnMarkovPair
+    val subjectState = uiState.subjectRecognition
+    val predictionState = uiState.wordPrediction
 
     var customThoughtPrompt by remember { mutableStateOf("") }
     var isActionExecuted by remember { mutableStateOf(false) }
@@ -495,9 +534,10 @@ fun UnifiedSimulationMatrix(
         )
 
         // Stream Category Filter Selector
-        var selectedCategory by remember { mutableStateOf("ALL") }
+        var selectedCategory by remember { mutableStateOf("WORDS") }
         val categoryChips = listOf(
-            "ALL" to "⚡ ყველა (11 ნაკადი)",
+            "WORDS" to "🗣️ სიტყვების გამოცნობა",
+            "ALL" to "⚡ ყველა (12 ნაკადი)",
             "BCI" to "🧠 BCI & სუბვოკალი",
             "SENSORS" to "📡 სენსორები & კამერა",
             "COGNITION" to "🧬 სემანტიკური გრაფი",
@@ -532,6 +572,35 @@ fun UnifiedSimulationMatrix(
                     )
                 }
             }
+        }
+
+        if (selectedCategory == "ALL" || selectedCategory == "WORDS" || selectedCategory == "BCI") {
+            // -------------------------------------------------------------
+            // 0. Direct Word Decoder & Subvocal Lexicon Engine
+            // -------------------------------------------------------------
+            DirectWordDecoderView(
+                wordDecoderState = wordDecoder,
+                subjectState = subjectState,
+                predictionState = predictionState,
+                onToggleLiveDecoding = onToggleWordDecoding,
+                onSetCategory = onSetWordDecoderCategory,
+                onInjectWord = onInjectWordDecoderItem,
+                onClearSentence = onClearWordDecoderSentence,
+                onCycleNextWord = onCycleNextWordDecoderItem,
+                onSelectActiveSubject = onSelectActiveSubject,
+                onToggleTargetLock = onToggleTargetLock,
+                onToggleContaminationShield = onToggleContaminationShield,
+                onToggleAutoSwitch = onToggleAutoSwitch,
+                onSimulateDetectedChange = onSimulateDetectedChange,
+                onAddNewSubject = onAddNewSubject,
+                onTogglePreMotorPredictor = onTogglePreMotorPredictor,
+                onApplyBranchPrediction = onApplyBranchPrediction,
+                onRegeneratePredictionBranches = onRegeneratePredictionBranches,
+                onToggleMarkovContext = onToggleMarkovContext,
+                onToggleGazeDwell = onToggleGazeDwell,
+                onToggleBilingual = onToggleBilingual,
+                onLearnMarkovPair = onLearnMarkovPair
+            )
         }
 
         if (selectedCategory == "ALL" || selectedCategory == "BCI") {
