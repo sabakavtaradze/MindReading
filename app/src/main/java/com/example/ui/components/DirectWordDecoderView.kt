@@ -522,6 +522,7 @@ fun DirectWordDecoderView(
                         "EMOTIONS" to "🧠 ემოციები",
                         "NEURO_SCIENCE" to "🔬 ნეირო-ტექნოლოგია",
                         "MORPHOLOGY_VERBS" to "🧬 ზმნები & კლასტერები",
+                        "SMART_HOME" to "🏠 ჭკვიანი სახლი",
                         "ENGLISH" to "🇺🇸 English"
                     )
 
