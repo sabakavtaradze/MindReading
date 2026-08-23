@@ -9,6 +9,7 @@ import com.example.data.DigitalTwinCheckpointEntity
 import com.example.data.DigitalTwinRepository
 import com.example.data.PredictionEntity
 import com.example.data.PredictionRepository
+import com.example.service.GeorgianNeuroLinguisticEngine
 import com.example.util.PermissionHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -1255,13 +1256,30 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         
         injectDecodedWord(branch.word, branch.category)
 
-        // Generate next branches following the applied word
-        val pool = listOf(
-            WordBranchPrediction("b_${System.currentTimeMillis()}_1", "შემდეგი_ეტაპი", (90..98).random(), -(280..340).random(), "DEV", "არსებითი სახელი", "ნაკადის ლოგიკური გაგრძელება", (25..40).random()),
-            WordBranchPrediction("b_${System.currentTimeMillis()}_2", "დადასტურებულია", (82..92).random(), -(260..310).random(), "COMMANDS", "შედეგი", "მაღალი ალბათობის ფონემა", (20..35).random()),
-            WordBranchPrediction("b_${System.currentTimeMillis()}_3", "ოპტიმიზაცია", (75..88).random(), -(220..280).random(), "DEV", "მოქმედება", "სუბვოკალური იმპულსი", (30..45).random()),
-            WordBranchPrediction("b_${System.currentTimeMillis()}_4", "სწრაფად", (68..80).random(), -(190..240).random(), "COMMON", "ზმნიზედა", "კოგნიტური აჩქარება", (15..28).random())
+        // Generate next branches following the applied word using real engine predictions!
+        val lastWord = branch.word
+        val candidates = GeorgianNeuroLinguisticEngine.predictBestCandidates(
+            previousWord = lastWord,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            circadianHour = 14,
+            stressLevel = if (current.wordPrediction.heartRateBpm > 85) 0.8f else 0.2f,
+            limit = 4
         )
+
+        val pool = candidates.mapIndexed { idx, entry ->
+            val prob = (98 - (idx * 6)).coerceAtLeast(65)
+            val rationale = if (entry.typicalNextWords.isNotEmpty()) "მარკოვის მიმდევრობა '$lastWord' ➔ '${entry.word}'" else "კონტექსტური რეზონანსი (${entry.category})"
+            WordBranchPrediction(
+                id = "b_${System.currentTimeMillis()}_$idx",
+                word = entry.word,
+                probabilityPct = prob,
+                phonemeLookaheadMs = -(240 + (idx * 25)),
+                category = entry.category,
+                linguisticGrammarRole = if (entry.category == "MORPHOLOGY_VERBS") "ზმნა (პოლისინთეზური)" else "სემანტიკური ერთეული",
+                semanticContextTrigger = rationale,
+                cognitiveLoadRequirementPct = 25 + (idx * 5)
+            )
+        }
 
         _uiState.update { state ->
             val newTotal = state.wordPrediction.totalWordsPredictedAhead + 1
@@ -1269,7 +1287,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             state.copy(
                 wordPrediction = state.wordPrediction.copy(
                     branches = pool,
-                    activeFocusWordCandidate = pool.first().word,
+                    activeFocusWordCandidate = pool.firstOrNull()?.word ?: branch.word,
                     totalWordsPredictedAhead = newTotal,
                     accuracyTrajectory = newHistory,
                     lastAppliedPrediction = "⚡ ავტო-დასრულება: '${branch.word}' (${branch.phonemeLookaheadMs}ms წინასწარ)"
@@ -1279,29 +1297,40 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun regenerateWordPredictionBranches() {
-        val wordSets = listOf(
-            listOf(
-                WordBranchPrediction("b1", "დავიწყოთ", 96, -340, "COMMANDS", "ზმნა (დაწყება)", "სუბვოკალური 142Hz პიკი", 28),
-                WordBranchPrediction("b2", "გავაანალიზოთ", 89, -300, "DEV", "ზმნა (ანალიზი)", "ტვინის ალფა/ბეტა კორელაცია", 44),
-                WordBranchPrediction("b3", "შევინახოთ", 81, -260, "COMMANDS", "ზმნა (შენახვა)", "მზერის ფიქსაცია ეკრანზე", 22),
-                WordBranchPrediction("b4", "დავაექსპორტოთ", 73, -210, "DEV", "მოქმედება", "ხელის მიკრო-ტრემორის იმპულსი", 35)
-            ),
-            listOf(
-                WordBranchPrediction("b1", "არქიტექტურა", 95, -330, "DEV", "არსებითი სახელი", "ღრმა ფოკუსის კონტექსტი", 46),
-                WordBranchPrediction("b2", "გავასუფთაოთ", 88, -290, "COMMANDS", "მოქმედება", "ხორხის კუნთის მიკრო-დაჭიმულობა", 31),
-                WordBranchPrediction("b3", "შედეგი", 82, -250, "COMMON", "შედეგი", "სემანტიკური მარკოვის ჯაჭვი", 19),
-                WordBranchPrediction("b4", "გადავამოწმოთ", 75, -200, "DEV", "ვერიფიკაცია", "პრემოტორული მზაობის პოტენციალი", 38)
-            )
+        val current = _uiState.value
+        val lastWord = current.wordDecoder.currentDecodedWord
+        val candidates = GeorgianNeuroLinguisticEngine.predictBestCandidates(
+            previousWord = lastWord,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            circadianHour = 14,
+            stressLevel = if (current.wordPrediction.heartRateBpm > 85) 0.8f else 0.2f,
+            limit = 4
         )
-        val selectedSet = wordSets.random()
-        _uiState.update { current ->
-            current.copy(
-                wordPrediction = current.wordPrediction.copy(
-                    branches = selectedSet,
-                    activeFocusWordCandidate = selectedSet.first().word,
+
+        val generatedBranches = candidates.mapIndexed { idx, entry ->
+            val prob = (96 - (idx * 5)).coerceAtLeast(70)
+            val rationale = if (entry.clusterSpeedupGainPct > 50) "თანხმოვანთა კლასტერი (+${entry.clusterSpeedupGainPct}% აჩქარება)" else "სუბვოკალური ${entry.emgFrequencyHz.toInt()}Hz სიგნალი"
+            WordBranchPrediction(
+                id = "b_${System.currentTimeMillis()}_$idx",
+                word = entry.word,
+                probabilityPct = prob,
+                phonemeLookaheadMs = -(280 + (idx * 20)),
+                category = entry.category,
+                linguisticGrammarRole = if (entry.category == "MORPHOLOGY_VERBS") "ზმნა (პოლისინთეზური)" else "სემანტიკური ერთეული",
+                semanticContextTrigger = rationale,
+                cognitiveLoadRequirementPct = 30 + (idx * 4)
+            )
+        }
+
+        _uiState.update { curr ->
+            curr.copy(
+                wordPrediction = curr.wordPrediction.copy(
+                    branches = generatedBranches,
+                    activeFocusWordCandidate = generatedBranches.firstOrNull()?.word ?: "შევამოწმოთ",
                     readinessPotentialLeadTimeMs = (300..360).random(),
                     currentReadinessSpikeMicroVolts = -(16.0f + (0..60).random() / 10f),
-                    predictionConfidenceScorePct = (94..99).random()
+                    predictionConfidenceScorePct = (94..99).random(),
+                    lastAppliedPrediction = "🧬 გენერირებულია ${generatedBranches.size} ალგორითმული ტოტი ქართული ლექსიკონიდან"
                 )
             )
         }
@@ -1585,7 +1614,12 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 "ჩვენ შევამოწმოთ სისტემის არქიტექტურა და გავუშვათ კომპილაცია",
                 "დავაკომიტოთ განახლებული ნეირო-მოდულები რეპოზიტორიაში",
                 "გავაანალიზოთ ბიომეტრიული სენსორების რეალურ დროში ნაკადი",
-                "სისტემა სრულ მზადყოფნაშია სუბვოკალური დეკოდირებისთვის"
+                "სისტემა სრულ მზადყოფნაშია სუბვოკალური დეკოდირებისთვის",
+                "გადავამოწმოთ ელექტროენცეფალოგრამის ალფა და გამა რიტმის სინქრონიზაცია",
+                "დავასინთეზოთ ნეირონული მოდელი და დავაკონფიგურიროთ პარამეტრები",
+                "შევაფასოთ კოგნიტური დატვირთვა და გულისცემის ვარიაბელობა",
+                "ავტომატურად გავაუმჯობესოთ ფონემათა სუბვოკალური ამოცნობის სიზუსტე",
+                "დავატრენინგოთ ნეირონული ქსელი ქართული ენის მორფოლოგიურ ბაზაზე"
             )
             val nextSentence = candidateSentences.random()
             val conf = (97..100).random()
