@@ -171,7 +171,12 @@ fun NeuroSyncApp(
                                 onToggleMarkovContext = { viewModel.toggleMarkovContextLearning() },
                                 onToggleGazeDwell = { viewModel.toggleGazeDwellSelection() },
                                 onToggleBilingual = { viewModel.toggleBilingualAutoFlip() },
-                                onLearnMarkovPair = { prev, next -> viewModel.learnNewMarkovTransition(prev, next) }
+                                onLearnMarkovPair = { prev, next -> viewModel.learnNewMarkovTransition(prev, next) },
+                                onCycleScreenContext = { viewModel.cycleAppScreenContext() },
+                                onToggleHrvCompensation = { viewModel.toggleHrvStressCompensation() },
+                                onTogglePhoneticSnap = { viewModel.togglePhoneticNoiseSnap() },
+                                onSimulateBioStress = { viewModel.simulateDynamicBioStress() },
+                                onUpdateWeights = { ngram, time, bio, ctx -> viewModel.updateFusionWeights(ngram, time, bio, ctx) }
                             )
                         }
                         NeuroTab.UNIFIED_MATRIX -> {
@@ -219,6 +224,20 @@ fun NeuroSyncApp(
                                     onToggleGazeDwell = { viewModel.toggleGazeDwellSelection() },
                                     onToggleBilingual = { viewModel.toggleBilingualAutoFlip() },
                                     onLearnMarkovPair = { prev, next -> viewModel.learnNewMarkovTransition(prev, next) },
+                                    onCycleScreenContext = { viewModel.cycleAppScreenContext() },
+                                    onToggleHrvCompensation = { viewModel.toggleHrvStressCompensation() },
+                                    onTogglePhoneticSnap = { viewModel.togglePhoneticNoiseSnap() },
+                                    onToggleMicroSaccade = { viewModel.toggleMicroSaccadeAnticipation() },
+                                    onToggleNeuroGrammar = { viewModel.toggleNeuroGrammarTransformer() },
+                                    onToggleEnergyPreserver = { viewModel.toggleCognitiveEnergyPreserver() },
+                                    onTogglePhonemeCompression = { viewModel.toggleSubvocalPhonemeCompression() },
+                                    onToggle3DNeuroSpatial = { viewModel.toggle3DNeuroSpatialFocusMap() },
+                                    onToggleAffectiveTone = { viewModel.toggleAffectiveToneStylizer() },
+                                    onCycleAffectiveTone = { viewModel.cycleAffectiveTone() },
+                                    onToggleUnifiedEngine = { viewModel.toggleUnifiedIntelligenceEngine() },
+                                    onSynthesizeUnifiedThought = { viewModel.synthesizeUnifiedThought() },
+                                    onSimulateBioStress = { viewModel.simulateDynamicBioStress() },
+                                    onUpdateWeights = { ngram, time, bio, ctx -> viewModel.updateFusionWeights(ngram, time, bio, ctx) },
                                     onToggleCamera = {
                                         if (uiState.cameraGaze.isCameraActive) {
                                             viewModel.stopCameraGazeTracking()

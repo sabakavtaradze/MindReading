@@ -391,6 +391,37 @@ fun SubjectRecognitionCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
+                        text = "🤖 ავტომატური ბიომეტრიული ამოცნობა (Auto-Detect)",
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = subjectState.detectionStatusLabel,
+                        color = Color(0xFF00FFB2),
+                        fontSize = 9.sp
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFF00FFB2).copy(alpha = 0.15f))
+                        .border(1.dp, Color(0xFF00FFB2).copy(alpha = 0.4f), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text("ავტომატური", color = Color(0xFF00FFB2), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+
+            // Protection Shields & Auto-Switch Toggles
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
                         text = "🛡️ მონაცემთა იზოლაციის ფარი (Data Shield)",
                         color = Color.White,
                         fontSize = 11.sp,

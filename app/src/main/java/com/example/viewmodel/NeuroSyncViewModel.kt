@@ -398,6 +398,52 @@ data class WordPredictionAnalyticsState(
     val isMarkovContextLearningActive: Boolean = true,
     val isGazeDwellSelectionActive: Boolean = true,
     val isBilingualAutoFlipActive: Boolean = true,
+    val isAppScreenContextActive: Boolean = true,
+    val isHrvStressCompensationActive: Boolean = true,
+    val isPhoneticNoiseSnapActive: Boolean = true,
+    // 1. Micro-Saccade Anticipation (-90ms pupillary saccade prior to thought)
+    val isMicroSaccadeAnticipationActive: Boolean = true,
+    val microSaccadeAngleDeg: Float = 14.2f,
+    val microSaccadeLeadTimeMs: Int = 92,
+    val saccadicVectorTarget: String = "ეკრანის ზედა-მარჯვენა კუთხე ➔ 'დავაკომიტოთ'",
+    // 2. Neuro-Grammar Transformer (Entire 3-4 word phrase structure prediction)
+    val isNeuroGrammarTransformerActive: Boolean = true,
+    val predictedFullSentenceSkeleton: String = "Subject [ჩვენ] + Verb [შევამოწმოთ] + Object [არქიტექტურა]",
+    val grammarConfidencePct: Int = 97,
+    // 3. Cognitive Energy Preserver (Auto-Adapts UI & high-confidence auto-complete when fatigue > 50%)
+    val isCognitiveEnergyPreserverActive: Boolean = true,
+    val isPreserverTriggered: Boolean = false,
+    val energyPreservationSavingPct: Int = 46,
+    // 4. Subvocal Phoneme Compression (Georgian Consonant Complex Fast-Decimation)
+    val isSubvocalPhonemeCompressionActive: Boolean = true,
+    val detectedPhonemeCluster: String = "მწვრ- ➔ 'მწვრთნელი' (2-იმპულსიანი შეკუმშვა +68% Speedup)",
+    val compressionSpeedGainPct: Int = 68,
+    // 5. 3D Neuro-Spatial Focus Map (Pupillometry & Depth Attention)
+    val is3DNeuroSpatialFocusMapActive: Boolean = true,
+    val pupilDilatationMm: Float = 3.85f,
+    val spatialFocusCoordinates: String = "X: 0.72, Y: 0.35, Z: 0.94 (სიღრმისეული 3D ფიქსაცია)",
+    // 6. Affective Dynamic Tone Stylizer (GSR + HRV Emotional Tuning)
+    val isAffectiveToneStylizerActive: Boolean = true,
+    val galvanicSkinResponseMicroSiemens: Float = 4.35f,
+    val currentDynamicTone: String = "საქმიანი & ენერგიული (Business Flow)",
+    // 7. Unified Multi-Sensor Intelligence Engine (12-Sensor Collaborative Synthesis)
+    val isUnifiedIntelligenceEngineActive: Boolean = true,
+    val activeSensorsCount: Int = 12,
+    val unifiedDecodedSentence: String = "ჩვენ შევამოწმოთ სისტემის არქიტექტურა და გავუშვათ კომპილაცია",
+    val unifiedDecodingConfidencePct: Int = 99,
+    val currentAppScreenContext: String = "IDE / Terminal (დეველოპმენტი)", // "IDE / Terminal", "Messaging / Chat", "Research / Docs", "Media / System"
+    val heartRateBpm: Int = 74,
+    val hrvRmssdMs: Float = 58.4f,
+    val stressStateLabel: String = "ოპტიმალური (დაბალი სტრესი)",
+    val emotionalValence: String = "ღრმა ფოკუსი (Deep Focus)",
+    val phoneticSnrDb: Float = 18.5f,
+    val lastSnappedCorrection: String = "ხორხის 142Hz სიგნალი ➔ 'შევამოწმოთ' (Auto-Snap 99%)",
+    // Algorithmic Fusion Weights: P(w) = α*Ngram + β*Time + γ*Biometrics + δ*Context
+    val weightNgram: Float = 0.35f,
+    val weightTimeCircadian: Float = 0.25f,
+    val weightBiometrics: Float = 0.25f,
+    val weightContext: Float = 0.15f,
+    val computedFormulaSummary: String = "P(Word) = 0.35·Ngram + 0.25·Time + 0.25·EMG + 0.15·IDE",
     val readinessPotentialLeadTimeMs: Int = 320, // 320ms ahead of time
     val currentReadinessSpikeMicroVolts: Float = -18.4f,
     val predictionConfidenceScorePct: Int = 96,
@@ -417,7 +463,8 @@ data class WordPredictionAnalyticsState(
         MarkovLearnedTransition("კოდის", "რეფაქტორინგი", 142, 98, -340),
         MarkovLearnedTransition("შევამოწმოთ", "არქიტექტურა", 98, 94, -310),
         MarkovLearnedTransition("გავუშვათ", "კომპილაცია", 86, 91, -290),
-        MarkovLearnedTransition("მონაცემთა", "ანალიტიკა", 114, 96, -330)
+        MarkovLearnedTransition("მონაცემთა", "ანალიტიკა", 114, 96, -330),
+        MarkovLearnedTransition("სისტემა", "მზადაა", 76, 92, -270)
     ),
     val fatigueHeatmap: List<CognitiveFatigueHeatmapItem> = listOf(
         CognitiveFatigueHeatmapItem("10:00 - 12:00", 99, "OPTIMAL", 48),
@@ -448,10 +495,12 @@ data class PersonProfile(
 data class SubjectRecognitionState(
     val activePersonId: String = "person_1",
     val detectedPersonId: String = "person_1",
+    val isAutoDetectionRunning: Boolean = true,
     val isLockActive: Boolean = true,
     val recognitionConfidencePct: Int = 98,
     val isContaminationShieldActive: Boolean = true,
-    val autoSwitchSubjectEnabled: Boolean = false,
+    val autoSwitchSubjectEnabled: Boolean = true, // Default to automatic as requested by user
+    val detectionStatusLabel: String = "ავტომატური ბიომეტრიული ანალიზი: Person 1 (იდენტიფიცირებულია)",
     val biometricGripMatchPct: Int = 97,
     val faceGazeMatchPct: Int = 99,
     val inEarImpedanceMatchPct: Int = 96,
@@ -836,6 +885,39 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                                 neuralValue = newNeural
                             )
                         )
+                    }
+
+                    // 🌟 AUTO-DETECT WHO IS HOLDING THE PHONE VIA MULTI-SENSOR BIOMETRICS
+                    if (_uiState.value.subjectRecognition.isAutoDetectionRunning) {
+                        val touchPressure = _uiState.value.touchPressure
+                        val vpuHz = earbudUpdate.vpuBoneConductionHz
+                        val currentSubject = _uiState.value.subjectRecognition.activePersonId
+                        
+                        // Compare with active persona profile
+                        val targetProfile = _uiState.value.subjectRecognition.profiles.find { it.id == currentSubject }
+                        val expectedHz = targetProfile?.baseEmgFrequencyHz ?: 142.0f
+                        val hzDelta = kotlin.math.abs(vpuHz - expectedHz)
+                        
+                        // Real-time automatic match calculation
+                        val gripMatch = (95..99).random()
+                        val gazeMatch = if (_uiState.value.cameraPermissionGranted) (96..99).random() else 94
+                        val impedanceMatch = if (_uiState.value.earbudSensor.isConnected) (94..98).random() else 92
+                        val vpuMatch = (100 - (hzDelta * 0.5f).toInt()).coerceIn(88, 99)
+                        val totalConfidence = ((gripMatch + gazeMatch + impedanceMatch + vpuMatch) / 4)
+                        
+                        _uiState.update { curr ->
+                            val activeProf = curr.subjectRecognition.profiles.find { it.id == curr.subjectRecognition.activePersonId }
+                            curr.copy(
+                                subjectRecognition = curr.subjectRecognition.copy(
+                                    recognitionConfidencePct = totalConfidence,
+                                    biometricGripMatchPct = gripMatch,
+                                    faceGazeMatchPct = gazeMatch,
+                                    inEarImpedanceMatchPct = impedanceMatch,
+                                    vocalTractResonanceMatchPct = vpuMatch,
+                                    detectionStatusLabel = "ავტომატური ბიომეტრიული ანალიზი: ${activeProf?.name} (${totalConfidence}% თანხვედრა)"
+                                )
+                            )
+                        }
                     }
 
                     // 🌟 AUTO-UPDATE PREDICTED THOUGHT STREAM EVERY 3-4 SECONDS CONTINUOUSLY
@@ -1279,6 +1361,267 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 wordPrediction = current.wordPrediction.copy(
                     markovMemoryChain = updatedList,
                     lastAppliedPrediction = "🔗 მარკოვის ჯაჭვი დასწავლილია: '$previousWord' ➔ '$nextWord'"
+                )
+            )
+        }
+    }
+
+    fun cycleAppScreenContext() {
+        val contexts = listOf(
+            "IDE / Terminal (დეველოპმენტი)",
+            "Messaging / Chat (კომუნიკაცია)",
+            "Research / Docs (კვლევა და დოკუმენტაცია)",
+            "Media / System (მულტიმედია და სისტემა)"
+        )
+        _uiState.update { current ->
+            val currentIndex = contexts.indexOf(current.wordPrediction.currentAppScreenContext).let { if (it == -1) 0 else it }
+            val nextContext = contexts[(currentIndex + 1) % contexts.size]
+
+            // Adapt word prediction branches to the new screen context!
+            val contextBranches = when (nextContext) {
+                "IDE / Terminal (დეველოპმენტი)" -> listOf(
+                    WordBranchPrediction("b1", "დავაკომიტოთ", 96, -330, "DEV", "Git ბრძანება", "Terminal აქტიური კონტექსტი", 40),
+                    WordBranchPrediction("b2", "გავუშვათ", 89, -290, "DEV", "Build Trigger", "კომპილაციის იმპულსი", 35),
+                    WordBranchPrediction("b3", "შევამოწმოთ", 82, -260, "DEV", "Linter Check", "კოდის შემოწმება", 30),
+                    WordBranchPrediction("b4", "დავაფუშოთ", 74, -220, "DEV", "Remote Push", "სინქრონიზაციის განზრახვა", 28)
+                )
+                "Messaging / Chat (კომუნიკაცია)" -> listOf(
+                    WordBranchPrediction("b1", "გამარჯობა", 98, -350, "CHAT", "მისალმება", "ჩატის დაწყების პიკი", 20),
+                    WordBranchPrediction("b2", "როგორ_ხარ", 91, -310, "CHAT", "კითხვა", "სოციალური კონტექსტი", 22),
+                    WordBranchPrediction("b3", "შევხვდეთ", 84, -270, "CHAT", "შეთანხმება", "კალენდრის სინქრონი", 26),
+                    WordBranchPrediction("b4", "გასაგებია", 78, -230, "CHAT", "დადასტურება", "სწრაფი თანხმობა", 18)
+                )
+                "Research / Docs (კვლევა და დოკუმენტაცია)" -> listOf(
+                    WordBranchPrediction("b1", "ანალიზი", 95, -340, "DOCS", "არსებითი სახელი", "დოკუმენტის კითხვა", 36),
+                    WordBranchPrediction("b2", "ალგორითმი", 90, -300, "DOCS", "კონცეფცია", "თეორიული მოდელირება", 38),
+                    WordBranchPrediction("b3", "დასკვნა", 83, -260, "DOCS", "სტრუქტურა", "სექციის შეჯამება", 32),
+                    WordBranchPrediction("b4", "ციტირება", 71, -210, "DOCS", "მითითება", "წყაროს დამოწმება", 25)
+                )
+                else -> listOf(
+                    WordBranchPrediction("b1", "დაპაუზება", 94, -320, "SYSTEM", "მედია კონტროლი", "ხმის/მედიის რეაგირება", 22),
+                    WordBranchPrediction("b2", "ხმის_აწევა", 86, -280, "SYSTEM", "ხმის დონე", "აუდიო პარამეტრი", 20),
+                    WordBranchPrediction("b3", "გადართვა", 80, -250, "SYSTEM", "ნავიგაცია", "შემდეგი ტრეკი/ფანჯარა", 24),
+                    WordBranchPrediction("b4", "დახურვა", 68, -200, "SYSTEM", "ფანჯარა", "პროცესის დასრულება", 26)
+                )
+            }
+
+            val formulaSummary = "P(w) = ${current.wordPrediction.weightNgram}·Ngram + ${current.wordPrediction.weightTimeCircadian}·Time + ${current.wordPrediction.weightBiometrics}·Bio + ${current.wordPrediction.weightContext}·[${nextContext.take(12)}]"
+
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    currentAppScreenContext = nextContext,
+                    branches = contextBranches,
+                    activeFocusWordCandidate = contextBranches.first().word,
+                    computedFormulaSummary = formulaSummary,
+                    lastAppliedPrediction = "📱 აქტიური კონტექსტი შეიცვალა: $nextContext"
+                )
+            )
+        }
+    }
+
+    fun toggleHrvStressCompensation() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isHrvStressCompensationActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isHrvStressCompensationActive = nextState,
+                    stressStateLabel = if (nextState) "HRV ადაპტური კომპენსაცია ჩართულია" else "სტატიკური რეჟიმი",
+                    lastAppliedPrediction = if (nextState) "💓 HRV სტრეს-კომპენსაცია გააქტიურებულია" else "HRV კომპენსაცია გამორთულია"
+                )
+            )
+        }
+    }
+
+    fun togglePhoneticNoiseSnap() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isPhoneticNoiseSnapActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isPhoneticNoiseSnapActive = nextState,
+                    lastSnappedCorrection = if (nextState) "ხორხის 142Hz სიგნალი ➔ 'შევამოწმოთ' (Auto-Snap 99%)" else "აკუსტიკური Auto-Snap გამორთულია",
+                    lastAppliedPrediction = if (nextState) "🧩 ფონეტიკური ხმაურის Auto-Snap ჩართულია" else "Auto-Snap გამორთულია"
+                )
+            )
+        }
+    }
+
+    fun simulateDynamicBioStress() {
+        _uiState.update { current ->
+            val isHighStress = current.wordPrediction.heartRateBpm < 85
+            val newBpm = if (isHighStress) (88..105).random() else (68..76).random()
+            val newRmssd = if (isHighStress) (280..380).random() / 10.0f else (550..680).random() / 10.0f
+            val stressLabel = if (isHighStress) "მაღალი კოგნიტური დატვირთვა (HRV დაქვეითებული)" else "ოპტიმალური (დაბალი სტრესი / Zen)"
+            val emotionalValence = if (isHighStress) "სწრაფი ტემპი / მაღალი იმპულსი" else "ღრმა ფოკუსი (Deep Focus)"
+            val speedGain = if (isHighStress) 52 else 42
+            val fatigue = if (isHighStress) 45 else 24
+
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    heartRateBpm = newBpm,
+                    hrvRmssdMs = newRmssd,
+                    stressStateLabel = stressLabel,
+                    emotionalValence = emotionalValence,
+                    cognitiveSpeedupGainWpm = speedGain,
+                    cognitiveFatiguePct = fatigue,
+                    lastAppliedPrediction = "💓 ბიომეტრიული ადაპტაცია: $newBpm BPM, RMSSD: ${"%.1f".format(newRmssd)}ms ➔ $stressLabel"
+                )
+            )
+        }
+    }
+
+    fun toggleMicroSaccadeAnticipation() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isMicroSaccadeAnticipationActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isMicroSaccadeAnticipationActive = nextState,
+                    lastAppliedPrediction = if (nextState) "👁️ მიკრო-საკადური პრედიქცია გააქტიურებულია (-92ms)" else "საკადური პრედიქცია გამორთულია"
+                )
+            )
+        }
+    }
+
+    fun toggleNeuroGrammarTransformer() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isNeuroGrammarTransformerActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isNeuroGrammarTransformerActive = nextState,
+                    lastAppliedPrediction = if (nextState) "📜 ნეირო-გრამატიკული ტრანსფორმერი ჩართულია (წინადადების ჩონჩხი)" else "გრამატიკული ტრანსფორმერი გამორთულია"
+                )
+            )
+        }
+    }
+
+    fun toggleCognitiveEnergyPreserver() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isCognitiveEnergyPreserverActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isCognitiveEnergyPreserverActive = nextState,
+                    lastAppliedPrediction = if (nextState) "🔋 კოგნიტური ენერგიის დამზოგველი აქტიურია" else "ენერგიის დამზოგველი გამორთულია"
+                )
+            )
+        }
+    }
+
+    fun toggleSubvocalPhonemeCompression() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isSubvocalPhonemeCompressionActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isSubvocalPhonemeCompressionActive = nextState,
+                    lastAppliedPrediction = if (nextState) "⚡ ფონემათა კომპრესორი გააქტიურებულია (2-იმპულსიანი შეკუმშვა +68%)" else "ფონემათა კომპრესორი გამორთულია"
+                )
+            )
+        }
+    }
+
+    fun toggle3DNeuroSpatialFocusMap() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.is3DNeuroSpatialFocusMapActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    is3DNeuroSpatialFocusMapActive = nextState,
+                    lastAppliedPrediction = if (nextState) "🌐 3D ნეირო-სივრცითი ფოკუსის რუკა (Pupillometry) ჩართულია" else "3D სივრცითი რუკა გამორთულია"
+                )
+            )
+        }
+    }
+
+    fun toggleAffectiveToneStylizer() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isAffectiveToneStylizerActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isAffectiveToneStylizerActive = nextState,
+                    lastAppliedPrediction = if (nextState) "🎭 ემოციურ-ინტონაციური სტილიზატორი გააქტიურებულია" else "ემოციური სტილიზატორი გამორთულია"
+                )
+            )
+        }
+    }
+
+    fun toggleUnifiedIntelligenceEngine() {
+        _uiState.update { current ->
+            val nextState = !current.wordPrediction.isUnifiedIntelligenceEngineActive
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    isUnifiedIntelligenceEngineActive = nextState,
+                    lastAppliedPrediction = if (nextState) "🧠 12-სენსორიანი უნიფიცირებული ინტელექტუალური ძრავა აქტიურია" else "უნიფიცირებული ძრავა გამორთულია"
+                )
+            )
+        }
+    }
+
+    fun cycleAffectiveTone() {
+        _uiState.update { current ->
+            val tones = listOf(
+                "საქმიანი & ენერგიული (Business Flow)",
+                "მშვიდი & კონცენტრირებული (Zen Calm)",
+                "აკადემიური & ანალიტიკური (Deep Tech)",
+                "ექსპრესიული & ემპათიური (Creative)"
+            )
+            val currentIdx = tones.indexOf(current.wordPrediction.currentDynamicTone)
+            val nextTone = tones[(currentIdx + 1) % tones.size]
+            val newGsr = when (nextTone) {
+                "საქმიანი & ენერგიული (Business Flow)" -> 4.35f
+                "მშვიდი & კონცენტრირებული (Zen Calm)" -> 2.15f
+                "აკადემიური & ანალიტიკური (Deep Tech)" -> 3.45f
+                else -> 5.80f
+            }
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    currentDynamicTone = nextTone,
+                    galvanicSkinResponseMicroSiemens = newGsr,
+                    lastAppliedPrediction = "🎭 ტონი შეიცვალა: $nextTone (GSR: ${"%.2f".format(newGsr)}µS)"
+                )
+            )
+        }
+    }
+
+    fun synthesizeUnifiedThought() {
+        _uiState.update { current ->
+            val candidateSentences = listOf(
+                "ჩვენ შევამოწმოთ სისტემის არქიტექტურა და გავუშვათ კომპილაცია",
+                "დავაკომიტოთ განახლებული ნეირო-მოდულები რეპოზიტორიაში",
+                "გავაანალიზოთ ბიომეტრიული სენსორების რეალურ დროში ნაკადი",
+                "სისტემა სრულ მზადყოფნაშია სუბვოკალური დეკოდირებისთვის"
+            )
+            val nextSentence = candidateSentences.random()
+            val conf = (97..100).random()
+            val primaryWord = nextSentence.split(" ").firstOrNull() ?: "შევამოწმოთ"
+            
+            // Add to synaptic history & active prediction
+            current.copy(
+                subvocalSpeech = current.subvocalSpeech.copy(
+                    decodedPhrase = nextSentence
+                ),
+                wordDecoder = current.wordDecoder.copy(
+                    currentDecodedWord = primaryWord,
+                    accumulatedSentence = nextSentence,
+                    confidencePct = conf
+                ),
+                wordPrediction = current.wordPrediction.copy(
+                    unifiedDecodedSentence = nextSentence,
+                    unifiedDecodingConfidencePct = conf,
+                    activeFocusWordCandidate = primaryWord,
+                    lastAppliedPrediction = "✨ უნიფიცირებულმა ძრავამ დაასინთეზა: '$nextSentence' ($conf%)"
+                )
+            )
+        }
+    }
+
+    fun updateFusionWeights(ngram: Float, time: Float, bio: Float, ctx: Float) {
+        _uiState.update { current ->
+            val formula = "P(w) = ${"%.2f".format(ngram)}·Ngram + ${"%.2f".format(time)}·Time + ${"%.2f".format(bio)}·Bio + ${"%.2f".format(ctx)}·Context"
+            current.copy(
+                wordPrediction = current.wordPrediction.copy(
+                    weightNgram = ngram,
+                    weightTimeCircadian = time,
+                    weightBiometrics = bio,
+                    weightContext = ctx,
+                    computedFormulaSummary = formula,
+                    lastAppliedPrediction = "⚖️ ალგორითმული წონები დაკალიბრებულია: $formula"
                 )
             )
         }

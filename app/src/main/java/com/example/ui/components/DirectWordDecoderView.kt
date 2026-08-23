@@ -90,6 +90,20 @@ fun DirectWordDecoderView(
     onToggleGazeDwell: (() -> Unit)? = null,
     onToggleBilingual: (() -> Unit)? = null,
     onLearnMarkovPair: ((String, String) -> Unit)? = null,
+    onCycleScreenContext: (() -> Unit)? = null,
+    onToggleHrvCompensation: (() -> Unit)? = null,
+    onTogglePhoneticSnap: (() -> Unit)? = null,
+    onToggleMicroSaccade: (() -> Unit)? = null,
+    onToggleNeuroGrammar: (() -> Unit)? = null,
+    onToggleEnergyPreserver: (() -> Unit)? = null,
+    onTogglePhonemeCompression: (() -> Unit)? = null,
+    onToggle3DNeuroSpatial: (() -> Unit)? = null,
+    onToggleAffectiveTone: (() -> Unit)? = null,
+    onCycleAffectiveTone: (() -> Unit)? = null,
+    onToggleUnifiedEngine: (() -> Unit)? = null,
+    onSynthesizeUnifiedThought: (() -> Unit)? = null,
+    onSimulateBioStress: (() -> Unit)? = null,
+    onUpdateWeights: ((Float, Float, Float, Float) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -122,7 +136,21 @@ fun DirectWordDecoderView(
                 onToggleMarkovContext = onToggleMarkovContext,
                 onToggleGazeDwell = onToggleGazeDwell,
                 onToggleBilingual = onToggleBilingual,
-                onLearnMarkovPair = onLearnMarkovPair
+                onLearnMarkovPair = onLearnMarkovPair,
+                onCycleScreenContext = onCycleScreenContext,
+                onToggleHrvCompensation = onToggleHrvCompensation,
+                onTogglePhoneticSnap = onTogglePhoneticSnap,
+                onToggleMicroSaccade = onToggleMicroSaccade,
+                onToggleNeuroGrammar = onToggleNeuroGrammar,
+                onToggleEnergyPreserver = onToggleEnergyPreserver,
+                onTogglePhonemeCompression = onTogglePhonemeCompression,
+                onToggle3DNeuroSpatial = onToggle3DNeuroSpatial,
+                onToggleAffectiveTone = onToggleAffectiveTone,
+                onCycleAffectiveTone = onCycleAffectiveTone,
+                onToggleUnifiedEngine = onToggleUnifiedEngine,
+                onSynthesizeUnifiedThought = onSynthesizeUnifiedThought,
+                onSimulateBioStress = onSimulateBioStress,
+                onUpdateWeights = onUpdateWeights
             )
         }
 

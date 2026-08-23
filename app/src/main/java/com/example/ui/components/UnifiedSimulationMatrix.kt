@@ -123,7 +123,21 @@ data class UnifiedSimulationActions(
     val onToggleMarkovContext: () -> Unit = {},
     val onToggleGazeDwell: () -> Unit = {},
     val onToggleBilingual: () -> Unit = {},
-    val onLearnMarkovPair: (String, String) -> Unit = { _, _ -> }
+    val onLearnMarkovPair: (String, String) -> Unit = { _, _ -> },
+    val onCycleScreenContext: () -> Unit = {},
+    val onToggleHrvCompensation: () -> Unit = {},
+    val onTogglePhoneticSnap: () -> Unit = {},
+    val onToggleMicroSaccade: () -> Unit = {},
+    val onToggleNeuroGrammar: () -> Unit = {},
+    val onToggleEnergyPreserver: () -> Unit = {},
+    val onTogglePhonemeCompression: () -> Unit = {},
+    val onToggle3DNeuroSpatial: () -> Unit = {},
+    val onToggleAffectiveTone: () -> Unit = {},
+    val onCycleAffectiveTone: () -> Unit = {},
+    val onToggleUnifiedEngine: () -> Unit = {},
+    val onSynthesizeUnifiedThought: () -> Unit = {},
+    val onSimulateBioStress: () -> Unit = {},
+    val onUpdateWeights: (Float, Float, Float, Float) -> Unit = { _, _, _, _ -> }
 )
 
 @Composable
@@ -219,6 +233,20 @@ fun UnifiedSimulationMatrix(
     val onToggleGazeDwell = actions.onToggleGazeDwell
     val onToggleBilingual = actions.onToggleBilingual
     val onLearnMarkovPair = actions.onLearnMarkovPair
+    val onCycleScreenContext = actions.onCycleScreenContext
+    val onToggleHrvCompensation = actions.onToggleHrvCompensation
+    val onTogglePhoneticSnap = actions.onTogglePhoneticSnap
+    val onToggleMicroSaccade = actions.onToggleMicroSaccade
+    val onToggleNeuroGrammar = actions.onToggleNeuroGrammar
+    val onToggleEnergyPreserver = actions.onToggleEnergyPreserver
+    val onTogglePhonemeCompression = actions.onTogglePhonemeCompression
+    val onToggle3DNeuroSpatial = actions.onToggle3DNeuroSpatial
+    val onToggleAffectiveTone = actions.onToggleAffectiveTone
+    val onCycleAffectiveTone = actions.onCycleAffectiveTone
+    val onToggleUnifiedEngine = actions.onToggleUnifiedEngine
+    val onSynthesizeUnifiedThought = actions.onSynthesizeUnifiedThought
+    val onSimulateBioStress = actions.onSimulateBioStress
+    val onUpdateWeights = actions.onUpdateWeights
     val subjectState = uiState.subjectRecognition
     val predictionState = uiState.wordPrediction
 
@@ -599,7 +627,21 @@ fun UnifiedSimulationMatrix(
                 onToggleMarkovContext = onToggleMarkovContext,
                 onToggleGazeDwell = onToggleGazeDwell,
                 onToggleBilingual = onToggleBilingual,
-                onLearnMarkovPair = onLearnMarkovPair
+                onLearnMarkovPair = onLearnMarkovPair,
+                onCycleScreenContext = onCycleScreenContext,
+                onToggleHrvCompensation = onToggleHrvCompensation,
+                onTogglePhoneticSnap = onTogglePhoneticSnap,
+                onToggleMicroSaccade = onToggleMicroSaccade,
+                onToggleNeuroGrammar = onToggleNeuroGrammar,
+                onToggleEnergyPreserver = onToggleEnergyPreserver,
+                onTogglePhonemeCompression = onTogglePhonemeCompression,
+                onToggle3DNeuroSpatial = onToggle3DNeuroSpatial,
+                onToggleAffectiveTone = onToggleAffectiveTone,
+                onCycleAffectiveTone = onCycleAffectiveTone,
+                onToggleUnifiedEngine = onToggleUnifiedEngine,
+                onSynthesizeUnifiedThought = onSynthesizeUnifiedThought,
+                onSimulateBioStress = onSimulateBioStress,
+                onUpdateWeights = onUpdateWeights
             )
         }
 
