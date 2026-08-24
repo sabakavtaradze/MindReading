@@ -35,6 +35,9 @@ class MainActivity : ComponentActivity() {
     ) { results ->
         results[Manifest.permission.RECORD_AUDIO]?.let {
             PermissionHelper.setMicGranted(this, it)
+            if (it) {
+                viewModel.startAudioListening()
+            }
         }
         results[Manifest.permission.CAMERA]?.let {
             PermissionHelper.setCameraGranted(this, it)
@@ -48,12 +51,16 @@ class MainActivity : ComponentActivity() {
             }
         }
         viewModel.refreshPermissions()
+        viewModel.startAllHardwareSensors(this)
         launchBackgroundServiceSafely()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Auto start hardware telemetry stream immediately
+        viewModel.startAllHardwareSensors(this)
 
         setContent {
             MyApplicationTheme {
@@ -71,6 +78,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         try {
             viewModel.refreshPermissions()
+            viewModel.startAllHardwareSensors(this)
         } catch (e: Throwable) {
             Log.e("MainActivity", "onResume refresh error", e)
         }
@@ -84,6 +92,14 @@ class MainActivity : ComponentActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             permsToRequest.add(Manifest.permission.CAMERA)
         }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.BODY_SENSORS) != PackageManager.PERMISSION_GRANTED) {
+            permsToRequest.add(Manifest.permission.BODY_SENSORS)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+                permsToRequest.add(Manifest.permission.ACTIVITY_RECOGNITION)
+            }
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 permsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
@@ -96,6 +112,7 @@ class MainActivity : ComponentActivity() {
             PermissionHelper.setCameraGranted(this, true)
             PermissionHelper.setNotificationsGranted(this, true)
             viewModel.refreshPermissions()
+            viewModel.startAllHardwareSensors(this)
             launchBackgroundServiceSafely()
         }
     }

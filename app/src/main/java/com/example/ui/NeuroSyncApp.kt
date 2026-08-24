@@ -281,11 +281,25 @@ fun NeuroSyncApp(
                                 speakerOutputDb = uiState.speakerOutputDb,
                                 motionTremor = uiState.motionTremor,
                                 heartRateBpm = uiState.heartRateBpm,
+                                realSensors = uiState.realSensors,
+                                realAudio = uiState.realAudio,
+                                cameraGaze = uiState.cameraGaze,
                                 onTapRegistered = { x, y -> viewModel.registerTouchTap(x, y) },
                                 onContextSelect = { viewModel.setAppContext(it) },
                                 onAudioDbChange = { viewModel.updateAudioDb(it) },
                                 onHeartRateChange = { viewModel.updateHeartRate(it) },
-                                onMotionTremorChange = { viewModel.updateMotionTremor(it) }
+                                onMotionTremorChange = { viewModel.updateMotionTremor(it) },
+                                onToggleCamera = {
+                                    if (uiState.cameraGaze.isCameraActive) {
+                                        viewModel.stopCameraGazeTracking()
+                                    } else {
+                                        cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+                                    }
+                                },
+                                onRequestMasterPermissions = {
+                                    viewModel.masterActivateAll()
+                                    onRequestMasterPermissions()
+                                }
                             )
                         }
                         NeuroTab.LOGS -> {

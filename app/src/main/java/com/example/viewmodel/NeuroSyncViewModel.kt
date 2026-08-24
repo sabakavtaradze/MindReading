@@ -10,6 +10,7 @@ import com.example.data.DigitalTwinRepository
 import com.example.data.PredictionEntity
 import com.example.data.PredictionRepository
 import com.example.service.GeorgianNeuroLinguisticEngine
+import com.example.service.UnifiedPredictiveThoughtEngine
 import com.example.util.PermissionHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -565,6 +566,7 @@ data class NeuroSyncUiState(
     val wordDecoder: DirectWordDecoderState = DirectWordDecoderState(),
     val wordPrediction: WordPredictionAnalyticsState = WordPredictionAnalyticsState(),
     val realSensors: com.example.sensor.RealHardwareSensorState = com.example.sensor.RealHardwareSensorState(),
+    val realAudio: com.example.sensor.RealAudioState = com.example.sensor.RealAudioState(),
     val cameraGaze: com.example.sensor.RealCameraGazeState = com.example.sensor.RealCameraGazeState(),
     val telemetry: TelemetryState = TelemetryState(),
     val digitalTwin: DigitalTwinState = DigitalTwinState(),
@@ -588,6 +590,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
     val hardwareSensorManager = com.example.sensor.RealHardwareSensorManager(application)
     val cameraGazeAnalyzer = com.example.sensor.RealCameraGazeAnalyzer(application)
+    val audioFrequencyAnalyzer = com.example.sensor.RealAudioFrequencyAnalyzer(application)
 
     private val _uiState = MutableStateFlow(NeuroSyncUiState())
     val uiState: StateFlow<NeuroSyncUiState> = _uiState.asStateFlow()
@@ -654,9 +657,10 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
         startTelemetryLoop()
 
-        // Start real hardware sensors (Accelerometer / Gyroscope)
+        // Start real hardware sensors (Accelerometer / Gyroscope / Light / Proximity / Audio)
         try {
             hardwareSensorManager.startListening()
+            audioFrequencyAnalyzer.startListening()
             viewModelScope.launch {
                 hardwareSensorManager.sensorState.collect { sensor ->
                     _uiState.update { current ->
@@ -664,6 +668,17 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                             realSensors = sensor,
                             motionTremor = sensor.microTremorMagnitude * 10f,
                             stressLevelPct = (100 - sensor.neuromuscularStabilityPct).coerceIn(10, 90)
+                        )
+                    }
+                }
+            }
+            viewModelScope.launch {
+                audioFrequencyAnalyzer.audioState.collect { audio ->
+                    _uiState.update { current ->
+                        current.copy(
+                            realAudio = audio,
+                            micPermissionGranted = audio.hasPermission || PermissionHelper.isMicGranted(getApplication()),
+                            audioDb = audio.decibels
                         )
                     }
                 }
@@ -777,6 +792,30 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun startAudioListening() {
+        try {
+            audioFrequencyAnalyzer.startListening()
+            PermissionHelper.setMicGranted(getApplication(), true)
+            _uiState.update { it.copy(micPermissionGranted = true) }
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
+    }
+
+    fun startAllHardwareSensors(lifecycleOwner: androidx.lifecycle.LifecycleOwner? = null) {
+        try {
+            hardwareSensorManager.startListening()
+            if (PermissionHelper.isMicGranted(getApplication())) {
+                audioFrequencyAnalyzer.startListening()
+            }
+            if (lifecycleOwner != null && PermissionHelper.isCameraGranted(getApplication())) {
+                cameraGazeAnalyzer.startCamera(lifecycleOwner)
+            }
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
+    }
+
     fun startCameraGazeTracking(lifecycleOwner: androidx.lifecycle.LifecycleOwner, surfaceProvider: androidx.camera.core.Preview.SurfaceProvider? = null) {
         cameraGazeAnalyzer.startCamera(lifecycleOwner, surfaceProvider)
         PermissionHelper.setCameraGranted(getApplication(), true)
@@ -800,6 +839,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     override fun onCleared() {
         super.onCleared()
         hardwareSensorManager.stopListening()
+        audioFrequencyAnalyzer.stopListening()
         cameraGazeAnalyzer.stopCamera()
     }
 
@@ -1046,6 +1086,13 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         val emgHz = entry?.emgFrequencyHz ?: (135f + (word.length * 2.5f))
         val conf = (95..99).random()
 
+        // 1. Register for Bayesian user adaptation & Markov transition
+        UnifiedPredictiveThoughtEngine.registerUserWordSelection(word)
+        val previousWord = _uiState.value.wordDecoder.currentDecodedWord
+        if (previousWord.isNotBlank() && previousWord != word) {
+            UnifiedPredictiveThoughtEngine.learnMarkovTransition(previousWord, word)
+        }
+
         _uiState.update { current ->
             val prevDecoder = current.wordDecoder
             val newAcc = if (prevDecoder.accumulatedSentence.isBlank()) {
@@ -1065,6 +1112,30 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
             val candidates = generateWordCandidates(word, category)
 
+            // Compute unified 5-pillar prediction
+            val unifiedOutput = UnifiedPredictiveThoughtEngine.computeUnifiedPredictions(
+                lastAccumulatedSentence = newAcc,
+                sensors = current.realSensors,
+                audio = current.realAudio,
+                cameraGaze = current.cameraGaze,
+                gazeX = current.cameraGazeX,
+                gazeY = current.cameraGazeY,
+                screenContext = current.wordPrediction.currentAppScreenContext
+            )
+
+            val nextBranches = unifiedOutput.topCandidateWords.mapIndexed { idx, scoreItem ->
+                WordBranchPrediction(
+                    id = "b_${System.currentTimeMillis()}_$idx",
+                    word = scoreItem.word,
+                    probabilityPct = scoreItem.finalProbabilityPct.toInt(),
+                    phonemeLookaheadMs = -(260 + (idx * 20)),
+                    category = scoreItem.category,
+                    linguisticGrammarRole = if (scoreItem.category == "MORPHOLOGY_VERBS") "ზმნა (პოლისინთეზური)" else "სემანტიკური ერთეული",
+                    semanticContextTrigger = "Bayesian 5-Pillar: ${scoreItem.category} (x${String.format(Locale.US, "%.1f", scoreItem.sensorMultiplier)})",
+                    cognitiveLoadRequirementPct = 25 + (idx * 4)
+                )
+            }
+
             current.copy(
                 wordDecoder = prevDecoder.copy(
                     currentDecodedWord = word,
@@ -1075,6 +1146,16 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                     recentWords = (listOf(newHistoryItem) + prevDecoder.recentWords).take(30),
                     internalSpeechVpuFrequencyHz = emgHz,
                     lastActionExecuted = "დეკოდირებულია: '$word' (${conf}%)"
+                ),
+                wordPrediction = current.wordPrediction.copy(
+                    branches = nextBranches,
+                    activeFocusWordCandidate = nextBranches.firstOrNull()?.word ?: word,
+                    unifiedDecodedSentence = unifiedOutput.primaryPredictedSentence,
+                    unifiedDecodingConfidencePct = unifiedOutput.overallConfidencePct,
+                    cognitiveSpeedupGainWpm = unifiedOutput.latencySpeedupGainWpm,
+                    saccadicVectorTarget = "${unifiedOutput.activeGazeIntent.sectorName} ➔ '${nextBranches.firstOrNull()?.word ?: word}'",
+                    detectedPhonemeCluster = "${unifiedOutput.activePhonemicMatch.primaryPhoneme} (${unifiedOutput.activePhonemicMatch.phoneticType}) ➔ ${unifiedOutput.activePhonemicMatch.resonanceMatchPct.toInt()}% რეზონანსი",
+                    lastAppliedPrediction = "✨ 5-მოდულიანი პროგნოზი: '${nextBranches.firstOrNull()?.word ?: word}' (${unifiedOutput.overallConfidencePct}%)"
                 )
             )
         }
@@ -1299,26 +1380,27 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     fun regenerateWordPredictionBranches() {
         val current = _uiState.value
         val lastWord = current.wordDecoder.currentDecodedWord
-        val candidates = GeorgianNeuroLinguisticEngine.predictBestCandidates(
-            previousWord = lastWord,
-            screenContext = current.wordPrediction.currentAppScreenContext,
-            circadianHour = 14,
-            stressLevel = if (current.wordPrediction.heartRateBpm > 85) 0.8f else 0.2f,
-            limit = 4
+        
+        val unifiedOutput = UnifiedPredictiveThoughtEngine.computeUnifiedPredictions(
+            lastAccumulatedSentence = current.wordDecoder.accumulatedSentence.ifBlank { lastWord },
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            cameraGaze = current.cameraGaze,
+            gazeX = current.cameraGazeX,
+            gazeY = current.cameraGazeY,
+            screenContext = current.wordPrediction.currentAppScreenContext
         )
 
-        val generatedBranches = candidates.mapIndexed { idx, entry ->
-            val prob = (96 - (idx * 5)).coerceAtLeast(70)
-            val rationale = if (entry.clusterSpeedupGainPct > 50) "თანხმოვანთა კლასტერი (+${entry.clusterSpeedupGainPct}% აჩქარება)" else "სუბვოკალური ${entry.emgFrequencyHz.toInt()}Hz სიგნალი"
+        val generatedBranches = unifiedOutput.topCandidateWords.mapIndexed { idx, scoreItem ->
             WordBranchPrediction(
                 id = "b_${System.currentTimeMillis()}_$idx",
-                word = entry.word,
-                probabilityPct = prob,
+                word = scoreItem.word,
+                probabilityPct = scoreItem.finalProbabilityPct.toInt(),
                 phonemeLookaheadMs = -(280 + (idx * 20)),
-                category = entry.category,
-                linguisticGrammarRole = if (entry.category == "MORPHOLOGY_VERBS") "ზმნა (პოლისინთეზური)" else "სემანტიკური ერთეული",
-                semanticContextTrigger = rationale,
-                cognitiveLoadRequirementPct = 30 + (idx * 4)
+                category = scoreItem.category,
+                linguisticGrammarRole = if (scoreItem.category == "MORPHOLOGY_VERBS") "ზმნა (პოლისინთეზური)" else "სემანტიკური ერთეული",
+                semanticContextTrigger = "Bayesian 5-Pillar: ${scoreItem.category} (x${String.format(Locale.US, "%.1f", scoreItem.sensorMultiplier)})",
+                cognitiveLoadRequirementPct = 28 + (idx * 4)
             )
         }
 
@@ -1327,10 +1409,15 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 wordPrediction = curr.wordPrediction.copy(
                     branches = generatedBranches,
                     activeFocusWordCandidate = generatedBranches.firstOrNull()?.word ?: "შევამოწმოთ",
+                    unifiedDecodedSentence = unifiedOutput.primaryPredictedSentence,
+                    unifiedDecodingConfidencePct = unifiedOutput.overallConfidencePct,
+                    cognitiveSpeedupGainWpm = unifiedOutput.latencySpeedupGainWpm,
                     readinessPotentialLeadTimeMs = (300..360).random(),
                     currentReadinessSpikeMicroVolts = -(16.0f + (0..60).random() / 10f),
-                    predictionConfidenceScorePct = (94..99).random(),
-                    lastAppliedPrediction = "🧬 გენერირებულია ${generatedBranches.size} ალგორითმული ტოტი ქართული ლექსიკონიდან"
+                    predictionConfidenceScorePct = unifiedOutput.overallConfidencePct,
+                    saccadicVectorTarget = "${unifiedOutput.activeGazeIntent.sectorName} ➔ '${generatedBranches.firstOrNull()?.word ?: "შევამოწმოთ"}'",
+                    detectedPhonemeCluster = "${unifiedOutput.activePhonemicMatch.primaryPhoneme} (${unifiedOutput.activePhonemicMatch.phoneticType}) ➔ ${unifiedOutput.activePhonemicMatch.resonanceMatchPct.toInt()}% რეზონანსი",
+                    lastAppliedPrediction = "🧬 5-Pillar AI: '${generatedBranches.firstOrNull()?.word ?: "შევამოწმოთ"}' (${unifiedOutput.overallConfidencePct}% სიზუსტე)"
                 )
             )
         }
@@ -1609,37 +1696,43 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun synthesizeUnifiedThought() {
-        _uiState.update { current ->
-            val candidateSentences = listOf(
-                "ჩვენ შევამოწმოთ სისტემის არქიტექტურა და გავუშვათ კომპილაცია",
-                "დავაკომიტოთ განახლებული ნეირო-მოდულები რეპოზიტორიაში",
-                "გავაანალიზოთ ბიომეტრიული სენსორების რეალურ დროში ნაკადი",
-                "სისტემა სრულ მზადყოფნაშია სუბვოკალური დეკოდირებისთვის",
-                "გადავამოწმოთ ელექტროენცეფალოგრამის ალფა და გამა რიტმის სინქრონიზაცია",
-                "დავასინთეზოთ ნეირონული მოდელი და დავაკონფიგურიროთ პარამეტრები",
-                "შევაფასოთ კოგნიტური დატვირთვა და გულისცემის ვარიაბელობა",
-                "ავტომატურად გავაუმჯობესოთ ფონემათა სუბვოკალური ამოცნობის სიზუსტე",
-                "დავატრენინგოთ ნეირონული ქსელი ქართული ენის მორფოლოგიურ ბაზაზე"
-            )
-            val nextSentence = candidateSentences.random()
-            val conf = (97..100).random()
-            val primaryWord = nextSentence.split(" ").firstOrNull() ?: "შევამოწმოთ"
-            
-            // Add to synaptic history & active prediction
-            current.copy(
-                subvocalSpeech = current.subvocalSpeech.copy(
+        val current = _uiState.value
+        val unifiedOutput = UnifiedPredictiveThoughtEngine.computeUnifiedPredictions(
+            lastAccumulatedSentence = current.wordDecoder.accumulatedSentence,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            cameraGaze = current.cameraGaze,
+            gazeX = current.cameraGazeX,
+            gazeY = current.cameraGazeY,
+            screenContext = current.wordPrediction.currentAppScreenContext
+        )
+
+        val nextSentence = unifiedOutput.primaryPredictedSentence
+        val conf = unifiedOutput.overallConfidencePct
+        val primaryWord = unifiedOutput.topCandidateWords.firstOrNull()?.word ?: "შევამოწმოთ"
+
+        // Register the synthesized primary word in user history
+        UnifiedPredictiveThoughtEngine.registerUserWordSelection(primaryWord)
+
+        _uiState.update { state ->
+            state.copy(
+                subvocalSpeech = state.subvocalSpeech.copy(
                     decodedPhrase = nextSentence
                 ),
-                wordDecoder = current.wordDecoder.copy(
+                wordDecoder = state.wordDecoder.copy(
                     currentDecodedWord = primaryWord,
                     accumulatedSentence = nextSentence,
-                    confidencePct = conf
+                    confidencePct = conf,
+                    lastActionExecuted = "✨ სინთეზირებულია: '$nextSentence'"
                 ),
-                wordPrediction = current.wordPrediction.copy(
+                wordPrediction = state.wordPrediction.copy(
                     unifiedDecodedSentence = nextSentence,
                     unifiedDecodingConfidencePct = conf,
                     activeFocusWordCandidate = primaryWord,
-                    lastAppliedPrediction = "✨ უნიფიცირებულმა ძრავამ დაასინთეზა: '$nextSentence' ($conf%)"
+                    cognitiveSpeedupGainWpm = unifiedOutput.latencySpeedupGainWpm,
+                    saccadicVectorTarget = "${unifiedOutput.activeGazeIntent.sectorName} ➔ '$primaryWord'",
+                    detectedPhonemeCluster = "${unifiedOutput.activePhonemicMatch.primaryPhoneme} (${unifiedOutput.activePhonemicMatch.phoneticType}) ➔ ${unifiedOutput.activePhonemicMatch.resonanceMatchPct.toInt()}% რეზონანსი",
+                    lastAppliedPrediction = "✨ 5-მოდულიანმა AI-მ დაასინთეზა: '$nextSentence' ($conf%)"
                 )
             )
         }

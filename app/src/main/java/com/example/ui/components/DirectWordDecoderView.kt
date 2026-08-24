@@ -516,13 +516,17 @@ fun DirectWordDecoderView(
                 ) {
                     val categories = listOf(
                         "ALL" to "ყველა (${GeorgianNeuroLinguisticEngine.MIND_LEXICON_DATABASE.size})",
+                        "OBJECTS" to "🪑 ნივთები & საგნები",
+                        "NATURE" to "🌳 ბუნება & გარემო",
+                        "TRANSPORT" to "🚗 ტრანსპორტი & ქალაქი",
+                        "FOOD" to "🍞 საჭმელი & სასმელი",
                         "COMMON" to "🇬🇪 ყოველდღიური",
                         "DEV" to "💻 IT & Dev",
                         "COMMANDS" to "⚡ ბრძანებები",
                         "EMOTIONS" to "🧠 ემოციები",
                         "NEURO_SCIENCE" to "🔬 ნეირო-ტექნოლოგია",
-                        "MORPHOLOGY_VERBS" to "🧬 ზმნები & კლასტერები",
                         "SMART_HOME" to "🏠 ჭკვიანი სახლი",
+                        "MORPHOLOGY_VERBS" to "🧬 ზმნები & კლასტერები",
                         "ENGLISH" to "🇺🇸 English"
                     )
 
