@@ -363,6 +363,24 @@ object UnifiedPredictiveThoughtEngine {
             jitterMagnitude = filteredKinematics.estimatedDriftMagnitude,
             sessionFatiguePct = fatigueState.estimatedFatigueLevelPct
         )
+
+        // 0d. Ingest frame into Temporal Multi-Scale Sensor History (DTW & Episodic Memory)
+        TemporalSensorHistoryEngine.recordTemporalFrame(
+            TemporalSensorHistoryEngine.SensorTemporalFrame(
+                timestampMs = System.currentTimeMillis(),
+                accelMagnitude = accelMag,
+                gyroMagnitude = gyroMag,
+                audioDecibels = audio.decibels,
+                formantHz = audio.dominantFrequencyHz,
+                lightLux = sensors.ambientLightLux,
+                gazeFixationScore = if (cameraGaze.isCameraActive) (cameraGaze.gazeConfidencePct / 100f) else 0.5f,
+                activityState = omniSummary.activityState
+            )
+        )
+        val historicalContext = TemporalSensorHistoryEngine.queryTemporalPredictions(
+            currentSummary = omniSummary,
+            currentFormantHz = audio.dominantFrequencyHz
+        )
         
         // 1. Markov Next-Word lookups & Semantic Embedding Neighbors
         val markovMatches = if (lastWord.isNotBlank()) {
@@ -442,6 +460,10 @@ object UnifiedPredictiveThoughtEngine {
             // Omni-Sensor Holistic Boost
             val omniWordBoost = OmniSensorFusionSummaryEngine.computeOmniSensorWordBoost(entry.word, omniSummary)
             ngramScore *= omniWordBoost
+
+            // Temporal & Historical Sensor DTW/Episodic Boost
+            val historicalBoost = TemporalSensorHistoryEngine.getHistoricalWordMultiplier(entry.word, historicalContext)
+            ngramScore *= historicalBoost
 
             // Semantic Embedding Cosine Boost
             if (semanticNeighbors.contains(entry.word.lowercase(Locale.ROOT))) {

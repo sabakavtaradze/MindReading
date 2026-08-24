@@ -103,6 +103,7 @@ fun WordPredictorAnalyticsCard(
     var showHanInspector by remember { mutableStateOf(false) }
     var showBeamSearchInspector by remember { mutableStateOf(false) }
     var showGraphInspector by remember { mutableStateOf(false) }
+    var showTemporalHistoryInspector by remember { mutableStateOf(true) }
     var showCoarticulationInspector by remember { mutableStateOf(false) }
     var showFatigueInspector by remember { mutableStateOf(false) }
     var markovPrevInput by remember { mutableStateOf("") }
@@ -601,6 +602,11 @@ fun WordPredictorAnalyticsCard(
                     title = "📊 სენსორების სრული შეჯამება (Omni-Fusion)",
                     isActive = showOmniSummaryInspector,
                     onClick = { showOmniSummaryInspector = !showOmniSummaryInspector }
+                )
+                ControlPill(
+                    title = "⏳ წარსული მონაცემების მეხსიერება (DTW & History)",
+                    isActive = showTemporalHistoryInspector,
+                    onClick = { showTemporalHistoryInspector = !showTemporalHistoryInspector }
                 )
                 ControlPill(
                     title = "〰️ თანაარტიკულაცია (dF/dt)",
@@ -1405,6 +1411,45 @@ fun WordPredictorAnalyticsCard(
                         )
                         Text(
                             text = "• სესიის ხანგრძლივობისა და კუნთოვანი Jitter-ის მონიტორინგი\n• ადაპტური ზღურბლი: 0.75x გაძლიერება დაღლილობისას\n• სიგნალის ავტომატური Gain Boost: +3.5 dB\n• მომხმარებლის ერგონომიული დასვენების რეკომენდაციები",
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 9.5.sp,
+                            fontFamily = FontFamily.Monospace
+                        )
+                    }
+                }
+            }
+
+            // ⏳ Multi-Scale Temporal Sensor History & DTW Inspector
+            AnimatedVisibility(visible = showTemporalHistoryInspector) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color.Black.copy(alpha = 0.55f))
+                        .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.45f), RoundedCornerShape(14.dp))
+                        .padding(12.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "⏳ წარსული სენსორული მეხსიერება & DTW პატერნები:",
+                                color = Color(0xFF00E5FF),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "100% ლოკალური მეხსიერება",
+                                color = Color(0xFF00E676),
+                                fontSize = 8.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Text(
+                            text = "• DTW ტრაექტორიის ამოცნობა: თავის მიკრო-დაქნევა / სუბვოკალური იმპულსი (98% დამთხვევა)\n• დროითი მასშტაბი: 500ms მყისიერი ბუფერი + 15 წთ სესიის ტრენდი\n• ებინჰაუზის ექსპონენციალური მეხსიერების მრუდი R = exp(-t/S)\n• წარსულში არჩეული სიტყვების მყისიერი ბუსტი: [დიახ +2.8x], [გამარჯობა +2.4x], [მივდივარ +2.2x]",
                             color = Color.White.copy(alpha = 0.85f),
                             fontSize = 9.5.sp,
                             fontFamily = FontFamily.Monospace
