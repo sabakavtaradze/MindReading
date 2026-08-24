@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +28,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Switch
@@ -104,6 +106,7 @@ fun WordPredictorAnalyticsCard(
     var showBeamSearchInspector by remember { mutableStateOf(false) }
     var showGraphInspector by remember { mutableStateOf(false) }
     var showTemporalHistoryInspector by remember { mutableStateOf(true) }
+    var showSelfLearningInspector by remember { mutableStateOf(true) }
     var showCoarticulationInspector by remember { mutableStateOf(false) }
     var showFatigueInspector by remember { mutableStateOf(false) }
     var markovPrevInput by remember { mutableStateOf("") }
@@ -607,6 +610,11 @@ fun WordPredictorAnalyticsCard(
                     title = "⏳ წარსული მონაცემების მეხსიერება (DTW & History)",
                     isActive = showTemporalHistoryInspector,
                     onClick = { showTemporalHistoryInspector = !showTemporalHistoryInspector }
+                )
+                ControlPill(
+                    title = "🧠 თვითგანვითარებადი სწავლება (Self-Learning & Precision)",
+                    isActive = showSelfLearningInspector,
+                    onClick = { showSelfLearningInspector = !showSelfLearningInspector }
                 )
                 ControlPill(
                     title = "〰️ თანაარტიკულაცია (dF/dt)",
@@ -1454,6 +1462,166 @@ fun WordPredictorAnalyticsCard(
                             fontSize = 9.5.sp,
                             fontFamily = FontFamily.Monospace
                         )
+                    }
+                }
+            }
+
+            // 🧠 Continual Self-Supervised Learning & Precision Calibration Dashboard
+            AnimatedVisibility(visible = showSelfLearningInspector) {
+                val learningAnalytics = com.example.service.ContinualSelfLearningEngine.getAnalyticsSummary()
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color(0xFF1A102F),
+                                    Color(0xFF0F172A)
+                                )
+                            )
+                        )
+                        .border(1.5.dp, Brush.horizontalGradient(listOf(Color(0xFFFF4081), Color(0xFF7C4DFF))), RoundedCornerShape(16.dp))
+                        .padding(14.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text(text = "🧠", fontSize = 16.sp)
+                                Text(
+                                    text = "Continual Self-Learning & Precision Calibration",
+                                    color = Color(0xFFFF4081),
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFFFFD54F).copy(alpha = 0.2f))
+                                    .border(1.dp, Color(0xFFFFD54F), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = learningAnalytics.currentLearningStatus,
+                                    color = Color(0xFFFFD54F),
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        // Precision growth progress bar
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "🎯 მოდელის მიმდინარე სიზუსტე (Accuracy Curve):",
+                                    color = Color.White.copy(alpha = 0.85f),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = "${String.format(java.util.Locale.US, "%.1f", learningAnalytics.accuracyPct)}%",
+                                    color = Color(0xFF00E676),
+                                    fontSize = 11.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            LinearProgressIndicator(
+                                progress = { (learningAnalytics.accuracyPct / 100f).coerceIn(0f, 1f) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(8.dp)
+                                    .clip(RoundedCornerShape(4.dp)),
+                                color = Color(0xFF00E676),
+                                trackColor = Color.White.copy(alpha = 0.15f)
+                            )
+                        }
+
+                        // 3-Metric Cards (Data Volume, Reinforcements, Experience Replay)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color.Black.copy(alpha = 0.4f))
+                                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column {
+                                    Text(text = "📦 მონაცემთა მოცულობა", color = Color(0xFF90CAF9), fontSize = 8.sp)
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(text = "${learningAnalytics.totalEpisodes} ეპიზოდი", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color.Black.copy(alpha = 0.4f))
+                                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column {
+                                    Text(text = "⚡ დადასტურებები", color = Color(0xFFA7FFEB), fontSize = 8.sp)
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(text = "${learningAnalytics.totalReinforcements} ჰიტი", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color.Black.copy(alpha = 0.4f))
+                                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column {
+                                    Text(text = "🔄 Replay Buffer", color = Color(0xFFFF80AB), fontSize = 8.sp)
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text(text = "${learningAnalytics.bufferCapacityUsedPct}% შევსებული", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+
+                        // Simulation button to test on-device learning progression
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "💡 ყოველი არჩევა ზრდის სიზუსტეს +0.1%-ით",
+                                color = Color.White.copy(alpha = 0.6f),
+                                fontSize = 8.5.sp
+                            )
+                            Button(
+                                onClick = {
+                                    com.example.service.ContinualSelfLearningEngine.recordUserFeedback(
+                                        prefix = "გ",
+                                        selectedWord = "გამარჯობა",
+                                        sensorFeatures = floatArrayOf(0.2f, 0.1f, 0.4f, 0.3f, 0.6f, 0.8f, 0.1f, 0.4f),
+                                        wasAccepted = true
+                                    )
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C4DFF)),
+                                shape = RoundedCornerShape(8.dp),
+                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 3.dp),
+                                modifier = Modifier.height(28.dp)
+                            ) {
+                                Text(text = "🧪 ტესტ-სწავლება (+Hit)", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
             }

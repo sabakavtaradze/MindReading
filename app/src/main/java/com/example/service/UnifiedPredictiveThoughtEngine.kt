@@ -381,6 +381,18 @@ object UnifiedPredictiveThoughtEngine {
             currentSummary = omniSummary,
             currentFormantHz = audio.dominantFrequencyHz
         )
+
+        // 0e. Current 8-D normalized sensor feature vector for Continuous Self-Learning
+        val current8DSensorVector = floatArrayOf(
+            (accelMag / 20f).coerceIn(0f, 1f),
+            (gyroMag / 10f).coerceIn(0f, 1f),
+            (audio.dominantFrequencyHz / 500f).coerceIn(0f, 1f),
+            ((audio.decibels + 60f) / 100f).coerceIn(0f, 1f),
+            (sensors.ambientLightLux / 1000f).coerceIn(0f, 1f),
+            if (cameraGaze.isCameraActive) (cameraGaze.gazeConfidencePct / 100f) else 0.5f,
+            (fatigueState.estimatedFatigueLevelPct / 100f).coerceIn(0f, 1f),
+            (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY) / 24f)
+        )
         
         // 1. Markov Next-Word lookups & Semantic Embedding Neighbors
         val markovMatches = if (lastWord.isNotBlank()) {
@@ -464,6 +476,10 @@ object UnifiedPredictiveThoughtEngine {
             // Temporal & Historical Sensor DTW/Episodic Boost
             val historicalBoost = TemporalSensorHistoryEngine.getHistoricalWordMultiplier(entry.word, historicalContext)
             ngramScore *= historicalBoost
+
+            // Continual Self-Learning & Experience Replay Multi-Armed Bandit Boost
+            val learningBoost = ContinualSelfLearningEngine.computeContinuousLearningMultiplier(entry.word, current8DSensorVector)
+            ngramScore *= learningBoost
 
             // Semantic Embedding Cosine Boost
             if (semanticNeighbors.contains(entry.word.lowercase(Locale.ROOT))) {
