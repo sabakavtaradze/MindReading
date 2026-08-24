@@ -314,7 +314,8 @@ object UnifiedPredictiveThoughtEngine {
         val activePhonemicMatch: PhonemicMatchResult,
         val overallConfidencePct: Int,
         val latencySpeedupGainWpm: Int,
-        val mathematicalFormulaLog: String
+        val mathematicalFormulaLog: String,
+        val omniSummary: OmniSensorFusionSummaryEngine.OmniSensorSummary? = null
     )
 
     fun computeUnifiedPredictions(
@@ -338,6 +339,30 @@ object UnifiedPredictiveThoughtEngine {
         )
         val cleanGazeX = filteredKinematics.smoothGazeX
         val cleanGazeY = filteredKinematics.smoothGazeY
+
+        // 0b. Neuromuscular Fatigue State
+        val fatigueState = NeuromuscularFatigueCompensator.evaluateFatigue(filteredKinematics.estimatedDriftMagnitude)
+
+        val accelMag = kotlin.math.sqrt(sensors.accelX * sensors.accelX + sensors.accelY * sensors.accelY + sensors.accelZ * sensors.accelZ)
+        val gyroMag = kotlin.math.sqrt(sensors.gyroX * sensors.gyroX + sensors.gyroY * sensors.gyroY + sensors.gyroZ * sensors.gyroZ)
+
+        // 0c. 12-Sensor Holistic Synthesis & Context Summary
+        val omniSummary = OmniSensorFusionSummaryEngine.synthesizeSensorStreams(
+            accelNorm = accelMag,
+            gyroNorm = gyroMag,
+            magHeadingDeg = sensors.compassHeadingDeg,
+            lightLux = sensors.ambientLightLux,
+            pressureHpa = sensors.atmosphericPressureHpa,
+            tempCelsius = sensors.ambientTemperatureC,
+            stepCount = sensors.totalStepsDetected,
+            audioDb = audio.decibels,
+            formantHz = audio.dominantFrequencyHz,
+            waveletEnergy = audio.rmsAmplitude * 100f,
+            gazeConfidence = if (cameraGaze.isCameraActive) (cameraGaze.gazeConfidencePct / 100f) else 0.5f,
+            gazeDeviation = abs(cleanGazeX - 0.5f) + abs(cleanGazeY - 0.5f),
+            jitterMagnitude = filteredKinematics.estimatedDriftMagnitude,
+            sessionFatiguePct = fatigueState.estimatedFatigueLevelPct
+        )
         
         // 1. Markov Next-Word lookups & Semantic Embedding Neighbors
         val markovMatches = if (lastWord.isNotBlank()) {
@@ -358,6 +383,15 @@ object UnifiedPredictiveThoughtEngine {
             currentPhrase = lastAccumulatedSentence.ifBlank { lastWord },
             subVocalFormantHz = audio.dominantFrequencyHz,
             activeScreenContext = screenContext
+        )
+
+        // 1d. Knowledge Graph Ontological Affinity Multiplier
+        val graphAffinity = GeorgianKnowledgeGraphEngine.queryKnowledgeGraph(lastAccumulatedSentence.ifBlank { lastWord })
+
+        // 1e. Laryngeal Co-Articulation & Trajectory
+        val coarticulation = LaryngealCoarticulationTracker.processFormantFrame(
+            frequencyHz = audio.dominantFrequencyHz,
+            energy = audio.decibels
         )
 
         // Semantic embedding neighbors
@@ -400,6 +434,15 @@ object UnifiedPredictiveThoughtEngine {
                 ngramScore += 3.2f
             }
 
+            // Knowledge Graph Ontological Boost
+            if (graphAffinity.suggestedConcepts.any { it.equals(entry.word, ignoreCase = true) }) {
+                ngramScore += 2.8f
+            }
+
+            // Omni-Sensor Holistic Boost
+            val omniWordBoost = OmniSensorFusionSummaryEngine.computeOmniSensorWordBoost(entry.word, omniSummary)
+            ngramScore *= omniWordBoost
+
             // Semantic Embedding Cosine Boost
             if (semanticNeighbors.contains(entry.word.lowercase(Locale.ROOT))) {
                 ngramScore += 2.5f
@@ -430,8 +473,8 @@ object UnifiedPredictiveThoughtEngine {
             // Personal Bayesian Prior with Ebbinghaus memory curve
             val prior = getPersonalPrior(entry.word)
 
-            // Combined Bayesian posterior score: P(W | Sensors, Audio, Gaze, Transformer, HAN, Morphology)
-            val combinedScore = ngramScore * sensorMult * subVocalBoost * gazeBoost * prior
+            // Combined Bayesian posterior score: P(W | OmniSensors, Audio, Gaze, Transformer, HAN, Morphology)
+            val combinedScore = (ngramScore * sensorMult * subVocalBoost * gazeBoost * prior) * fatigueState.adaptiveThresholdMultiplier
 
             BayesianWordScore(
                 word = entry.word,
@@ -453,18 +496,26 @@ object UnifiedPredictiveThoughtEngine {
             it.copy(finalProbabilityPct = pct)
         }
 
+        // Run Beam Search Viterbi sequence decoder on top candidates
+        val beamCandidates = normalizedCandidates.map { Pair(it.word, it.finalProbabilityPct / 100.0f) }
+        val beamResult = BeamSearchViterbiDecoder.decodeSentence(
+            initialContext = lastAccumulatedSentence,
+            candidatePredictions = beamCandidates,
+            maxSteps = 2
+        )
+
         // Construct sentence
         val topWord = normalizedCandidates.firstOrNull()?.word ?: "შევამოწმოთ"
         val nextPredictedSentence = if (lastAccumulatedSentence.isBlank()) {
-            "$topWord სისტემის არქიტექტურა და გავუშვათ"
+            beamResult.bestHypothesisSentence.ifBlank { "$topWord სისტემის არქიტექტურა და გავუშვათ" }
         } else {
-            "$lastAccumulatedSentence $topWord"
+            beamResult.bestHypothesisSentence.ifBlank { "$lastAccumulatedSentence $topWord" }
         }
 
         val speedup = 48 + (normalizedCandidates.firstOrNull()?.finalProbabilityPct?.toInt() ?: 80) / 4
         val confidence = normalizedCandidates.firstOrNull()?.finalProbabilityPct?.toInt() ?: 96
 
-        val formulaLog = "HAN Intent: ${hanProfile.dominantIntent} | ${hanProfile.attentionPathwayExplanation}"
+        val formulaLog = "Omni-State: ${omniSummary.activityState.geLabel} | HAN: ${hanProfile.dominantIntent} | ${hanProfile.attentionPathwayExplanation}"
 
         return UnifiedPredictionOutput(
             primaryPredictedSentence = nextPredictedSentence,
@@ -473,7 +524,8 @@ object UnifiedPredictiveThoughtEngine {
             activePhonemicMatch = phonemeMatch,
             overallConfidencePct = confidence,
             latencySpeedupGainWpm = speedup,
-            mathematicalFormulaLog = formulaLog
+            mathematicalFormulaLog = formulaLog,
+            omniSummary = omniSummary
         )
     }
 }
