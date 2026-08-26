@@ -59,8 +59,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Auto start hardware telemetry stream immediately
+        // Auto start hardware telemetry stream immediately and start perpetual foreground service
         viewModel.startAllHardwareSensors(this)
+        launchBackgroundServiceSafely()
 
         setContent {
             MyApplicationTheme {

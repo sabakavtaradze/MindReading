@@ -238,6 +238,14 @@ fun NeuroSyncApp(
                                     onSynthesizeUnifiedThought = { viewModel.synthesizeUnifiedThought() },
                                     onSimulateBioStress = { viewModel.simulateDynamicBioStress() },
                                     onUpdateWeights = { ngram, time, bio, ctx -> viewModel.updateFusionWeights(ngram, time, bio, ctx) },
+                                    onMeasurePpgPulse = { viewModel.measurePpgPulseManual() },
+                                    onTriggerPupilAha = { viewModel.triggerPupilAhaMoment() },
+                                    onRecomputeBayesian = { viewModel.recomputeBayesianThought() },
+                                    onApplyBayesianHypothesis = { hypothesis -> viewModel.applyBayesianHypothesis(hypothesis) },
+                                    onTriggerCognitiveApnea = { viewModel.triggerCognitiveApnea() },
+                                    onStepNextSubvocal = { viewModel.stepNextSubvocalThought() },
+                                    onCycleSaliencyTarget = { viewModel.cycleSaliencyTarget() },
+                                    onStepNextAssociativeConcept = { viewModel.stepNextAssociativeConcept() },
                                     onToggleCamera = {
                                         if (uiState.cameraGaze.isCameraActive) {
                                             viewModel.stopCameraGazeTracking()

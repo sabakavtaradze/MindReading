@@ -69,13 +69,13 @@ fun HeroNeuralOverlay(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(310.dp)
-            .clip(RoundedCornerShape(32.dp))
+            .height(200.dp)
+            .clip(RoundedCornerShape(24.dp))
             .background(NeuralSurface)
             .border(
                 width = 1.dp,
                 color = Color.White.copy(alpha = 0.08f),
-                shape = RoundedCornerShape(32.dp)
+                shape = RoundedCornerShape(24.dp)
             )
     ) {
         // Radial Gradient Effect
@@ -96,12 +96,12 @@ fun HeroNeuralOverlay(
         Column(
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(bottom = 28.dp),
+                .padding(bottom = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Box(
                 modifier = Modifier
-                    .size(175.dp)
+                    .size(115.dp)
                     .clip(CircleShape)
                     .background(NeuralAccent.copy(alpha = 0.05f))
                     .border(1.dp, NeuralAccent.copy(alpha = 0.18f), CircleShape)
@@ -110,7 +110,7 @@ fun HeroNeuralOverlay(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(125.dp)
+                        .size(80.dp)
                         .clip(CircleShape)
                         .background(NeuralAccent.copy(alpha = 0.12f))
                         .border(1.dp, NeuralAccent.copy(alpha = 0.38f), CircleShape),
@@ -118,7 +118,7 @@ fun HeroNeuralOverlay(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(68.dp)
+                            .size(48.dp)
                             .graphicsLayer {
                                 val s = if (isSyncing) scalePulse else 1.0f
                                 scaleX = s
@@ -132,21 +132,21 @@ fun HeroNeuralOverlay(
                             imageVector = AppIcons.Psychology,
                             contentDescription = "Synaptic Core",
                             tint = NeuralDeepPurple,
-                            modifier = Modifier.size(34.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = statusText,
                 color = NeuralTextSecondary,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.8.sp
+                letterSpacing = 0.6.sp
             )
         }
 

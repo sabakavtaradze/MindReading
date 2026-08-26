@@ -15,6 +15,7 @@ import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.MainActivity
+import com.example.sensor.RealHardwareSensorManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -33,6 +34,7 @@ class NeuralContextService : Service() {
 
     private var isRunning = true
     private var wakeLock: PowerManager.WakeLock? = null
+    private var hardwareSensorManager: RealHardwareSensorManager? = null
 
     private val _micDecibels = MutableStateFlow(28.4f)
     val micDecibels: StateFlow<Float> = _micDecibels.asStateFlow()
@@ -55,9 +57,15 @@ class NeuralContextService : Service() {
             createNotificationChannel()
             startForegroundServiceWithNotification(
                 title = "NeuroSync • ნეირონული კავშირი",
-                text = "აზრების პროგნოზირების ფონური სერვისი აქტიურია"
+                text = "აზრების პროგნოზირების ფონური სერვისი და სენსორები აქტიურია (24/7)"
             )
             acquireWakeLock()
+            
+            // Keep real hardware sensors continuously alive in the background
+            hardwareSensorManager = RealHardwareSensorManager.getInstance(applicationContext).apply {
+                startListening()
+            }
+
             startBackgroundMonitoringLoop()
             isServiceRunning = true
             com.example.receiver.BootReceiver.schedulePerpetualWatchdog(this)
@@ -68,8 +76,9 @@ class NeuralContextService : Service() {
 
     override fun onTaskRemoved(rootIntent: Intent?) {
         super.onTaskRemoved(rootIntent)
-        Log.d("NeuralContextService", "onTaskRemoved triggered - scheduling perpetual watchdog")
+        Log.d("NeuralContextService", "onTaskRemoved triggered - keeping background telemetry active")
         try {
+            hardwareSensorManager?.startListening()
             com.example.receiver.BootReceiver.schedulePerpetualWatchdog(applicationContext)
         } catch (e: Throwable) {
             Log.w("NeuralContextService", "onTaskRemoved watchdog schedule failed", e)
@@ -78,8 +87,9 @@ class NeuralContextService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         try {
+            hardwareSensorManager?.startListening()
             val customText = intent?.getStringExtra(EXTRA_NOTIFICATION_TEXT)
-                ?: "აზრების პროგნოზირება მუშაობს უწყვეტ ფონურ რეჟიმში"
+                ?: "აზრების პროგნოზირება და სენსორები მუშაობს უწყვეტ ფონურ რეჟიმში"
             startForegroundServiceWithNotification(
                 title = "NeuroSync • ნეირონული კავშირი აქტიურია",
                 text = customText
@@ -195,15 +205,17 @@ class NeuralContextService : Service() {
         scope.launch {
             val thoughtPool = listOf(
                 "ამოცნობილია: კოდის რეფაქტორინგი და Compose ოპტიმიზაცია (98.6%)",
-                "ამოცნობილია: მაღალი კოგნიტური კონცენტრაცია (Alpha 10.2Hz)",
+                "ამოცნობილია: მაღალი კოგნიტური კონცენტრაცია და რესპირატორული ფოკუსი",
                 "ამოცნობილია: სუბვოკალური მზაობა შეტყობინების გასაგზავნად",
-                "ამოცნობილია: ამოცანის ანალიზი და გონებრივი მოდელირება (99.1%)",
+                "ამოცნობილია: ამოცანის ანალიზი და ასოციაციური მოდელირება (99.1%)",
                 "ამოცნობილია: მშვიდი ფოკუსი და დაბალი ემოციური ფრიქცია"
             )
             var index = 0
             while (isRunning) {
                 try {
-                    delay(4000)
+                    delay(3500)
+                    // Continuous background sensor keep-alive
+                    hardwareSensorManager?.startListening()
                     _micDecibels.value = 24f + Random.nextFloat() * 8f
                     val currentThought = thoughtPool[index % thoughtPool.size]
                     index++

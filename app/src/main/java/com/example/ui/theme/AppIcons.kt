@@ -47,4 +47,5 @@ object AppIcons {
     val Notifications: ImageVector = Icons.Default.Notifications
     val Layers: ImageVector = Icons.Default.Menu
     val Bolt: ImageVector = Icons.Default.Star
+    val AutoGraph: ImageVector = Icons.Default.Share
 }

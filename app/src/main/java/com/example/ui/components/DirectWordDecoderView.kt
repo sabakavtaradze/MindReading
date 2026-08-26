@@ -110,6 +110,10 @@ fun DirectWordDecoderView(
     var customWordInput by remember { mutableStateOf("") }
     var lexiconSearchQuery by remember { mutableStateOf("") }
     var isMorphologyExplorerExpanded by remember { mutableStateOf(false) }
+    var isLexiconSectionExpanded by remember { mutableStateOf(true) }
+    var isRecentWordsExpanded by remember { mutableStateOf(true) }
+    var lexiconCurrentPage by remember { mutableStateOf(0) }
+    val itemsPerPage = 12
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -456,19 +460,29 @@ fun DirectWordDecoderView(
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isLexiconSectionExpanded = !isLexiconSectionExpanded },
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "ქართული ნეირო-სემანტიკური ლექსიკონი",
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (isLexiconSectionExpanded) "▲" else "▼",
+                                color = NeuralAccent,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                         Text(
-                            text = "ქართული ნეირო-სემანტიკური ლექსიკონი",
-                            color = Color.White,
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = "130+ სიტყვა • 33 ფონემა • მორფოლოგიური ზმნები",
+                            text = "130+ სიტყვა • გვერდებად დაყოფილი (Pagination) • 33 ფონემა",
                             color = NeuralTextSecondary,
                             fontSize = 10.sp
                         )
@@ -489,150 +503,158 @@ fun DirectWordDecoderView(
                     }
                 }
 
-                // Lexicon Real-Time Search Bar
-                OutlinedTextField(
-                    value = lexiconSearchQuery,
-                    onValueChange = { lexiconSearchQuery = it },
-                    placeholder = { Text("მოძებნეთ სიტყვა ან ძირი (მაგ. შევამოწმოთ, წვრთნ, კოდი)...", color = NeuralTextSecondary, fontSize = 11.sp) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = NeuralAccent,
-                        unfocusedBorderColor = Color.White.copy(alpha = 0.15f),
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedContainerColor = Color.Black.copy(alpha = 0.3f),
-                        unfocusedContainerColor = Color.Black.copy(alpha = 0.3f)
-                    ),
-                    shape = RoundedCornerShape(10.dp)
-                )
-
-                // Category Chips Row
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    val categories = listOf(
-                        "ALL" to "ყველა (${GeorgianNeuroLinguisticEngine.MIND_LEXICON_DATABASE.size})",
-                        "OBJECTS" to "🪑 ნივთები & საგნები",
-                        "NATURE" to "🌳 ბუნება & გარემო",
-                        "TRANSPORT" to "🚗 ტრანსპორტი & ქალაქი",
-                        "FOOD" to "🍞 საჭმელი & სასმელი",
-                        "COMMON" to "🇬🇪 ყოველდღიური",
-                        "DEV" to "💻 IT & Dev",
-                        "COMMANDS" to "⚡ ბრძანებები",
-                        "EMOTIONS" to "🧠 ემოციები",
-                        "NEURO_SCIENCE" to "🔬 ნეირო-ტექნოლოგია",
-                        "SMART_HOME" to "🏠 ჭკვიანი სახლი",
-                        "MORPHOLOGY_VERBS" to "🧬 ზმნები & კლასტერები",
-                        "ENGLISH" to "🇺🇸 English"
+                if (isLexiconSectionExpanded) {
+                    // Lexicon Real-Time Search Bar
+                    OutlinedTextField(
+                        value = lexiconSearchQuery,
+                        onValueChange = { 
+                            lexiconSearchQuery = it
+                            lexiconCurrentPage = 0
+                        },
+                        placeholder = { Text("მოძებნეთ სიტყვა ან ძირი (მაგ. შევამოწმოთ, წვრთნ, კოდი)...", color = NeuralTextSecondary, fontSize = 11.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = NeuralAccent,
+                            unfocusedBorderColor = Color.White.copy(alpha = 0.15f),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedContainerColor = Color.Black.copy(alpha = 0.3f),
+                            unfocusedContainerColor = Color.Black.copy(alpha = 0.3f)
+                        ),
+                        shape = RoundedCornerShape(10.dp)
                     )
 
-                    categories.forEach { (key, title) ->
-                        val isSelected = wordDecoderState.activeLexiconCategory == key
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(if (isSelected) NeuralAccent else Color.White.copy(alpha = 0.06f))
-                                .clickable { onSetCategory(key) }
-                                .padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = title,
-                                color = if (isSelected) NeuralDeepPurple else Color.White,
-                                fontSize = 11.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                            )
-                        }
-                    }
-                }
+                    // Category Chips Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        val categories = listOf(
+                            "ALL" to "ყველა (${GeorgianNeuroLinguisticEngine.MIND_LEXICON_DATABASE.size})",
+                            "OBJECTS" to "🪑 ნივთები & საგნები",
+                            "NATURE" to "🌳 ბუნება & გარემო",
+                            "TRANSPORT" to "🚗 ტრანსპორტი & ქალაქი",
+                            "FOOD" to "🍞 საჭმელი & სასმელი",
+                            "COMMON" to "🇬🇪 ყოველდღიური",
+                            "DEV" to "💻 IT & Dev",
+                            "COMMANDS" to "⚡ ბრძანებები",
+                            "EMOTIONS" to "🧠 ემოციები",
+                            "NEURO_SCIENCE" to "🔬 ნეირო-ტექნოლოგია",
+                            "SMART_HOME" to "🏠 ჭკვიანი სახლი",
+                            "MORPHOLOGY_VERBS" to "🧬 ზმნები & კლასტერები",
+                            "ENGLISH" to "🇺🇸 English"
+                        )
 
-                // Morphological Root Explorer Expandable Accordion
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF19102B))
-                        .border(1.dp, Color(0xFF9D00FF).copy(alpha = 0.35f), RoundedCornerShape(12.dp))
-                        .clickable { isMorphologyExplorerExpanded = !isMorphologyExplorerExpanded }
-                        .padding(10.dp)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text(text = "🧬", fontSize = 13.sp)
+                        categories.forEach { (key, title) ->
+                            val isSelected = wordDecoderState.activeLexiconCategory == key
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (isSelected) NeuralAccent else Color.White.copy(alpha = 0.06f))
+                                    .clickable { 
+                                        onSetCategory(key)
+                                        lexiconCurrentPage = 0
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
                                 Text(
-                                    text = "ქართული მორფოლოგიური ზმნური ძირების გენერატორი",
-                                    color = Color(0xFF00FFB2),
+                                    text = title,
+                                    color = if (isSelected) NeuralDeepPurple else Color.White,
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
                             }
-                            Text(
-                                text = if (isMorphologyExplorerExpanded) "დაკეცვა ▲" else "გაშლა ▼",
-                                color = NeuralAccent,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
                         }
+                    }
 
-                        if (isMorphologyExplorerExpanded) {
-                            Text(
-                                text = "პოლისინთეზური ზმნისწინები (შე-, გა-, და-, მო-, გადა-) და ძირები (-მოწმ-, -კომიტ-, -წვრთნ-, -სინთეზ-) ავტომატურად წარმოქმნიან აზრის ფორმებს:",
-                                color = NeuralTextSecondary,
-                                fontSize = 10.sp
-                            )
+                    // Morphological Root Explorer Expandable Accordion
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF19102B))
+                            .border(1.dp, Color(0xFF9D00FF).copy(alpha = 0.35f), RoundedCornerShape(12.dp))
+                            .clickable { isMorphologyExplorerExpanded = !isMorphologyExplorerExpanded }
+                            .padding(10.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text(text = "🧬", fontSize = 13.sp)
+                                    Text(
+                                        text = "ქართული მორფოლოგიური ზმნური ძირების გენერატორი",
+                                        color = Color(0xFF00FFB2),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                                Text(
+                                    text = if (isMorphologyExplorerExpanded) "დაკეცვა ▲" else "გაშლა ▼",
+                                    color = NeuralAccent,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
 
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                GeorgianNeuroLinguisticEngine.GEORGIAN_VERB_ROOTS.forEach { verbRoot ->
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(Color.Black.copy(alpha = 0.35f))
-                                            .padding(8.dp)
-                                    ) {
-                                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                verticalAlignment = Alignment.CenterVertically
-                                            ) {
-                                                Text(
-                                                    text = "ძირი: -${verbRoot.root}- (${verbRoot.meaning})",
-                                                    color = Color.White,
-                                                    fontSize = 10.5.sp,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                            }
+                            if (isMorphologyExplorerExpanded) {
+                                Text(
+                                    text = "პოლისინთეზური ზმნისწინები (შე-, გა-, და-, მო-, გადა-) და ძირები (-მოწმ-, -კომიტ-, -წვრთნ-, -სინთეზ-) ავტომატურად წარმოქმნიან აზრის ფორმებს:",
+                                    color = NeuralTextSecondary,
+                                    fontSize = 10.sp
+                                )
 
-                                            Row(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .horizontalScroll(rememberScrollState()),
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                            ) {
-                                                verbRoot.forms.forEach { form ->
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .clip(RoundedCornerShape(6.dp))
-                                                            .background(Color(0xFF2A1B4E))
-                                                            .border(0.8.dp, NeuralAccent.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
-                                                            .clickable { onInjectWord(form, "MORPHOLOGY_VERBS") }
-                                                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                                                    ) {
-                                                        Text(
-                                                            text = form,
-                                                            color = Color.White,
-                                                            fontSize = 10.sp,
-                                                            fontWeight = FontWeight.Medium
-                                                        )
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    GeorgianNeuroLinguisticEngine.GEORGIAN_VERB_ROOTS.forEach { verbRoot ->
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(Color.Black.copy(alpha = 0.35f))
+                                                .padding(8.dp)
+                                        ) {
+                                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Text(
+                                                        text = "ძირი: -${verbRoot.root}- (${verbRoot.meaning})",
+                                                        color = Color.White,
+                                                        fontSize = 10.5.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .horizontalScroll(rememberScrollState()),
+                                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                                ) {
+                                                    verbRoot.forms.forEach { form ->
+                                                        Box(
+                                                            modifier = Modifier
+                                                                .clip(RoundedCornerShape(6.dp))
+                                                                .background(Color(0xFF2A1B4E))
+                                                                .border(0.8.dp, NeuralAccent.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                                                .clickable { onInjectWord(form, "MORPHOLOGY_VERBS") }
+                                                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                                        ) {
+                                                            Text(
+                                                                text = form,
+                                                                color = Color.White,
+                                                                fontSize = 10.sp,
+                                                                fontWeight = FontWeight.Medium
+                                                            )
+                                                        }
                                                     }
                                                 }
                                             }
@@ -642,64 +664,138 @@ fun DirectWordDecoderView(
                             }
                         }
                     }
-                }
 
-                // Lexicon Word Grid
-                val currentCategory = wordDecoderState.activeLexiconCategory
-                val filteredLexicon = GeorgianNeuroLinguisticEngine.MIND_LEXICON_DATABASE.filter { entry ->
-                    val categoryMatches = currentCategory == "ALL" || entry.category == currentCategory
-                    val searchMatches = lexiconSearchQuery.isBlank() ||
-                            entry.word.contains(lexiconSearchQuery.trim(), ignoreCase = true) ||
-                            entry.description.contains(lexiconSearchQuery.trim(), ignoreCase = true) ||
-                            entry.rootStem.contains(lexiconSearchQuery.trim(), ignoreCase = true)
-                    categoryMatches && searchMatches
-                }
+                    // Lexicon Word Grid with PAGINATION
+                    val currentCategory = wordDecoderState.activeLexiconCategory
+                    val filteredLexicon = GeorgianNeuroLinguisticEngine.MIND_LEXICON_DATABASE.filter { entry ->
+                        val categoryMatches = currentCategory == "ALL" || entry.category == currentCategory
+                        val searchMatches = lexiconSearchQuery.isBlank() ||
+                                entry.word.contains(lexiconSearchQuery.trim(), ignoreCase = true) ||
+                                entry.description.contains(lexiconSearchQuery.trim(), ignoreCase = true) ||
+                                entry.rootStem.contains(lexiconSearchQuery.trim(), ignoreCase = true)
+                        categoryMatches && searchMatches
+                    }
 
-                if (filteredLexicon.isEmpty()) {
-                    Text(
-                        text = "სიტყვა ვერ მოიძებნა. სცადეთ სხვა ძიება ან გამოიყენეთ ქვემოთ მოცემული შეყვანის ველი.",
-                        color = NeuralTextSecondary,
-                        fontSize = 11.sp,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                } else {
-                    FlowRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        filteredLexicon.forEach { item ->
-                            Box(
+                    val totalPages = maxOf(1, (filteredLexicon.size + itemsPerPage - 1) / itemsPerPage)
+                    val safePage = lexiconCurrentPage.coerceIn(0, totalPages - 1)
+                    val paginatedList = filteredLexicon.drop(safePage * itemsPerPage).take(itemsPerPage)
+
+                    if (filteredLexicon.isEmpty()) {
+                        Text(
+                            text = "სიტყვა ვერ მოიძებნა. სცადეთ სხვა ძიება ან გამოიყენეთ ქვემოთ მოცემული შეყვანის ველი.",
+                            color = NeuralTextSecondary,
+                            fontSize = 11.sp,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    } else {
+                        // Compact Word Grid
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            paginatedList.forEach { item ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(Color(0xFF1E1E2E))
+                                        .border(1.dp, Color(0xFF00FFB2).copy(alpha = 0.35f), RoundedCornerShape(8.dp))
+                                        .clickable { onInjectWord(item.word, item.category) }
+                                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Text(
+                                            text = item.word,
+                                            color = Color.White,
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = "(${item.emgFrequencyHz.toInt()}Hz)",
+                                            color = Color(0xFF00FFB2),
+                                            fontSize = 9.sp
+                                        )
+                                        if (item.clusterSpeedupGainPct > 50) {
+                                            Text(
+                                                text = "⚡+${item.clusterSpeedupGainPct}%",
+                                                color = NeuralAccent,
+                                                fontSize = 8.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // --- PAGINATION CONTROLS BAR ---
+                        if (totalPages > 1) {
+                            Row(
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(Color(0xFF1E1E2E))
-                                    .border(1.dp, Color(0xFF00FFB2).copy(alpha = 0.35f), RoundedCornerShape(8.dp))
-                                    .clickable { onInjectWord(item.word, item.category) }
-                                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.Black.copy(alpha = 0.3f))
+                                    .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                    .padding(horizontal = 8.dp, vertical = 6.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
+                                // Previous Page Button
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (safePage > 0) NeuralDeepPurple else Color.White.copy(alpha = 0.05f))
+                                        .border(1.dp, if (safePage > 0) NeuralAccent.copy(alpha = 0.5f) else Color.Transparent, RoundedCornerShape(8.dp))
+                                        .clickable(enabled = safePage > 0) {
+                                            if (safePage > 0) lexiconCurrentPage = safePage - 1
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "‹ წინა",
+                                        color = if (safePage > 0) NeuralAccent else NeuralTextSecondary.copy(alpha = 0.4f),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                // Page Indicators
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(4.dp)
                                 ) {
                                     Text(
-                                        text = item.word,
+                                        text = "${safePage + 1} / $totalPages",
                                         color = Color.White,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = "(${item.emgFrequencyHz.toInt()}Hz)",
-                                        color = Color(0xFF00FFB2),
-                                        fontSize = 9.sp
+                                        text = "(${filteredLexicon.size} სიტყვა)",
+                                        color = NeuralTextSecondary,
+                                        fontSize = 10.sp
                                     )
-                                    if (item.clusterSpeedupGainPct > 50) {
-                                        Text(
-                                            text = "⚡+${item.clusterSpeedupGainPct}%",
-                                            color = NeuralAccent,
-                                            fontSize = 8.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
+                                }
+
+                                // Next Page Button
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (safePage < totalPages - 1) NeuralAccent else Color.White.copy(alpha = 0.05f))
+                                        .clickable(enabled = safePage < totalPages - 1) {
+                                            if (safePage < totalPages - 1) lexiconCurrentPage = safePage + 1
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "შემდეგი ›",
+                                        color = if (safePage < totalPages - 1) NeuralDeepPurple else NeuralTextSecondary.copy(alpha = 0.4f),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
                                 }
                             }
                         }
@@ -786,16 +882,32 @@ fun DirectWordDecoderView(
                 .padding(16.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(
-                    text = "დეკოდირებული სიტყვების ქრონოლოგია",
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isRecentWordsExpanded = !isRecentWordsExpanded },
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "დეკოდირებული სიტყვების ქრონოლოგია",
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = if (isRecentWordsExpanded) "დაკეცვა ▲" else "გაშლა ▼ (${wordDecoderState.recentWords.size})",
+                        color = NeuralAccent,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
 
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    wordDecoderState.recentWords.take(8).forEach { item ->
-                        RecentWordRow(item = item)
+                if (isRecentWordsExpanded) {
+                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        wordDecoderState.recentWords.take(6).forEach { item ->
+                            RecentWordRow(item = item)
+                        }
                     }
                 }
             }

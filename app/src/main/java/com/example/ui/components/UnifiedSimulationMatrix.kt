@@ -137,7 +137,15 @@ data class UnifiedSimulationActions(
     val onToggleUnifiedEngine: () -> Unit = {},
     val onSynthesizeUnifiedThought: () -> Unit = {},
     val onSimulateBioStress: () -> Unit = {},
-    val onUpdateWeights: (Float, Float, Float, Float) -> Unit = { _, _, _, _ -> }
+    val onUpdateWeights: (Float, Float, Float, Float) -> Unit = { _, _, _, _ -> },
+    val onMeasurePpgPulse: () -> Unit = {},
+    val onTriggerPupilAha: () -> Unit = {},
+    val onRecomputeBayesian: () -> Unit = {},
+    val onApplyBayesianHypothesis: (com.example.service.ThoughtHypothesis) -> Unit = {},
+    val onTriggerCognitiveApnea: () -> Unit = {},
+    val onStepNextSubvocal: () -> Unit = {},
+    val onCycleSaliencyTarget: () -> Unit = {},
+    val onStepNextAssociativeConcept: () -> Unit = {}
 )
 
 @Composable
@@ -561,10 +569,25 @@ fun UnifiedSimulationMatrix(
             onCoreClicked = onRunUnifiedInference
         )
 
+        // 🌟 9-PILLAR OMNI-COGNITIVE HIERARCHICAL BAYESIAN ENGINE
+        HierarchicalBayesianCognitiveCard(
+            bayesianState = uiState.cognitiveBiometrics,
+            onMeasurePpgPulse = actions.onMeasurePpgPulse,
+            onTriggerPupilAha = actions.onTriggerPupilAha,
+            onRecomputeBayesian = actions.onRecomputeBayesian,
+            onApplyHypothesis = actions.onApplyBayesianHypothesis,
+            onTouchTap = actions.onTouchTap,
+            onTriggerCognitiveApnea = actions.onTriggerCognitiveApnea,
+            onStepNextSubvocal = actions.onStepNextSubvocal,
+            onCycleSaliencyTarget = actions.onCycleSaliencyTarget,
+            onStepNextAssociativeConcept = actions.onStepNextAssociativeConcept
+        )
+
         // Stream Category Filter Selector
         var selectedCategory by remember { mutableStateOf("WORDS") }
         val categoryChips = listOf(
             "WORDS" to "🗣️ სიტყვების გამოცნობა",
+            "COGNITION_5" to "🎯 5-Pillar განზრახვა",
             "ALL" to "⚡ ყველა (12 ნაკადი)",
             "BCI" to "🧠 BCI & სუბვოკალი",
             "SENSORS" to "📡 სენსორები & კამერა",
@@ -2498,34 +2521,34 @@ private fun UnifiedMatrixVisualizer(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(290.dp)
-            .clip(RoundedCornerShape(28.dp))
+            .height(200.dp)
+            .clip(RoundedCornerShape(22.dp))
             .background(NeuralSurface)
-            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(28.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(22.dp))
     ) {
         // Synaptic Background Canvas
         Canvas(modifier = Modifier.fillMaxSize()) {
             val center = Offset(size.width / 2f, size.height / 2f)
-            val radius = size.width.coerceAtMost(size.height) * 0.4f
+            val radius = size.width.coerceAtMost(size.height) * 0.38f
 
             // Concentric Energy Rings
             drawCircle(
                 color = NeuralAccent.copy(alpha = 0.08f),
                 radius = radius * 1.05f,
                 center = center,
-                style = Stroke(width = 2f)
+                style = Stroke(width = 1.5f)
             )
             drawCircle(
                 color = NeuralAccent.copy(alpha = 0.15f),
                 radius = radius * 0.7f,
                 center = center,
-                style = Stroke(width = 2f)
+                style = Stroke(width = 1.5f)
             )
             drawCircle(
                 color = NeuralAccent.copy(alpha = 0.25f),
                 radius = radius * 0.4f,
                 center = center,
-                style = Stroke(width = 2f)
+                style = Stroke(width = 1.5f)
             )
 
             // Converging Multimodal Nodes
@@ -2549,13 +2572,13 @@ private fun UnifiedMatrixVisualizer(
                     color = nodeColors[i % nodeColors.size].copy(alpha = if (isSyncing) 0.5f else 0.2f),
                     start = Offset(nodeX, nodeY),
                     end = center,
-                    strokeWidth = 2f
+                    strokeWidth = 1.5f
                 )
 
                 // Outer Node Circle
                 drawCircle(
                     color = nodeColors[i % nodeColors.size],
-                    radius = 8f,
+                    radius = 6f,
                     center = Offset(nodeX, nodeY)
                 )
             }
@@ -2570,7 +2593,7 @@ private fun UnifiedMatrixVisualizer(
         ) {
             Box(
                 modifier = Modifier
-                    .size(110.dp)
+                    .size(80.dp)
                     .scale(if (isSyncing) coreScale else 1f)
                     .clip(CircleShape)
                     .background(
@@ -2578,7 +2601,7 @@ private fun UnifiedMatrixVisualizer(
                             colors = listOf(NeuralAccent, NeuralDeepPurple)
                         )
                     )
-                    .border(2.dp, NeuralAccent, CircleShape),
+                    .border(1.5.dp, NeuralAccent, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -2586,27 +2609,27 @@ private fun UnifiedMatrixVisualizer(
                         imageVector = AppIcons.Psychology,
                         contentDescription = "ბირთვი",
                         tint = NeuralDeepPurple,
-                        modifier = Modifier.size(32.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                     Text(
                         text = "${String.format(java.util.Locale.US, "%.1f", matchPercentage)}%",
                         color = NeuralDeepPurple,
-                        fontSize = 13.sp,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = FontFamily.Monospace
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             Text(
                 text = "მულტიმოდალური ბირთვი",
                 color = NeuralAccent,
-                fontSize = 10.sp,
+                fontSize = 9.sp,
                 fontFamily = FontFamily.Monospace,
                 fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
+                letterSpacing = 0.8.sp
             )
         }
 

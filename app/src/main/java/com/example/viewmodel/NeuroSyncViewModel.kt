@@ -9,6 +9,17 @@ import com.example.data.DigitalTwinCheckpointEntity
 import com.example.data.DigitalTwinRepository
 import com.example.data.PredictionEntity
 import com.example.data.PredictionRepository
+import com.example.service.BioPpgHrvEngine
+import com.example.service.PpgHrvMetrics
+import com.example.service.PupillometryCognitiveEngine
+import com.example.service.PupillometryMetrics
+import com.example.service.PsychomotorHesitationEngine
+import com.example.service.PsychomotorHesitationMetrics
+import com.example.service.UltradianBioRhythmEngine
+import com.example.service.UltradianBioRhythmMetrics
+import com.example.service.HierarchicalBayesianThoughtEngine
+import com.example.service.HierarchicalBayesianState
+import com.example.service.ThoughtHypothesis
 import com.example.service.GeorgianNeuroLinguisticEngine
 import com.example.service.UnifiedPredictiveThoughtEngine
 import com.example.util.PermissionHelper
@@ -578,7 +589,8 @@ data class NeuroSyncUiState(
     val notificationsGranted: Boolean = true,
     val usageStatsPermissionGranted: Boolean = false,
     val accessibilityPermissionGranted: Boolean = false,
-    val overlayPermissionGranted: Boolean = false
+    val overlayPermissionGranted: Boolean = false,
+    val cognitiveBiometrics: HierarchicalBayesianState = HierarchicalBayesianState()
 )
 
 class NeuroSyncViewModel(application: Application) : AndroidViewModel(application) {
@@ -588,9 +600,14 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     val history: StateFlow<List<PredictionEntity>>
     val digitalTwinCheckpoints: StateFlow<List<DigitalTwinCheckpointEntity>>
 
-    val hardwareSensorManager = com.example.sensor.RealHardwareSensorManager(application)
+    val hardwareSensorManager = com.example.sensor.RealHardwareSensorManager.getInstance(application)
     val cameraGazeAnalyzer = com.example.sensor.RealCameraGazeAnalyzer(application)
     val audioFrequencyAnalyzer = com.example.sensor.RealAudioFrequencyAnalyzer(application)
+
+    val respiratoryPatternEngine = com.example.service.RespiratoryPatternEngine()
+    val subvocalSpeechEngine = com.example.service.SubvocalSpeechEngine()
+    val visualSaliencyEngine = com.example.service.VisualSaliencyEngine()
+    val associativeThoughtGraphEngine = com.example.service.AssociativeThoughtGraphEngine()
 
     private val _uiState = MutableStateFlow(NeuroSyncUiState())
     val uiState: StateFlow<NeuroSyncUiState> = _uiState.asStateFlow()
@@ -960,6 +977,69 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                             )
                         }
                     }
+
+                    // 🌟 COMPUTE OMNI-COGNITIVE INTENT & BIOMETRICS PILLARS
+                    val ppgResult = BioPpgHrvEngine.computePpgHrv(
+                        baseBpm = newHeartRate.toFloat(),
+                        motionTremor = newTremor,
+                        audioDb = if (_uiState.value.micPermissionGranted) _uiState.value.audioDb else 35f,
+                        isUserMoving = _uiState.value.realSensors.isUserMoving,
+                        touchHesitation = _uiState.value.hesitationMetrics.hesitationIndex
+                    )
+
+                    val pupillometryResult = PupillometryCognitiveEngine.computePupillometry(
+                        ambientLux = _uiState.value.realSensors.ambientLightLux,
+                        gazeX = newGazeX,
+                        gazeY = newGazeY,
+                        isGazeActive = _uiState.value.cameraGaze.isCameraActive,
+                        cognitiveLoad = newCogLoad / 100f
+                    )
+
+                    val hesitationResult = PsychomotorHesitationEngine.evaluateHesitation()
+                    val bioRhythmResult = UltradianBioRhythmEngine.computeBioRhythm()
+
+                    val respiratoryResult = respiratoryPatternEngine.computeRespiration(
+                        accelZ = _uiState.value.realSensors.accelZ,
+                        accelTremor = newTremor,
+                        audioDb = _uiState.value.audioDb,
+                        stressLevelPct = _uiState.value.stressLevelPct,
+                        cognitiveLoad = newCogLoad / 100f
+                    )
+
+                    val subvocalResult = subvocalSpeechEngine.computeSubvocalSpeech(
+                        micDb = _uiState.value.audioDb,
+                        isAudioActive = _uiState.value.micPermissionGranted,
+                        cognitiveArousal = newCogLoad / 100f
+                    )
+
+                    val saliencyResult = visualSaliencyEngine.computeSaliency(
+                        gazeX = newGazeX,
+                        gazeY = newGazeY,
+                        isGazeActive = _uiState.value.cameraGaze.isCameraActive,
+                        pupilFixationScore = _uiState.value.cameraGaze.gazeConfidencePct.toFloat()
+                    )
+
+                    val associativeResult = associativeThoughtGraphEngine.computeAssociativeGraph(
+                        stressLevelPct = _uiState.value.stressLevelPct,
+                        cognitiveEnergy = bioRhythmResult.ultradianEnergyPercent.toFloat()
+                    )
+
+                    val bayesianState = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+                        ppg = ppgResult,
+                        pupil = pupillometryResult,
+                        hesitation = hesitationResult,
+                        bioRhythm = bioRhythmResult,
+                        respiratory = respiratoryResult,
+                        subvocal = subvocalResult,
+                        saliency = saliencyResult,
+                        associative = associativeResult,
+                        sensors = _uiState.value.realSensors,
+                        audio = _uiState.value.realAudio,
+                        screenContext = _uiState.value.wordPrediction.currentAppScreenContext,
+                        lastDecodedWord = _uiState.value.wordDecoder.currentDecodedWord
+                    )
+
+                    _uiState.update { it.copy(cognitiveBiometrics = bayesianState) }
 
                     // 🌟 AUTO-UPDATE PREDICTED THOUGHT STREAM EVERY 3-4 SECONDS CONTINUOUSLY
                     val updateInterval = _uiState.value.thoughtUpdateIntervalSeconds
@@ -1769,6 +1849,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         val hesitationScore = (latency / 1200f).coerceIn(0.05f, 0.95f)
         val jitter = ((latency % 100) / 3).coerceIn(5L, 35L).toInt()
 
+        // Record tap in Psychomotor Hesitation Engine
+        val hesitationResult = PsychomotorHesitationEngine.recordTap(x, y)
+
         val rhythmState = when {
             latency < 160L -> "ულტრა-სწრაფი უწყვეტი ნაკადი"
             latency < 350L -> "მკაფიო და გადამწყვეტი რიტმი"
@@ -1776,16 +1859,202 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             else -> "კოგნიტური გადაწყვეტილების პაუზა"
         }
 
-        _uiState.update {
-            it.copy(
+        _uiState.update { current ->
+            val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+                ppg = current.cognitiveBiometrics.ppgMetrics,
+                pupil = current.cognitiveBiometrics.pupillometryMetrics,
+                hesitation = hesitationResult,
+                bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+                sensors = current.realSensors,
+                audio = current.realAudio,
+                screenContext = current.wordPrediction.currentAppScreenContext,
+                lastDecodedWord = current.wordDecoder.currentDecodedWord
+            )
+
+            current.copy(
                 touchTapsCount = newCount,
                 lastTouchCoords = "X: ${x.toInt()}, Y: ${y.toInt()}",
+                cognitiveBiometrics = bayesian,
                 hesitationMetrics = MicroHesitationMetrics(
                     interTapLatencyMs = latency,
                     hesitationIndex = hesitationScore,
                     motorJitterPct = jitter,
                     typingRhythmState = rhythmState
                 )
+            )
+        }
+    }
+
+    fun measurePpgPulseManual() {
+        val current = _uiState.value
+        val ppgResult = BioPpgHrvEngine.computePpgHrv(
+            baseBpm = (70..88).random().toFloat(),
+            motionTremor = current.motionTremor,
+            audioDb = current.audioDb,
+            isUserMoving = current.realSensors.isUserMoving,
+            touchHesitation = current.hesitationMetrics.hesitationIndex
+        )
+        val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+            ppg = ppgResult,
+            pupil = current.cognitiveBiometrics.pupillometryMetrics,
+            hesitation = current.cognitiveBiometrics.hesitationMetrics,
+            bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            lastDecodedWord = current.wordDecoder.currentDecodedWord
+        )
+        _uiState.update {
+            it.copy(
+                heartRateBpm = ppgResult.heartRateBpm.toInt(),
+                cognitiveBiometrics = bayesian
+            )
+        }
+    }
+
+    fun triggerPupilAhaMoment() {
+        val current = _uiState.value
+        val pupilResult = PupillometryCognitiveEngine.triggerAhaMoment(current.realSensors.ambientLightLux)
+        val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+            ppg = current.cognitiveBiometrics.ppgMetrics,
+            pupil = pupilResult,
+            hesitation = current.cognitiveBiometrics.hesitationMetrics,
+            bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            lastDecodedWord = current.wordDecoder.currentDecodedWord
+        )
+        _uiState.update {
+            it.copy(
+                cognitiveBiometrics = bayesian,
+                subconsciousFocusLevel = "💡 AHA! MOMENT დეტექცია (გაფართოება: ${String.format(Locale.US, "%.1f", pupilResult.pupilDiameterMm)}mm)"
+            )
+        }
+    }
+
+    fun recomputeBayesianThought() {
+        val current = _uiState.value
+        val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+            ppg = current.cognitiveBiometrics.ppgMetrics,
+            pupil = current.cognitiveBiometrics.pupillometryMetrics,
+            hesitation = current.cognitiveBiometrics.hesitationMetrics,
+            bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            lastDecodedWord = current.wordDecoder.currentDecodedWord
+        )
+        _uiState.update { it.copy(cognitiveBiometrics = bayesian) }
+    }
+
+    fun applyBayesianHypothesis(hypothesis: ThoughtHypothesis) {
+        _uiState.update { current ->
+            current.copy(
+                currentPredictionTitle = "ბაიესური განზრახვა: ${hypothesis.primaryIntentCategory}",
+                currentPredictionText = hypothesis.thoughtSummary,
+                currentActionPlan = "• ალბათობა: ${String.format(Locale.US, "%.1f", hypothesis.probabilityScore * 100)}%\n• რეკომენდებული ქმედება: ${hypothesis.predictedNextAction}\n• მტკიცებულებები: ${hypothesis.evidenceContributors.entries.joinToString(", ") { "${it.key}: ${String.format(Locale.US, "%.1f", it.value)}" }}",
+                statusText = "ნეირონული ინფერენცია: ${hypothesis.primaryIntentCategory}"
+            )
+        }
+    }
+
+    fun triggerCognitiveApnea() {
+        val current = _uiState.value
+        val respResult = respiratoryPatternEngine.triggerCognitiveApneaSimulation()
+        val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+            ppg = current.cognitiveBiometrics.ppgMetrics,
+            pupil = current.cognitiveBiometrics.pupillometryMetrics,
+            hesitation = current.cognitiveBiometrics.hesitationMetrics,
+            bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+            respiratory = respResult,
+            subvocal = current.cognitiveBiometrics.subvocalMetrics,
+            saliency = current.cognitiveBiometrics.saliencyMetrics,
+            associative = current.cognitiveBiometrics.associativeGraphMetrics,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            lastDecodedWord = current.wordDecoder.currentDecodedWord
+        )
+        _uiState.update {
+            it.copy(
+                cognitiveBiometrics = bayesian,
+                statusText = "🫁 კოგნიტური აპნოე დაფიქსირებულია"
+            )
+        }
+    }
+
+    fun stepNextSubvocalThought() {
+        val current = _uiState.value
+        val subvocalResult = subvocalSpeechEngine.stepNextSubvocalThought()
+        val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+            ppg = current.cognitiveBiometrics.ppgMetrics,
+            pupil = current.cognitiveBiometrics.pupillometryMetrics,
+            hesitation = current.cognitiveBiometrics.hesitationMetrics,
+            bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+            respiratory = current.cognitiveBiometrics.respiratoryMetrics,
+            subvocal = subvocalResult,
+            saliency = current.cognitiveBiometrics.saliencyMetrics,
+            associative = current.cognitiveBiometrics.associativeGraphMetrics,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            lastDecodedWord = current.wordDecoder.currentDecodedWord
+        )
+        _uiState.update {
+            it.copy(
+                cognitiveBiometrics = bayesian,
+                statusText = "🤫 სუბვოკალური მონოლოგი: ${subvocalResult.decodedInnerPhraseSnippet}"
+            )
+        }
+    }
+
+    fun cycleSaliencyTarget() {
+        val current = _uiState.value
+        val saliencyResult = visualSaliencyEngine.cycleTargetElement()
+        val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+            ppg = current.cognitiveBiometrics.ppgMetrics,
+            pupil = current.cognitiveBiometrics.pupillometryMetrics,
+            hesitation = current.cognitiveBiometrics.hesitationMetrics,
+            bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+            respiratory = current.cognitiveBiometrics.respiratoryMetrics,
+            subvocal = current.cognitiveBiometrics.subvocalMetrics,
+            saliency = saliencyResult,
+            associative = current.cognitiveBiometrics.associativeGraphMetrics,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            lastDecodedWord = current.wordDecoder.currentDecodedWord
+        )
+        _uiState.update {
+            it.copy(
+                cognitiveBiometrics = bayesian,
+                statusText = "🎯 ვიზუალური ყურადღება: ${saliencyResult.targetedVisualElement}"
+            )
+        }
+    }
+
+    fun stepNextAssociativeConcept() {
+        val current = _uiState.value
+        val assocResult = associativeThoughtGraphEngine.stepNextAssociativeConcept()
+        val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+            ppg = current.cognitiveBiometrics.ppgMetrics,
+            pupil = current.cognitiveBiometrics.pupillometryMetrics,
+            hesitation = current.cognitiveBiometrics.hesitationMetrics,
+            bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+            respiratory = current.cognitiveBiometrics.respiratoryMetrics,
+            subvocal = current.cognitiveBiometrics.subvocalMetrics,
+            saliency = current.cognitiveBiometrics.saliencyMetrics,
+            associative = assocResult,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            lastDecodedWord = current.wordDecoder.currentDecodedWord
+        )
+        _uiState.update {
+            it.copy(
+                cognitiveBiometrics = bayesian,
+                statusText = "🧬 ასოციაციური გრაფი: ${assocResult.activeSeedConcept}"
             )
         }
     }

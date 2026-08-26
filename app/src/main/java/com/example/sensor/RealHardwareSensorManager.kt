@@ -559,5 +559,18 @@ class RealHardwareSensorManager(private val context: Context) : SensorEventListe
     override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {
         // No-op
     }
+
+    companion object {
+        @Volatile
+        private var instance: RealHardwareSensorManager? = null
+
+        fun getInstance(context: Context): RealHardwareSensorManager {
+            return instance ?: synchronized(this) {
+                instance ?: RealHardwareSensorManager(context.applicationContext).also {
+                    instance = it
+                }
+            }
+        }
+    }
 }
 
