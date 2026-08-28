@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.ui.components.BehavioralPsychologyView
 import com.example.ui.components.DigitalTwinView
 import com.example.ui.components.DirectWordDecoderView
 import com.example.ui.components.ExplanationModal
@@ -62,7 +64,7 @@ import com.example.ui.theme.NeuralDeepPurple
 import com.example.ui.theme.NeuralSurface
 import com.example.viewmodel.NeuroSyncViewModel
 
-enum class NeuroTab { WORDS, UNIFIED_MATRIX, DIGITAL_TWIN, MIND_LAB, SENSORS, LOGS }
+enum class NeuroTab { WORDS, UNIFIED_MATRIX, BEHAVIOR_PSYCH, DIGITAL_TWIN, MIND_LAB, SENSORS, LOGS }
 
 @Composable
 fun NeuroSyncApp(
@@ -246,6 +248,10 @@ fun NeuroSyncApp(
                                     onStepNextSubvocal = { viewModel.stepNextSubvocalThought() },
                                     onCycleSaliencyTarget = { viewModel.cycleSaliencyTarget() },
                                     onStepNextAssociativeConcept = { viewModel.stepNextAssociativeConcept() },
+                                    onStepNextFacs = { viewModel.stepNextFacsMicroExpression() },
+                                    onStepNextEmfSpatial = { viewModel.stepNextSpatialProfile() },
+                                    onStepNextLatency = { viewModel.stepNextCognitiveLatency() },
+                                    onStepNextFatigue = { viewModel.stepNextDecisionFatigue() },
                                     onToggleCamera = {
                                         if (uiState.cameraGaze.isCameraActive) {
                                             viewModel.stopCameraGazeTracking()
@@ -254,6 +260,30 @@ fun NeuroSyncApp(
                                         }
                                     }
                                 )
+                            )
+                        }
+                        NeuroTab.BEHAVIOR_PSYCH -> {
+                            BehavioralPsychologyView(
+                                psychologyState = uiState.behavioralPsychology,
+                                voiceState = uiState.voiceBiomarkers,
+                                cantabState = uiState.cantabSpm,
+                                wearablesState = uiState.wearablesSuite,
+                                testState = uiState.psychTestState,
+                                lslState = uiState.lslExportState,
+                                onToggleDevice = { viewModel.toggleWearableDevice(it) },
+                                onScanBle = { viewModel.triggerBleScan() },
+                                onSwitchTestType = { viewModel.switchPsychTestType(it) },
+                                onAnswerStroop = { viewModel.answerStroopTest(it) },
+                                onTriggerGoNoGo = { viewModel.triggerGoNoGoAction(it) },
+                                onAnswerIat = { viewModel.answerIatTest(it) },
+                                onClickCantabBox = { viewModel.clickCantabBox(it) },
+                                onToggleVoiceAnalysis = { viewModel.toggleVoiceAnalysis() },
+                                onTriggerAcousticStress = { viewModel.triggerAcousticStressSample() },
+                                onToggleLsl = { viewModel.toggleLslBroadcast() },
+                                onSetLslFormat = { viewModel.setLslExportFormat(it) },
+                                onExportLslData = { viewModel.exportLslDataPacket() },
+                                onTriggerGsrPeak = { viewModel.triggerGsrStressPeak() },
+                                onSimulateSystem1Or2 = { viewModel.simulateSystem1Or2Step() }
                             )
                         }
                         NeuroTab.DIGITAL_TWIN -> {
@@ -369,26 +399,30 @@ private fun TabSelectorBar(
             .clip(RoundedCornerShape(20.dp))
             .background(NeuralSurface)
             .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
-            .padding(6.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
+            .padding(6.dp)
+            .horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        TabPillItem("სიტყვები", activeTab == NeuroTab.WORDS, modifier = Modifier.weight(1.1f)) {
+        TabPillItem("სიტყვები", activeTab == NeuroTab.WORDS) {
             onTabSelected(NeuroTab.WORDS)
         }
-        TabPillItem("მატრიცა", activeTab == NeuroTab.UNIFIED_MATRIX, modifier = Modifier.weight(1f)) {
+        TabPillItem("მატრიცა", activeTab == NeuroTab.UNIFIED_MATRIX) {
             onTabSelected(NeuroTab.UNIFIED_MATRIX)
         }
-        TabPillItem("90 დღე", activeTab == NeuroTab.DIGITAL_TWIN, modifier = Modifier.weight(0.9f)) {
+        TabPillItem("🧬 ქცევა & BLE", activeTab == NeuroTab.BEHAVIOR_PSYCH) {
+            onTabSelected(NeuroTab.BEHAVIOR_PSYCH)
+        }
+        TabPillItem("90 დღე", activeTab == NeuroTab.DIGITAL_TWIN) {
             onTabSelected(NeuroTab.DIGITAL_TWIN)
         }
-        TabPillItem("ლაბი", activeTab == NeuroTab.MIND_LAB, modifier = Modifier.weight(0.8f)) {
+        TabPillItem("ლაბი", activeTab == NeuroTab.MIND_LAB) {
             onTabSelected(NeuroTab.MIND_LAB)
         }
-        TabPillItem("სენსორები", activeTab == NeuroTab.SENSORS, modifier = Modifier.weight(1f)) {
+        TabPillItem("სენსორები", activeTab == NeuroTab.SENSORS) {
             onTabSelected(NeuroTab.SENSORS)
         }
-        TabPillItem("ლოგი", activeTab == NeuroTab.LOGS, modifier = Modifier.weight(0.8f)) {
+        TabPillItem("ლოგი", activeTab == NeuroTab.LOGS) {
             onTabSelected(NeuroTab.LOGS)
         }
 
@@ -422,7 +456,7 @@ private fun TabPillItem(
             .clip(RoundedCornerShape(14.dp))
             .background(if (isSelected) NeuralAccent else Color.Transparent)
             .clickable { onClick() }
-            .padding(vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(

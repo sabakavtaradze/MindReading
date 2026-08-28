@@ -48,6 +48,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.service.AssociativeThoughtGraphMetrics
+import com.example.service.CognitiveLatencyMetrics
+import com.example.service.DecisionFatigueMetrics
+import com.example.service.EmfSpatialContextMetrics
+import com.example.service.FacsMicroExpressionMetrics
 import com.example.service.HierarchicalBayesianState
 import com.example.service.PpgHrvMetrics
 import com.example.service.PsychomotorHesitationMetrics
@@ -79,6 +83,10 @@ fun HierarchicalBayesianCognitiveCard(
     onStepNextSubvocal: () -> Unit = {},
     onCycleSaliencyTarget: () -> Unit = {},
     onStepNextAssociativeConcept: () -> Unit = {},
+    onStepNextFacs: () -> Unit = {},
+    onStepNextEmfSpatial: () -> Unit = {},
+    onStepNextLatency: () -> Unit = {},
+    onStepNextFatigue: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var activeEngineSection by remember { mutableStateOf("BAYESIAN") }
@@ -119,13 +127,13 @@ fun HierarchicalBayesianCognitiveCard(
 
                     Column {
                         Text(
-                            text = "აზრის გამოთვლის 9-ძრავიანი სისტემა",
+                            text = "აზრის გამოთვლის 13-ძრავიანი სისტემა",
                             color = NeuralTextPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Bayesian • Subvocal • Apnea • Saliency • Hopfield",
+                            text = "FACS • EMF • Latency • Fatigue • Bayesian",
                             color = NeuralAccent,
                             fontSize = 10.sp,
                             fontFamily = FontFamily.Monospace
@@ -160,6 +168,26 @@ fun HierarchicalBayesianCognitiveCard(
                     label = "🧠 ბაიესური ტვინი",
                     isSelected = activeEngineSection == "BAYESIAN",
                     onClick = { activeEngineSection = "BAYESIAN" }
+                )
+                EngineTabChip(
+                    label = "⚡ FACS მიმიკა",
+                    isSelected = activeEngineSection == "FACS",
+                    onClick = { activeEngineSection = "FACS" }
+                )
+                EngineTabChip(
+                    label = "🧲 EMF & სივრცე",
+                    isSelected = activeEngineSection == "EMF",
+                    onClick = { activeEngineSection = "EMF" }
+                )
+                EngineTabChip(
+                    label = "⏳ ლატენტობა & Dwell",
+                    isSelected = activeEngineSection == "LATENCY",
+                    onClick = { activeEngineSection = "LATENCY" }
+                )
+                EngineTabChip(
+                    label = "🧠 დაღლილობა & ენტროპია",
+                    isSelected = activeEngineSection == "FATIGUE",
+                    onClick = { activeEngineSection = "FATIGUE" }
                 )
                 EngineTabChip(
                     label = "🫁 სუნთქვა & აპნოე",
@@ -209,6 +237,22 @@ fun HierarchicalBayesianCognitiveCard(
                     bayesianState = bayesianState,
                     onRecompute = onRecomputeBayesian,
                     onApplyHypothesis = onApplyHypothesis
+                )
+                "FACS" -> FacsMicroExpressionEngineView(
+                    facs = bayesianState.facsMetrics,
+                    onStepNext = onStepNextFacs
+                )
+                "EMF" -> EmfSpatialContextEngineView(
+                    emf = bayesianState.emfMetrics,
+                    onStepNext = onStepNextEmfSpatial
+                )
+                "LATENCY" -> CognitiveLatencyDwellEngineView(
+                    latency = bayesianState.latencyMetrics,
+                    onStepNext = onStepNextLatency
+                )
+                "FATIGUE" -> DecisionFatigueDepletionEngineView(
+                    fatigue = bayesianState.fatigueMetrics,
+                    onStepNext = onStepNextFatigue
                 )
                 "RESPIRATION" -> RespiratoryPatternEngineView(
                     respiration = bayesianState.respiratoryMetrics,
@@ -1071,6 +1115,286 @@ private fun MetricPill(
         ) {
             Text(text = label, color = NeuralTextSecondary, fontSize = 9.sp)
             Text(text = value, color = accentColor, fontSize = 10.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+        }
+    }
+}
+
+// 10. ⚡ FACS MICRO-EXPRESSION DYNAMICS VIEW (40-120ms)
+@Composable
+private fun FacsMicroExpressionEngineView(
+    facs: FacsMicroExpressionMetrics,
+    onStepNext: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(NeuralDeepPurple)
+                .border(1.dp, Color(0xFFFF5964).copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                .padding(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "⚡ FACS მიკრო-მიმიკა (${facs.microExpressionDurationMs}ms)",
+                        color = Color(0xFFFF5964),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "${100 - facs.facialFrictionPct}% სანდოობა",
+                        color = NeuralAccent,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Text(
+                    text = "დომინანტური ემოცია: ${facs.detectedMicroEmotion}",
+                    color = NeuralTextPrimary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = facs.georgianMicroInsight,
+                    color = NeuralTextSecondary,
+                    fontSize = 10.sp
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MetricPill("AU4 წარბის დაჭიმულობა", String.format(Locale.US, "%.2f", facs.eyebrowFurrowAU4), Color(0xFFFF5964), Modifier.weight(1f))
+            MetricPill("AU12 ღიმილი", String.format(Locale.US, "%.2f", facs.smileLipCornerAU12), Color(0xFF00F5D4), Modifier.weight(1f))
+            MetricPill("ემოციური ვალენტობა", String.format(Locale.US, "%.2f", facs.emotionalValenceScore), if (facs.emotionalValenceScore >= 0) Color(0xFF00F5D4) else Color(0xFFFF5964), Modifier.weight(1f))
+        }
+
+        Button(
+            onClick = onStepNext,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF5964).copy(alpha = 0.25f)),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("⚡ შემდეგი მიკრო-მიმიკის სიმულაცია (FACS AU Step)", color = Color(0xFFFF5964), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+// 11. 🧲 EMF & SPATIAL CONTEXT VIEW
+@Composable
+private fun EmfSpatialContextEngineView(
+    emf: EmfSpatialContextMetrics,
+    onStepNext: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(NeuralDeepPurple)
+                .border(1.dp, Color(0xFF4CC9F0).copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                .padding(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "🧲 EMF & სივრცითი გარემო",
+                        color = Color(0xFF4CC9F0),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = if (emf.proximityToElectronicsScore > 0.5f) "⚡ მოწყობილობასთან ახლოს" else "თავისუფალი ველი",
+                        color = if (emf.proximityToElectronicsScore > 0.5f) Color(0xFFFFBE0B) else Color(0xFF00F5D4),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Text(
+                    text = "გარემოს დომენი: ${emf.estimatedEnvironmentDomain}",
+                    color = NeuralTextPrimary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "კოგნიტური შეზღუდვა: ${emf.spatialCognitiveDomainConstraint}",
+                    color = NeuralTextSecondary,
+                    fontSize = 10.sp
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MetricPill("მაგნიტური ველი (EMF)", "${String.format(Locale.US, "%.1f", emf.magneticFluxDensityMicroTesla)} µT", Color(0xFF4CC9F0), Modifier.weight(1f))
+            MetricPill("სიმაღლის დელტა", "${String.format(Locale.US, "%.1f", emf.altitudeDeltaMeters)} m", Color(0xFF00F5D4), Modifier.weight(1f))
+            MetricPill("RF/BT სიგნალები", "${emf.ambientRssiDensity} აქტიური", Color(0xFFFFBE0B), Modifier.weight(1f))
+        }
+
+        Button(
+            onClick = onStepNext,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CC9F0).copy(alpha = 0.25f)),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("🧲 გარემოს პროფილის გადართვა (სამუშაო/ტრანზიტი/გარე)", color = Color(0xFF4CC9F0), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+// 12. ⏳ COGNITIVE LATENCY & DWELL DYNAMICS VIEW (System 1 vs System 2)
+@Composable
+private fun CognitiveLatencyDwellEngineView(
+    latency: CognitiveLatencyMetrics,
+    onStepNext: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(NeuralDeepPurple)
+                .border(1.dp, Color(0xFFF72585).copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                .padding(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "⏳ კოგნიტური ლატენტობა (${latency.stimulusResponseLatencyMs}ms)",
+                        color = Color(0xFFF72585),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = if (latency.cognitiveFrictionIndex > 0.4f) "🧠 System 2 (ღრმა)" else "⚡ System 1 (სწრაფი)",
+                        color = if (latency.cognitiveFrictionIndex > 0.4f) Color(0xFFFFBE0B) else Color(0xFF00F5D4),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Text(
+                    text = "აზროვნების რეჟიმი: ${latency.decisionMode}",
+                    color = NeuralTextPrimary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = latency.georgianLatencyInsight,
+                    color = NeuralTextSecondary,
+                    fontSize = 10.sp
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MetricPill("პასუხის ლატენტობა", "${latency.stimulusResponseLatencyMs} ms", Color(0xFFF72585), Modifier.weight(1f))
+            MetricPill("მოქმედების დაყოვნება", "${latency.dwellTimeBeforeActionMs} ms", Color(0xFF00F5D4), Modifier.weight(1f))
+            MetricPill("ფრიქციის ინდექსი", "${(latency.cognitiveFrictionIndex * 100).toInt()}%", Color(0xFFFFBE0B), Modifier.weight(1f))
+        }
+
+        Button(
+            onClick = onStepNext,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF72585).copy(alpha = 0.25f)),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("⏳ ლატენტობის რეჟიმის შეცვლა (System 1/2 პულსი)", color = Color(0xFFF72585), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+        }
+    }
+}
+
+// 13. 🧠 DECISION FATIGUE & EGO DEPLETION VIEW
+@Composable
+private fun DecisionFatigueDepletionEngineView(
+    fatigue: DecisionFatigueMetrics,
+    onStepNext: () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(16.dp))
+                .background(NeuralDeepPurple)
+                .border(1.dp, Color(0xFFFFB703).copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                .padding(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "🧠 მენტალური რესურსი & ენტროპია",
+                        color = Color(0xFFFFB703),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = if (fatigue.mentalEnergyReservePct < 40) "⚠️ Ego Depleted" else "სრულად ენერგიული",
+                        color = if (fatigue.mentalEnergyReservePct < 40) Color(0xFFFF5964) else Color(0xFF00F5D4),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Text(
+                    text = "გადაღლის სტადია: ${fatigue.decisionDepletionLevel}",
+                    color = NeuralTextPrimary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = fatigue.georgianFatigueSummary,
+                    color = NeuralTextSecondary,
+                    fontSize = 10.sp
+                )
+            }
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            MetricPill("მენტალური რეზერვი", "${fatigue.mentalEnergyReservePct}%", if (fatigue.mentalEnergyReservePct > 50) Color(0xFF00F5D4) else Color(0xFFFF5964), Modifier.weight(1f))
+            MetricPill("გადაწყვეტილებები", "${fatigue.accumulatedDecisionsToday}", Color(0xFFFFB703), Modifier.weight(1f))
+            MetricPill("მიდრეკილება", fatigue.heuristicBiasTendency.take(18) + "...", Color(0xFF00B4D8), Modifier.weight(1f))
+        }
+
+        Button(
+            onClick = onStepNext,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFB703).copy(alpha = 0.25f)),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("🧠 გადაწყვეტილების მიღება (ენერგიის ამოწურვის ციკლი)", color = Color(0xFFFFB703), fontSize = 11.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

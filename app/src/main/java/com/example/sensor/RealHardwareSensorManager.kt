@@ -10,6 +10,10 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.BatteryManager
+import android.os.Handler
+import android.os.HandlerThread
+import android.os.PowerManager
+import android.os.Process
 import android.util.Log
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -223,23 +227,84 @@ class RealHardwareSensorManager(private val context: Context) : SensorEventListe
     )
     val sensorState: StateFlow<RealHardwareSensorState> = _sensorState.asStateFlow()
 
+    private var sensorThread: HandlerThread? = null
+    private var sensorHandler: Handler? = null
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var isListeningRegistered = false
+
+    private fun ensureBackgroundThread(): Handler? {
+        try {
+            if (sensorThread == null || !sensorThread!!.isAlive) {
+                sensorThread = HandlerThread("NeuroSensorBgThread", Process.THREAD_PRIORITY_MORE_FAVORABLE).apply {
+                    start()
+                }
+                sensorHandler = Handler(sensorThread!!.looper)
+            }
+            return sensorHandler
+        } catch (e: Throwable) {
+            Log.e("RealHardwareSensorManager", "Error creating sensor HandlerThread", e)
+            return null
+        }
+    }
+
+    private fun acquireWakeLock() {
+        try {
+            if (wakeLock == null) {
+                val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+                wakeLock = powerManager?.newWakeLock(
+                    PowerManager.PARTIAL_WAKE_LOCK,
+                    "NeuroSync:SensorBackgroundWakeLock"
+                )?.apply {
+                    setReferenceCounted(false)
+                }
+            }
+            if (wakeLock?.isHeld == false) {
+                wakeLock?.acquire(24 * 60 * 60 * 1000L) // 24hr persistent window
+            }
+        } catch (e: Throwable) {
+            Log.e("RealHardwareSensorManager", "WakeLock error", e)
+        }
+    }
+
     fun startListening() {
         if (sensorManager == null) return
         try {
-            val delay = SensorManager.SENSOR_DELAY_UI
-            accelerometer?.let { sensorManager.registerListener(this, it, delay) }
-            gyroscope?.let { sensorManager.registerListener(this, it, delay) }
-            magnetometer?.let { sensorManager.registerListener(this, it, delay) }
-            linearAccel?.let { sensorManager.registerListener(this, it, delay) }
-            gravitySensor?.let { sensorManager.registerListener(this, it, delay) }
-            rotationVectorSensor?.let { sensorManager.registerListener(this, it, delay) }
-            lightSensor?.let { sensorManager.registerListener(this, it, delay) }
-            proximitySensor?.let { sensorManager.registerListener(this, it, delay) }
-            pressureSensor?.let { sensorManager.registerListener(this, it, delay) }
-            stepDetectorSensor?.let { sensorManager.registerListener(this, it, delay) }
-            stepCounterSensor?.let { sensorManager.registerListener(this, it, delay) }
-            tempSensor?.let { sensorManager.registerListener(this, it, delay) }
-            humiditySensor?.let { sensorManager.registerListener(this, it, delay) }
+            acquireWakeLock()
+            val handler = ensureBackgroundThread()
+            val delay = SensorManager.SENSOR_DELAY_GAME // High fidelity sampling for neural tremor & orientation
+
+            if (!isListeningRegistered) {
+                if (handler != null) {
+                    accelerometer?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    gyroscope?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    magnetometer?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    linearAccel?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    gravitySensor?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    rotationVectorSensor?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    lightSensor?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    proximitySensor?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    pressureSensor?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    stepDetectorSensor?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    stepCounterSensor?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    tempSensor?.let { sensorManager.registerListener(this, it, delay, handler) }
+                    humiditySensor?.let { sensorManager.registerListener(this, it, delay, handler) }
+                } else {
+                    accelerometer?.let { sensorManager.registerListener(this, it, delay) }
+                    gyroscope?.let { sensorManager.registerListener(this, it, delay) }
+                    magnetometer?.let { sensorManager.registerListener(this, it, delay) }
+                    linearAccel?.let { sensorManager.registerListener(this, it, delay) }
+                    gravitySensor?.let { sensorManager.registerListener(this, it, delay) }
+                    rotationVectorSensor?.let { sensorManager.registerListener(this, it, delay) }
+                    lightSensor?.let { sensorManager.registerListener(this, it, delay) }
+                    proximitySensor?.let { sensorManager.registerListener(this, it, delay) }
+                    pressureSensor?.let { sensorManager.registerListener(this, it, delay) }
+                    stepDetectorSensor?.let { sensorManager.registerListener(this, it, delay) }
+                    stepCounterSensor?.let { sensorManager.registerListener(this, it, delay) }
+                    tempSensor?.let { sensorManager.registerListener(this, it, delay) }
+                    humiditySensor?.let { sensorManager.registerListener(this, it, delay) }
+                }
+                isListeningRegistered = true
+            }
 
             registerBatteryMonitor()
             updateSystemMemoryMetrics()
@@ -328,15 +393,30 @@ class RealHardwareSensorManager(private val context: Context) : SensorEventListe
         }
     }
 
-    fun stopListening() {
+    fun stopListening(force: Boolean = false) {
+        if (!force && com.example.service.NeuralContextService.isServiceRunning) {
+            // Keep sensors active in background for 24/7 thought decoding
+            return
+        }
         try {
             sensorManager?.unregisterListener(this)
+            isListeningRegistered = false
             batteryReceiver?.let {
                 try {
                     context.unregisterReceiver(it)
                 } catch (ignored: Throwable) {}
                 batteryReceiver = null
             }
+            try {
+                if (wakeLock?.isHeld == true) {
+                    wakeLock?.release()
+                }
+            } catch (ignored: Throwable) {}
+            try {
+                sensorThread?.quitSafely()
+                sensorThread = null
+                sensorHandler = null
+            } catch (ignored: Throwable) {}
             _sensorState.value = _sensorState.value.copy(isTracking = false)
         } catch (e: Throwable) {
             Log.e("RealHardwareSensorManager", "Error unregistering sensor listeners", e)

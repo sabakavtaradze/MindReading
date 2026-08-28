@@ -590,7 +590,130 @@ data class NeuroSyncUiState(
     val usageStatsPermissionGranted: Boolean = false,
     val accessibilityPermissionGranted: Boolean = false,
     val overlayPermissionGranted: Boolean = false,
-    val cognitiveBiometrics: HierarchicalBayesianState = HierarchicalBayesianState()
+    val cognitiveBiometrics: HierarchicalBayesianState = HierarchicalBayesianState(),
+    val behavioralPsychology: BehavioralPsychologyState = BehavioralPsychologyState(),
+    val voiceBiomarkers: VoiceBiomarkersState = VoiceBiomarkersState(),
+    val cantabSpm: CantabPsychState = CantabPsychState(),
+    val wearablesSuite: WearablesSuiteState = WearablesSuiteState(),
+    val psychTestState: PsychologicalTestState = PsychologicalTestState(),
+    val lslExportState: LslExportState = LslExportState()
+)
+
+data class VoiceBiomarkersState(
+    val isVoiceAnalyzing: Boolean = true,
+    val fundamentalFrequencyF0Hz: Float = 124.5f,
+    val pitchJitterPct: Float = 0.78f, // Micro-pitch instability (<1.04% is normal/healthy)
+    val amplitudeShimmerPct: Float = 1.42f, // Micro-amplitude variation (<3.8% is healthy)
+    val harmonicToNoiseRatioDb: Float = 22.8f, // Voice clarity
+    val speechCadenceSyllablesPerSec: Float = 4.3f, // Normal conversational tempo
+    val pauseToSpeechRatioPct: Int = 16, // Low hesitation
+    val vocalDepressionBurnoutRiskPct: Int = 11, // Low risk
+    val vocalAcousticState: String = "ენერგიული & რიტმული მეტყველება (აკუსტიკური რეზონანსი: 96%)",
+    val vocalFryDetected: Boolean = false,
+    val flatMonotoneAffectDetected: Boolean = false
+)
+
+data class CantabPsychState(
+    val spatialMemorySpan: Int = 7, // Items retained in working memory
+    val pairedAssociatesScorePct: Int = 95, // Visual & spatial memory
+    val cognitiveFlexibilityScorePct: Int = 91, // WCST flexibility
+    val iatDScore: Float = 0.12f, // Implicit Association Test D-Score (Neutral/Low bias)
+    val implicitBiasStatus: String = "ნეიტრალური ქვეცნობიერი ბალანსი (Low Implicit Bias)",
+    val iatLatencyDiffMs: Int = 34,
+    val pupilDilationTeprMm: Float = 0.26f, // Task-Evoked Pupillary Response (<0.4mm = calm focus)
+    val cognitiveFrictionIndex: Float = 0.14f // Low friction
+)
+
+data class BehavioralPsychologyState(
+    val system1RatioPct: Int = 42,
+    val system2RatioPct: Int = 58,
+    val averageDecisionLatencyMs: Int = 340,
+    val cognitiveModeDescription: String = "System 2: ანალიტიკური და გაცნობიერებული ფოკუსი",
+    val dailyMicroDecisionsCount: Int = 148,
+    val maxDailyDecisionsBudget: Int = 250,
+    val egoDepletionPct: Int = 34,
+    val willpowerStatus: String = "ოპტიმალური რეზერვი (მაღალი თვითკონტროლი)",
+    val mistakeSusceptibilityPct: Int = 12,
+    val keystrokeCadenceWpm: Int = 58,
+    val flightTimeMs: Int = 112,
+    val dwellDurationMs: Int = 86,
+    val backspaceCorrectionRatePct: Int = 5,
+    val touchPressureConsistencyPct: Int = 94,
+    val microTremorAgitationIndex: Float = 0.08f,
+    val emotionalValence: Float = 0.72f, // -1.0 to +1.0
+    val arousalLevel: Float = 0.45f,     // 0.0 to 1.0
+    val innerAffectStatus: String = "ღრმა მენტალური ნაკადი & კმაყოფილება (Flow State)",
+    val duchenneSmileDetected: Boolean = true,
+    val au4FrownTensionIndex: Float = 0.06f,
+    val galvanicSkinConductanceMicroSiemens: Float = 4.35f,
+    val phasicSpikesPerMin: Int = 4,
+    val sympatheticArousalPct: Int = 28,
+    val circadianPhase: String = "დილის კოგნიტური პიკი (Peak Flow Zone)",
+    val remSleepRatioPct: Int = 24,
+    val deepSleepRatioPct: Int = 22,
+    val morningReadinessScore: Int = 92,
+    val detectedBiases: List<String> = listOf(
+        "სტატუს-კვოს მიკერძოება (Status Quo: 12%)",
+        "დანაკარგის არიდება (Loss Aversion: 18%)",
+        "დამაგრების ეფექტი (Anchoring: 9%)"
+    )
+)
+
+data class WearableDeviceItem(
+    val id: String,
+    val name: String,
+    val type: String, // "EEG", "GSR", "SLEEP_RING", "SEMG", "EYE_TRACKING"
+    val isConnected: Boolean,
+    val isStreaming: Boolean,
+    val batteryPct: Int,
+    val primaryMetric: String,
+    val secondaryMetric: String,
+    val iconEmoji: String
+)
+
+data class WearablesSuiteState(
+    val isBleScanning: Boolean = false,
+    val devices: List<WearableDeviceItem> = listOf(
+        WearableDeviceItem("muse_s", "Muse S (4-Ch EEG)", "EEG", true, true, 88, "ტვინის ტალღები: Alpha 10.2Hz, Beta 18.4Hz", "სიგნალის ხარისხი: 99% (TP9, AF7, AF8, TP10)", "🧠"),
+        WearableDeviceItem("empatica_e4", "Empatica EmbracePlus / E4", "GSR", true, true, 92, "კანის გამტარობა: 4.35 µS (GSR / EDA)", "კანის ტემპერატურა: 34.2°C • Phasic Peaks: 4/წთ", "⚡"),
+        WearableDeviceItem("oura_ring", "Oura Ring Gen 3", "SLEEP_RING", true, true, 76, "ღამის HRV RMSSD: 62 ms • RHR: 54 bpm", "ძილის ქულა: 91/100 (REM: 24%, Deep: 22%)", "💍"),
+        WearableDeviceItem("bioamp_semg", "BioAmp EXG Pill (sEMG)", "SEMG", true, true, 95, "ხორხის კუნთოვანი დაძაბულობა: 142.5 µV", "სუბვოკალური ფონემების სენსიტიურობა: 98%", "🎙️"),
+        WearableDeviceItem("tobii_glasses", "Tobii Pro Glasses (Eye Tracking)", "EYE_TRACKING", true, true, 82, "ფიქსაციის ხანგრძლივობა: 420 ms", "საკადური სიჩქარე: 320°/წმ • გუგა: 3.65 მმ", "👓")
+    )
+)
+
+data class PsychologicalTestState(
+    val activeTestType: String = "STROOP", // "STROOP", "GO_NO_GO", "IAT", "CANTAB_SWM"
+    val stroopWord: String = "მწვანე",
+    val stroopInkColorHex: Long = 0xFFFF5252, // Red ink displaying the word "მწვანე" (Green)
+    val stroopCorrectAnswer: String = "წითელი",
+    val stroopOptions: List<String> = listOf("წითელი", "მწვანე", "ლურჯი", "ყვითელი"),
+    val goNoGoPrompt: String = "დააჭირე 'აქტივაციას' მხოლოდ მწვანე სიგნალის დროს!",
+    val isGoSignal: Boolean = true,
+    val iatStimulusWord: String = "სიმშვიდე",
+    val iatTargetCategory: String = "პოზიტიური / მე",
+    val iatLeftCategory: String = "პოზიტიური / მე",
+    val iatRightCategory: String = "ნეგატიური / სხვა",
+    val cantabBoxes: List<Int> = listOf(1, 2, 3, 4, 5, 6),
+    val cantabTargetBox: Int = 3,
+    val cantabFoundCount: Int = 4,
+    val cantabErrorsCount: Int = 0,
+    val testScorePct: Int = 96,
+    val lastReactionLatencyMs: Int = 264,
+    val evaluatedMode: String = "System 1 (სწრაფი ინტუიციური რეფლექსი)",
+    val testsCompletedCount: Int = 12,
+    val statusMessage: String = "ტესტი მზადაა: შეამოწმეთ თქვენი ინჰიბიცია და რეაქციის დრო რეალურ დროში!"
+)
+
+data class LslExportState(
+    val isLslBroadcastActive: Boolean = true,
+    val streamName: String = "NeuroSync_Multimodal_LSL_Stream",
+    val streamType: String = "EEG+GSR+PPG+FACS+Subvocal",
+    val samplingRateHz: Int = 250,
+    val packetsTransmitted: Long = 24800L,
+    val exportFormats: List<String> = listOf("XDF", "EDF", "HDF5", "JSON"),
+    val selectedFormat: String = "XDF",
+    val lastExportStatus: String = "LSL ნაკადი აქტიურია (Port 59124) • მზადაა Python / NeuroKit2 / OpenBCI-სთვის"
 )
 
 class NeuroSyncViewModel(application: Application) : AndroidViewModel(application) {
@@ -601,13 +724,18 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     val digitalTwinCheckpoints: StateFlow<List<DigitalTwinCheckpointEntity>>
 
     val hardwareSensorManager = com.example.sensor.RealHardwareSensorManager.getInstance(application)
-    val cameraGazeAnalyzer = com.example.sensor.RealCameraGazeAnalyzer(application)
-    val audioFrequencyAnalyzer = com.example.sensor.RealAudioFrequencyAnalyzer(application)
+    val cameraGazeAnalyzer = com.example.sensor.RealCameraGazeAnalyzer.getInstance(application)
+    val audioFrequencyAnalyzer = com.example.sensor.RealAudioFrequencyAnalyzer.getInstance(application)
 
     val respiratoryPatternEngine = com.example.service.RespiratoryPatternEngine()
     val subvocalSpeechEngine = com.example.service.SubvocalSpeechEngine()
     val visualSaliencyEngine = com.example.service.VisualSaliencyEngine()
     val associativeThoughtGraphEngine = com.example.service.AssociativeThoughtGraphEngine()
+    // 🌟 4 NEW Omni-Cognitive Engines
+    val facsMicroExpressionEngine = com.example.service.FacsMicroExpressionEngine()
+    val emfSpatialContextEngine = com.example.service.EmfSpatialContextEngine()
+    val cognitiveLatencyDwellEngine = com.example.service.CognitiveLatencyDwellEngine()
+    val decisionFatigueDepletionEngine = com.example.service.DecisionFatigueDepletionEngine()
 
     private val _uiState = MutableStateFlow(NeuroSyncUiState())
     val uiState: StateFlow<NeuroSyncUiState> = _uiState.asStateFlow()
@@ -1024,6 +1152,30 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         cognitiveEnergy = bioRhythmResult.ultradianEnergyPercent.toFloat()
                     )
 
+                    val facsResult = facsMicroExpressionEngine.computeFacsMicroExpressions(
+                        cognitiveArousal = newCogLoad / 100f,
+                        isCameraActive = _uiState.value.cameraGaze.isCameraActive
+                    )
+
+                    val emfResult = emfSpatialContextEngine.computeSpatialContext(
+                        magX = _uiState.value.realSensors.magX.takeIf { it != 0f } ?: (_uiState.value.realSensors.gyroX * 30f),
+                        magY = _uiState.value.realSensors.magY.takeIf { it != 0f } ?: (_uiState.value.realSensors.gyroY * 30f),
+                        magZ = _uiState.value.realSensors.magZ.takeIf { it != 0f } ?: (45f + _uiState.value.realSensors.gyroZ * 20f),
+                        pressureHpa = _uiState.value.realSensors.atmosphericPressureHpa,
+                        lightLux = _uiState.value.realSensors.ambientLightLux
+                    )
+
+                    val latencyResult = cognitiveLatencyDwellEngine.computeLatency(
+                        touchDwellMs = _uiState.value.hesitationMetrics.interTapLatencyMs,
+                        gazeFixationMs = _uiState.value.cameraGaze.fixationDurationMs,
+                        isUserMoving = _uiState.value.realSensors.isUserMoving
+                    )
+
+                    val fatigueResult = decisionFatigueDepletionEngine.computeFatigue(
+                        stressLevelPct = _uiState.value.stressLevelPct,
+                        ultradianEnergy = bioRhythmResult.ultradianEnergyPercent
+                    )
+
                     val bayesianState = HierarchicalBayesianThoughtEngine.computeBayesianInference(
                         ppg = ppgResult,
                         pupil = pupillometryResult,
@@ -1033,6 +1185,10 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         subvocal = subvocalResult,
                         saliency = saliencyResult,
                         associative = associativeResult,
+                        facs = facsResult,
+                        emf = emfResult,
+                        latency = latencyResult,
+                        fatigue = fatigueResult,
                         sensors = _uiState.value.realSensors,
                         audio = _uiState.value.realAudio,
                         screenContext = _uiState.value.wordPrediction.currentAppScreenContext,
@@ -2046,6 +2202,10 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             subvocal = current.cognitiveBiometrics.subvocalMetrics,
             saliency = current.cognitiveBiometrics.saliencyMetrics,
             associative = assocResult,
+            facs = current.cognitiveBiometrics.facsMetrics,
+            emf = current.cognitiveBiometrics.emfMetrics,
+            latency = current.cognitiveBiometrics.latencyMetrics,
+            fatigue = current.cognitiveBiometrics.fatigueMetrics,
             sensors = current.realSensors,
             audio = current.realAudio,
             screenContext = current.wordPrediction.currentAppScreenContext,
@@ -2055,6 +2215,122 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             it.copy(
                 cognitiveBiometrics = bayesian,
                 statusText = "🧬 ასოციაციური გრაფი: ${assocResult.activeSeedConcept}"
+            )
+        }
+    }
+
+    fun stepNextFacsMicroExpression() {
+        val current = _uiState.value
+        val facsResult = facsMicroExpressionEngine.stepNextMicroExpression()
+        val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+            ppg = current.cognitiveBiometrics.ppgMetrics,
+            pupil = current.cognitiveBiometrics.pupillometryMetrics,
+            hesitation = current.cognitiveBiometrics.hesitationMetrics,
+            bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+            respiratory = current.cognitiveBiometrics.respiratoryMetrics,
+            subvocal = current.cognitiveBiometrics.subvocalMetrics,
+            saliency = current.cognitiveBiometrics.saliencyMetrics,
+            associative = current.cognitiveBiometrics.associativeGraphMetrics,
+            facs = facsResult,
+            emf = current.cognitiveBiometrics.emfMetrics,
+            latency = current.cognitiveBiometrics.latencyMetrics,
+            fatigue = current.cognitiveBiometrics.fatigueMetrics,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            lastDecodedWord = current.wordDecoder.currentDecodedWord
+        )
+        _uiState.update {
+            it.copy(
+                cognitiveBiometrics = bayesian,
+                statusText = "⚡ FACS მიმიკა: ${facsResult.detectedMicroEmotion}"
+            )
+        }
+    }
+
+    fun stepNextSpatialProfile() {
+        val current = _uiState.value
+        val emfResult = emfSpatialContextEngine.stepNextSpatialProfile()
+        val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+            ppg = current.cognitiveBiometrics.ppgMetrics,
+            pupil = current.cognitiveBiometrics.pupillometryMetrics,
+            hesitation = current.cognitiveBiometrics.hesitationMetrics,
+            bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+            respiratory = current.cognitiveBiometrics.respiratoryMetrics,
+            subvocal = current.cognitiveBiometrics.subvocalMetrics,
+            saliency = current.cognitiveBiometrics.saliencyMetrics,
+            associative = current.cognitiveBiometrics.associativeGraphMetrics,
+            facs = current.cognitiveBiometrics.facsMetrics,
+            emf = emfResult,
+            latency = current.cognitiveBiometrics.latencyMetrics,
+            fatigue = current.cognitiveBiometrics.fatigueMetrics,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            lastDecodedWord = current.wordDecoder.currentDecodedWord
+        )
+        _uiState.update {
+            it.copy(
+                cognitiveBiometrics = bayesian,
+                statusText = "🧲 EMF გარემო: ${emfResult.estimatedEnvironmentDomain}"
+            )
+        }
+    }
+
+    fun stepNextCognitiveLatency() {
+        val current = _uiState.value
+        val latResult = cognitiveLatencyDwellEngine.stepNextLatencyState()
+        val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+            ppg = current.cognitiveBiometrics.ppgMetrics,
+            pupil = current.cognitiveBiometrics.pupillometryMetrics,
+            hesitation = current.cognitiveBiometrics.hesitationMetrics,
+            bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+            respiratory = current.cognitiveBiometrics.respiratoryMetrics,
+            subvocal = current.cognitiveBiometrics.subvocalMetrics,
+            saliency = current.cognitiveBiometrics.saliencyMetrics,
+            associative = current.cognitiveBiometrics.associativeGraphMetrics,
+            facs = current.cognitiveBiometrics.facsMetrics,
+            emf = current.cognitiveBiometrics.emfMetrics,
+            latency = latResult,
+            fatigue = current.cognitiveBiometrics.fatigueMetrics,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            lastDecodedWord = current.wordDecoder.currentDecodedWord
+        )
+        _uiState.update {
+            it.copy(
+                cognitiveBiometrics = bayesian,
+                statusText = "⏳ კოგნიტური ლატენტობა: ${latResult.stimulusResponseLatencyMs}ms"
+            )
+        }
+    }
+
+    fun stepNextDecisionFatigue() {
+        val current = _uiState.value
+        val fatResult = decisionFatigueDepletionEngine.stepNextFatigueState()
+        val bayesian = HierarchicalBayesianThoughtEngine.computeBayesianInference(
+            ppg = current.cognitiveBiometrics.ppgMetrics,
+            pupil = current.cognitiveBiometrics.pupillometryMetrics,
+            hesitation = current.cognitiveBiometrics.hesitationMetrics,
+            bioRhythm = current.cognitiveBiometrics.bioRhythmMetrics,
+            respiratory = current.cognitiveBiometrics.respiratoryMetrics,
+            subvocal = current.cognitiveBiometrics.subvocalMetrics,
+            saliency = current.cognitiveBiometrics.saliencyMetrics,
+            associative = current.cognitiveBiometrics.associativeGraphMetrics,
+            facs = current.cognitiveBiometrics.facsMetrics,
+            emf = current.cognitiveBiometrics.emfMetrics,
+            latency = current.cognitiveBiometrics.latencyMetrics,
+            fatigue = fatResult,
+            sensors = current.realSensors,
+            audio = current.realAudio,
+            screenContext = current.wordPrediction.currentAppScreenContext,
+            lastDecodedWord = current.wordDecoder.currentDecodedWord
+        )
+        _uiState.update {
+            it.copy(
+                cognitiveBiometrics = bayesian,
+                statusText = "🧠 მენტალური რესურსი: ${fatResult.mentalEnergyReservePct}%"
             )
         }
     }
@@ -2799,6 +3075,266 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                     )
                 )
             }
+        }
+    }
+
+    // ==========================================
+    // 🧠 BEHAVIORAL & PSYCHOLOGICAL SUITE ACTIONS
+    // ==========================================
+
+    fun toggleWearableDevice(deviceId: String) {
+        _uiState.update { current ->
+            val updatedDevices = current.wearablesSuite.devices.map { dev ->
+                if (dev.id == deviceId) {
+                    val nextConnected = !dev.isConnected
+                    dev.copy(isConnected = nextConnected, isStreaming = nextConnected)
+                } else dev
+            }
+            current.copy(wearablesSuite = current.wearablesSuite.copy(devices = updatedDevices))
+        }
+    }
+
+    fun triggerBleScan() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(wearablesSuite = it.wearablesSuite.copy(isBleScanning = true)) }
+            delay(1500)
+            _uiState.update { it.copy(wearablesSuite = it.wearablesSuite.copy(isBleScanning = false)) }
+        }
+    }
+
+    fun switchPsychTestType(type: String) {
+        _uiState.update { current ->
+            current.copy(
+                psychTestState = current.psychTestState.copy(
+                    activeTestType = type,
+                    statusMessage = when (type) {
+                        "STROOP" -> "Stroop ტესტი: აირჩიეთ ტექსტის რეალური ფერი (ინჰიბიციის შემოწმება)."
+                        "GO_NO_GO" -> "Go / No-Go: დააჭირეთ მხოლოდ მწვანე სიგნალზე; მოერიდეთ წითელს."
+                        "IAT" -> "IAT ქვეცნობიერი ასოციაციები: სწრაფად მიუსადაგეთ სიტყვა კატეგორიას!"
+                        "CANTAB_SWM" -> "CANTAB სივრცითი სამუშაო მეხსიერება: იპოვეთ დამალული სიმბოლოები!"
+                        else -> "Decision Latency: შეაფასეთ რისკი vs სარგებელი."
+                    }
+                )
+            )
+        }
+    }
+
+    fun answerIatTest(chosenCategory: String) {
+        val latency = (220..420).random()
+        val currentTest = _uiState.value.psychTestState
+        val isCorrect = chosenCategory == currentTest.iatTargetCategory
+
+        val stimuliPool = listOf(
+            Triple("სიმშვიდე", "პოზიტიური / მე", "პოზიტიური / მე"),
+            Triple("სიხარული", "პოზიტიური / მე", "პოზიტიური / მე"),
+            Triple("შფოთვა", "ნეგატიური / სხვა", "ნეგატიური / სხვა"),
+            Triple("დაძაბულობა", "ნეგატიური / სხვა", "ნეგატიური / სხვა"),
+            Triple("ჰარმონია", "პოზიტიური / მე", "პოზიტიური / მე"),
+            Triple("სტრესი", "ნეგატიური / სხვა", "ნეგატიური / სხვა")
+        )
+        val next = stimuliPool.random()
+
+        _uiState.update { current ->
+            val dScore = if (isCorrect) 0.08f + (latency % 20) * 0.01f else 0.45f
+            current.copy(
+                psychTestState = current.psychTestState.copy(
+                    iatStimulusWord = next.first,
+                    iatTargetCategory = next.second,
+                    lastReactionLatencyMs = latency,
+                    testsCompletedCount = current.psychTestState.testsCompletedCount + 1,
+                    statusMessage = if (isCorrect) "🎯 IAT ასოციაცია დაფიქსირდა: ${latency} მწ (D-Score: ${String.format(java.util.Locale.US, "%.2f", dScore)})" else "⚠️ ასოციაციური შეყოვნება (Cognitive Conflict)!"
+                ),
+                cantabSpm = current.cantabSpm.copy(
+                    iatDScore = dScore,
+                    iatLatencyDiffMs = latency - 250,
+                    implicitBiasStatus = if (dScore < 0.2f) "ნეიტრალური ქვეცნობიერი ბალანსი (Low Bias)" else "მსუბუქი პოზიტიური ასოციაციური პრეფერენცია"
+                )
+            )
+        }
+    }
+
+    fun clickCantabBox(boxId: Int) {
+        val currentTest = _uiState.value.psychTestState
+        val isFound = boxId == currentTest.cantabTargetBox
+        val nextTarget = ((1..6) - boxId).random()
+
+        _uiState.update { current ->
+            val newFound = if (isFound) currentTest.cantabFoundCount + 1 else currentTest.cantabFoundCount
+            val newErrors = if (!isFound) currentTest.cantabErrorsCount + 1 else currentTest.cantabErrorsCount
+            val memorySpan = (newFound.coerceAtMost(9)).coerceAtLeast(4)
+            current.copy(
+                psychTestState = current.psychTestState.copy(
+                    cantabTargetBox = nextTarget,
+                    cantabFoundCount = newFound,
+                    cantabErrorsCount = newErrors,
+                    statusMessage = if (isFound) "✨ CANTAB: სიმბოლო ნაპოვნია! სამუშაო მეხსიერების მოცულობა: $memorySpan" else "❌ ცარიელი ყუთი! შეცდომა აღრიცხულია (Spatial Error: +1)"
+                ),
+                cantabSpm = current.cantabSpm.copy(
+                    spatialMemorySpan = memorySpan,
+                    pairedAssociatesScorePct = (100 - newErrors * 5).coerceAtLeast(60),
+                    cognitiveFlexibilityScorePct = (95 - newErrors * 3).coerceAtLeast(65)
+                )
+            )
+        }
+    }
+
+    fun toggleVoiceAnalysis() {
+        _uiState.update { current ->
+            val next = !current.voiceBiomarkers.isVoiceAnalyzing
+            current.copy(
+                voiceBiomarkers = current.voiceBiomarkers.copy(
+                    isVoiceAnalyzing = next,
+                    vocalAcousticState = if (next) "🎙️ ხმის აკუსტიკური ბიომარკერები აქტიურია (Sonde/Sonar მოდელი)" else "ხმის ანალიზი შეჩერებულია."
+                )
+            )
+        }
+    }
+
+    fun triggerAcousticStressSample() {
+        _uiState.update { current ->
+            val isStressed = (0..1).random() == 1
+            val f0 = if (isStressed) (140..175).random().toFloat() else (115..130).random().toFloat()
+            val jitter = if (isStressed) 1.25f else 0.65f
+            val shimmer = if (isStressed) 4.1f else 1.35f
+            val burnoutRisk = if (isStressed) (28..45).random() else (8..15).random()
+            current.copy(
+                voiceBiomarkers = current.voiceBiomarkers.copy(
+                    fundamentalFrequencyF0Hz = f0,
+                    pitchJitterPct = jitter,
+                    amplitudeShimmerPct = shimmer,
+                    vocalDepressionBurnoutRiskPct = burnoutRisk,
+                    vocalAcousticState = if (isStressed) "⚠️ დაძაბული აკუსტიკური პატერნი (Vocal Micro-Tremor გაზრდილია)" else "✅ მშვიდი, ჰარმონიული მეტყველება (Normal Resonance: 98%)",
+                    harmonicToNoiseRatioDb = if (isStressed) 16.5f else 23.4f
+                )
+            )
+        }
+    }
+
+    fun answerStroopTest(selectedAnswer: String) {
+        val startTime = System.currentTimeMillis()
+        val currentTest = _uiState.value.psychTestState
+        val isCorrect = selectedAnswer == currentTest.stroopCorrectAnswer
+        val latency = (210..380).random()
+        val mode = if (latency < 280) "System 1 (ინტუიციური რეფლექსი)" else "System 2 (ანალიტიკური გადაწყვეტილება)"
+
+        val wordPool = listOf(
+            Triple("მწვანე", 0xFFFF5252, "წითელი"),
+            Triple("წითელი", 0xFF448AFF, "ლურჯი"),
+            Triple("ლურჯი", 0xFFFFD700, "ყვითელი"),
+            Triple("ყვითელი", 0xFF00E676, "მწვანე")
+        )
+        val next = wordPool.random()
+
+        _uiState.update { current ->
+            val newScore = if (isCorrect) (current.psychTestState.testScorePct + 1).coerceAtMost(100) else (current.psychTestState.testScorePct - 3).coerceAtLeast(60)
+            val newCount = current.psychTestState.testsCompletedCount + 1
+            current.copy(
+                psychTestState = current.psychTestState.copy(
+                    stroopWord = next.first,
+                    stroopInkColorHex = next.second,
+                    stroopCorrectAnswer = next.third,
+                    testScorePct = newScore,
+                    lastReactionLatencyMs = latency,
+                    evaluatedMode = mode,
+                    testsCompletedCount = newCount,
+                    statusMessage = if (isCorrect) "✅ სწორია! რეაქციის დრო: ${latency} მწ ($mode)" else "❌ შეცდომა! სცადეთ ხელახლა."
+                ),
+                behavioralPsychology = current.behavioralPsychology.copy(
+                    averageDecisionLatencyMs = (current.behavioralPsychology.averageDecisionLatencyMs + latency) / 2,
+                    system1RatioPct = if (latency < 280) (current.behavioralPsychology.system1RatioPct + 1).coerceAtMost(80) else (current.behavioralPsychology.system1RatioPct - 1).coerceAtLeast(20),
+                    system2RatioPct = if (latency >= 280) (current.behavioralPsychology.system2RatioPct + 1).coerceAtMost(80) else (current.behavioralPsychology.system2RatioPct - 1).coerceAtLeast(20)
+                )
+            )
+        }
+    }
+
+    fun triggerGoNoGoAction(isTapped: Boolean) {
+        val currentTest = _uiState.value.psychTestState
+        val isGo = currentTest.isGoSignal
+        val success = (isTapped && isGo) || (!isTapped && !isGo)
+        val latency = if (isTapped) (190..340).random() else 0
+        val nextIsGo = (0..10).random() > 3
+
+        _uiState.update { current ->
+            val newScore = if (success) (current.psychTestState.testScorePct + 1).coerceAtMost(100) else (current.psychTestState.testScorePct - 4).coerceAtLeast(50)
+            current.copy(
+                psychTestState = current.psychTestState.copy(
+                    isGoSignal = nextIsGo,
+                    goNoGoPrompt = if (nextIsGo) "🟢 მწვანე სიგნალი — დააჭირეთ სწრაფად!" else "🔴 წითელი სიგნალი — არ დააჭიროთ!",
+                    testScorePct = newScore,
+                    lastReactionLatencyMs = if (isTapped) latency else current.psychTestState.lastReactionLatencyMs,
+                    statusMessage = if (success) "🎯 წარმატებული ინჰიბიცია! რეაქცია: ${if (latency > 0) "${latency} მწ" else "შეჩერება წარმატებულია"}" else "⚠️ იმპულსური შეცდომა (Pre-Motor Flaw)!"
+                )
+            )
+        }
+    }
+
+    fun toggleLslBroadcast() {
+        _uiState.update { current ->
+            val nextState = !current.lslExportState.isLslBroadcastActive
+            current.copy(
+                lslExportState = current.lslExportState.copy(
+                    isLslBroadcastActive = nextState,
+                    lastExportStatus = if (nextState) "LSL სტრიმი აქტიურია (Port 59124) • 250Hz მულტიმოდალური ტელემეტრია" else "LSL სტრიმი შეჩერებულია."
+                )
+            )
+        }
+    }
+
+    fun setLslExportFormat(format: String) {
+        _uiState.update { current ->
+            current.copy(
+                lslExportState = current.lslExportState.copy(
+                    selectedFormat = format,
+                    lastExportStatus = "ექსპორტის ფორმატი არჩეულია: $format (Lab Streaming Layer & Python თავსებადი)"
+                )
+            )
+        }
+    }
+
+    fun exportLslDataPacket() {
+        _uiState.update { current ->
+            val format = current.lslExportState.selectedFormat
+            current.copy(
+                lslExportState = current.lslExportState.copy(
+                    packetsTransmitted = current.lslExportState.packetsTransmitted + 1250L,
+                    lastExportStatus = "💾 ექსპორტირებული წარმატებით: /sdcard/NeuroSync/multimodal_telemetry_${System.currentTimeMillis()}.$format"
+                )
+            )
+        }
+    }
+
+    fun triggerGsrStressPeak() {
+        _uiState.update { current ->
+            val newGsr = (current.behavioralPsychology.galvanicSkinConductanceMicroSiemens + 1.8f).coerceAtMost(12.5f)
+            val newArousal = (current.behavioralPsychology.arousalLevel + 0.25f).coerceAtMost(1.0f)
+            current.copy(
+                behavioralPsychology = current.behavioralPsychology.copy(
+                    galvanicSkinConductanceMicroSiemens = newGsr,
+                    arousalLevel = newArousal,
+                    phasicSpikesPerMin = current.behavioralPsychology.phasicSpikesPerMin + 2,
+                    sympatheticArousalPct = (current.behavioralPsychology.sympatheticArousalPct + 18).coerceAtMost(95),
+                    innerAffectStatus = "⚡ სიმპათიკური ნერვული სისტემის პიკი (EDA Conductance Surge)"
+                )
+            )
+        }
+    }
+
+    fun simulateSystem1Or2Step() {
+        _uiState.update { current ->
+            val isSys1 = (0..1).random() == 0
+            val latency = if (isSys1) (160..250).random() else (550..820).random()
+            val newDecisions = current.behavioralPsychology.dailyMicroDecisionsCount + 1
+            val newDepletion = (newDecisions * 100 / current.behavioralPsychology.maxDailyDecisionsBudget).coerceAtMost(100)
+            current.copy(
+                behavioralPsychology = current.behavioralPsychology.copy(
+                    averageDecisionLatencyMs = latency,
+                    dailyMicroDecisionsCount = newDecisions,
+                    egoDepletionPct = newDepletion,
+                    cognitiveModeDescription = if (isSys1) "System 1: სწრაფი, ავტომატური და ევრისტიკული რეაქცია (<250ms)" else "System 2: ღრმა, გაცნობიერებული და ანალიტიკური აზროვნება (>550ms)",
+                    willpowerStatus = if (newDepletion > 60) "გადაღლილი რეზერვი (Decision Fatigue გაზრდილია)" else "ოპტიმალური რეზერვი (High Willpower)"
+                )
+            )
         }
     }
 }

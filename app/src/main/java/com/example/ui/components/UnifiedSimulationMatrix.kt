@@ -145,7 +145,11 @@ data class UnifiedSimulationActions(
     val onTriggerCognitiveApnea: () -> Unit = {},
     val onStepNextSubvocal: () -> Unit = {},
     val onCycleSaliencyTarget: () -> Unit = {},
-    val onStepNextAssociativeConcept: () -> Unit = {}
+    val onStepNextAssociativeConcept: () -> Unit = {},
+    val onStepNextFacs: () -> Unit = {},
+    val onStepNextEmfSpatial: () -> Unit = {},
+    val onStepNextLatency: () -> Unit = {},
+    val onStepNextFatigue: () -> Unit = {}
 )
 
 @Composable
@@ -569,7 +573,7 @@ fun UnifiedSimulationMatrix(
             onCoreClicked = onRunUnifiedInference
         )
 
-        // 🌟 9-PILLAR OMNI-COGNITIVE HIERARCHICAL BAYESIAN ENGINE
+        // 🌟 13-PILLAR OMNI-COGNITIVE HIERARCHICAL BAYESIAN ENGINE
         HierarchicalBayesianCognitiveCard(
             bayesianState = uiState.cognitiveBiometrics,
             onMeasurePpgPulse = actions.onMeasurePpgPulse,
@@ -580,7 +584,11 @@ fun UnifiedSimulationMatrix(
             onTriggerCognitiveApnea = actions.onTriggerCognitiveApnea,
             onStepNextSubvocal = actions.onStepNextSubvocal,
             onCycleSaliencyTarget = actions.onCycleSaliencyTarget,
-            onStepNextAssociativeConcept = actions.onStepNextAssociativeConcept
+            onStepNextAssociativeConcept = actions.onStepNextAssociativeConcept,
+            onStepNextFacs = actions.onStepNextFacs,
+            onStepNextEmfSpatial = actions.onStepNextEmfSpatial,
+            onStepNextLatency = actions.onStepNextLatency,
+            onStepNextFatigue = actions.onStepNextFatigue
         )
 
         // Stream Category Filter Selector

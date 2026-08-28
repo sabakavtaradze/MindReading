@@ -32,7 +32,12 @@ data class HierarchicalBayesianState(
     val respiratoryMetrics: RespiratoryPatternMetrics = RespiratoryPatternMetrics(),
     val subvocalMetrics: SubvocalSpeechMetrics = SubvocalSpeechMetrics(),
     val saliencyMetrics: VisualSaliencyMetrics = VisualSaliencyMetrics(),
-    val associativeGraphMetrics: AssociativeThoughtGraphMetrics = AssociativeThoughtGraphMetrics()
+    val associativeGraphMetrics: AssociativeThoughtGraphMetrics = AssociativeThoughtGraphMetrics(),
+    // 🌟 4 NEW Omni-Cognitive Deep Pillars
+    val facsMetrics: FacsMicroExpressionMetrics = FacsMicroExpressionMetrics(),
+    val emfMetrics: EmfSpatialContextMetrics = EmfSpatialContextMetrics(),
+    val latencyMetrics: CognitiveLatencyMetrics = CognitiveLatencyMetrics(),
+    val fatigueMetrics: DecisionFatigueMetrics = DecisionFatigueMetrics()
 )
 
 object HierarchicalBayesianThoughtEngine {
@@ -46,6 +51,10 @@ object HierarchicalBayesianThoughtEngine {
         subvocal: SubvocalSpeechMetrics = SubvocalSpeechMetrics(),
         saliency: VisualSaliencyMetrics = VisualSaliencyMetrics(),
         associative: AssociativeThoughtGraphMetrics = AssociativeThoughtGraphMetrics(),
+        facs: FacsMicroExpressionMetrics = FacsMicroExpressionMetrics(),
+        emf: EmfSpatialContextMetrics = EmfSpatialContextMetrics(),
+        latency: CognitiveLatencyMetrics = CognitiveLatencyMetrics(),
+        fatigue: DecisionFatigueMetrics = DecisionFatigueMetrics(),
         sensors: RealHardwareSensorState,
         audio: RealAudioState,
         screenContext: String,
@@ -178,7 +187,50 @@ object HierarchicalBayesianThoughtEngine {
             evidence["ასოციაციური გრაფი"] = assocWeight
             logProb += ln(assocWeight.toDouble())
 
-            // 9. Context & Screen
+            // 9. FACS Micro-Expressions (AU4 / AU12 / AU9 / AU7)
+            val facsWeight = when (intent) {
+                "DEV_ACTION" -> if (facs.eyebrowFurrowAU4 > 0.4f || facs.eyelidTightenerAU7 > 0.3f) 2.4f else 0.8f
+                "CREATIVE_THOUGHT" -> if (facs.smileLipCornerAU12 > 0.35f || facs.emotionalValenceScore > 0.6f) 2.3f else 0.9f
+                "URGENT_COMMAND" -> if (facs.facialFrictionPct > 50) 2.0f else 0.9f
+                "REST_STATE" -> if (facs.eyebrowFurrowAU4 < 0.2f && facs.eyelidTightenerAU7 < 0.3f) 2.2f else 0.7f
+                else -> 1.0f
+            }
+            evidence["FACS მიმიკა"] = facsWeight
+            logProb += ln(facsWeight.toDouble())
+
+            // 10. EMF & Spatial Context
+            val emfWeight = when (intent) {
+                "DEV_ACTION" -> if (emf.spatialCognitiveDomainConstraint.contains("DEV") || emf.proximityToElectronicsScore > 0.7f) 2.5f else 0.8f
+                "URGENT_COMMAND" -> if (emf.spatialCognitiveDomainConstraint.contains("URGENT") || sensors.isUserMoving) 2.3f else 0.9f
+                "SOCIAL_MESSAGE" -> if (emf.spatialCognitiveDomainConstraint.contains("SOCIAL")) 2.2f else 0.9f
+                "REST_STATE" -> if (emf.spatialCognitiveDomainConstraint.contains("REST") || emf.magneticFluxDensityMicroTesla < 42f) 2.3f else 0.8f
+                else -> 1.0f
+            }
+            evidence["EMF/სივრცე"] = emfWeight
+            logProb += ln(emfWeight.toDouble())
+
+            // 11. Cognitive Latency & Dwell Dynamics (System 1 vs System 2)
+            val latencyWeight = when (intent) {
+                "URGENT_COMMAND" -> if (latency.stimulusResponseLatencyMs < 400L) 2.4f else 0.7f
+                "DEV_ACTION" -> if (latency.stimulusResponseLatencyMs in 600L..1800L) 2.3f else 0.9f
+                "CREATIVE_THOUGHT" -> if (latency.stimulusResponseLatencyMs > 1200L && latency.cognitiveFrictionIndex > 0.4f) 2.2f else 0.9f
+                "REST_STATE" -> if (latency.dwellTimeBeforeActionMs > 1200L) 1.8f else 0.9f
+                else -> 1.0f
+            }
+            evidence["კოგნიტური ლატენტობა"] = latencyWeight
+            logProb += ln(latencyWeight.toDouble())
+
+            // 12. Decision Fatigue & Ego Depletion
+            val fatigueWeight = when (intent) {
+                "REST_STATE", "PHYSIOLOGICAL_NEED" -> if (fatigue.mentalEnergyReservePct < 45 || fatigue.recommendedRestWindowMin > 0) 2.6f else 0.6f
+                "DEV_ACTION", "CREATIVE_THOUGHT" -> if (fatigue.mentalEnergyReservePct > 65) 2.2f else 0.5f
+                "URGENT_COMMAND" -> if (fatigue.heuristicBiasTendency.contains("ევრისტიკა")) 1.9f else 1.0f
+                else -> 1.0f
+            }
+            evidence["დაღლილობა/ენტროპია"] = fatigueWeight
+            logProb += ln(fatigueWeight.toDouble())
+
+            // 13. Context & Screen
             val contextWeight = when {
                 screenContext.contains("IDE", ignoreCase = true) && intent == "DEV_ACTION" -> 2.5f
                 screenContext.contains("Chat", ignoreCase = true) && intent == "SOCIAL_MESSAGE" -> 2.4f
@@ -218,6 +270,8 @@ object HierarchicalBayesianThoughtEngine {
             dominantThought = top?.thoughtSummary ?: "სისტემური აზროვნება",
             overallCertaintyPct = overallCertainty,
             cognitiveStateSummary = when {
+                fatigue.mentalEnergyReservePct < 35 -> "🧠 მენტალური გამოფიტვა • საჭიროა ენერგოდამზოგავი რეჟიმი"
+                facs.eyebrowFurrowAU4 > 0.5f -> "⚡ FACS AU4 მიკრო-დაჭიმულობა • აქტიური ლოგიკური ანალიზი"
                 respiratory.isCognitiveApneaActive -> "🫁 კოგნიტური აპნოე • ღრმა ლოგიკური გადაწყვეტილების მიღება"
                 pupil.isAhaDecisionMoment -> "💡 Aha! ინსაითი — აზრის მომენტალური კრისტალიზაცია"
                 ppg.baevskyStressIndex > 220f -> "გადაუდებელი სტრეს-რეაქცია და მაღალი ტემპი"
@@ -231,7 +285,11 @@ object HierarchicalBayesianThoughtEngine {
             respiratoryMetrics = respiratory,
             subvocalMetrics = subvocal,
             saliencyMetrics = saliency,
-            associativeGraphMetrics = associative
+            associativeGraphMetrics = associative,
+            facsMetrics = facs,
+            emfMetrics = emf,
+            latencyMetrics = latency,
+            fatigueMetrics = fatigue
         )
     }
 }

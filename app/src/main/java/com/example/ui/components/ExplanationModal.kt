@@ -133,6 +133,39 @@ fun ExplanationModal(
                         """.trimIndent()
                     )
 
+                    // Behavioral Psychology & Digital Phenotyping Section
+                    ExplanationSectionCard(
+                        title = "🧬 ქცევითი & ფსიქოლოგიური ნეირო-ანალიტიკა (Digital Phenotyping)",
+                        content = """
+                            ინტეგრირებული სამეცნიერო მოდელები:
+                            
+                            1. Sonde/Sonar ხმის აკუსტიკური ბიომარკერები:
+                            • F0 ფუნდამენტური სიხშირე, Pitch Jitter (მიკრო-ტრემორი), Amplitude Shimmer და HNR ხმის სისუფთავე.
+                            • პაუზების ხანგრძლივობისა და მეტყველების ტემპის მიხედვით ფარული დეპრესიის, შფოთვისა და გადაწვის (Burnout) პროგნოზი.
+                            
+                            2. CANTAB (Cambridge Cognition) & Pupillometry:
+                            • Spatial Working Memory (SWM) და Paired Associates Learning (PAL) მეხსიერების მოცულობა.
+                            • გუგის კოგნიტური დატვირთვა (Task-Evoked Pupillary Response - TEPR) და კოგნიტური მოქნილობა (WCST).
+                            
+                            3. IAT (Implicit Association Test) ქვეცნობიერი ასოციაციები:
+                            • ქვეცნობიერი ასოციაციების, ფარული მიკერძოებებისა და შინაგანი ემოციური განწყობის ტესტირება მილიწამური ლატენტურობით.
+                            
+                            4. Daniel Kahneman-ის System 1 / System 2 მოდელი:
+                            • System 1 (ინტუიციური, სწრაფი რეფლექსი <250ms) vs System 2 (გაცნობიერებული, ანალიტიკური აზროვნება >600ms).
+                            • Ego Depletion: ყოველდღიური მიკრო-გადაწყვეტილებების თვლა და ნებისყოფის რესურსის ამოწურვის მონიტორინგი.
+                            
+                            5. Beiwe / Mindstrong კლავიატურული და შეხების დინამიკა:
+                            • Keystroke Cadence (WPM), Flight Time (ღილაკებს შორის დრო) და Dwell Time (დაჭერის ხანგრძლივობა).
+                            
+                            6. Russell's Circumplex, FACS მიკრო-მიმიკა & GSR:
+                            • ემოციური ვალენტობა (-1.0 to +1.0), Arousal და კანის გალვანური რეაქცია (GSR / EDA).
+                            
+                            7. Bluetooth (BLE) Wearables & Lab Streaming Layer (LSL):
+                            • Muse EEG, Empatica GSR, Oura Ring, BioAmp sEMG და Tobii თვალის ტრეკინგის სინქრონიზაცია.
+                            • 250Hz LSL სტრიმინგი და XDF/EDF ექსპორტი Python (NeuroKit2, MNE) და MATLAB-ისთვის.
+                        """.trimIndent()
+                    )
+
                     ExplanationSectionCard(
                         title = "🔒 უსაფრთხოება და ნებართვების მუდმივი შენახვა",
                         content = """

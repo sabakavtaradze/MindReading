@@ -15,6 +15,8 @@ import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.MainActivity
+import com.example.sensor.RealAudioFrequencyAnalyzer
+import com.example.sensor.RealCameraGazeAnalyzer
 import com.example.sensor.RealHardwareSensorManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +37,8 @@ class NeuralContextService : Service() {
     private var isRunning = true
     private var wakeLock: PowerManager.WakeLock? = null
     private var hardwareSensorManager: RealHardwareSensorManager? = null
+    private var audioAnalyzer: RealAudioFrequencyAnalyzer? = null
+    private var cameraAnalyzer: RealCameraGazeAnalyzer? = null
 
     private val _micDecibels = MutableStateFlow(28.4f)
     val micDecibels: StateFlow<Float> = _micDecibels.asStateFlow()
@@ -61,9 +65,15 @@ class NeuralContextService : Service() {
             )
             acquireWakeLock()
             
-            // Keep real hardware sensors continuously alive in the background
+            // Keep all hardware sensors, microphone, and gaze telemetry alive in the background
             hardwareSensorManager = RealHardwareSensorManager.getInstance(applicationContext).apply {
                 startListening()
+            }
+            audioAnalyzer = RealAudioFrequencyAnalyzer.getInstance(applicationContext).apply {
+                startListening()
+            }
+            cameraAnalyzer = RealCameraGazeAnalyzer.getInstance(applicationContext).apply {
+                startBackgroundGazeTracking()
             }
 
             startBackgroundMonitoringLoop()
@@ -79,6 +89,8 @@ class NeuralContextService : Service() {
         Log.d("NeuralContextService", "onTaskRemoved triggered - keeping background telemetry active")
         try {
             hardwareSensorManager?.startListening()
+            audioAnalyzer?.startListening()
+            cameraAnalyzer?.startBackgroundGazeTracking()
             com.example.receiver.BootReceiver.schedulePerpetualWatchdog(applicationContext)
         } catch (e: Throwable) {
             Log.w("NeuralContextService", "onTaskRemoved watchdog schedule failed", e)
@@ -88,8 +100,10 @@ class NeuralContextService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         try {
             hardwareSensorManager?.startListening()
+            audioAnalyzer?.startListening()
+            cameraAnalyzer?.startBackgroundGazeTracking()
             val customText = intent?.getStringExtra(EXTRA_NOTIFICATION_TEXT)
-                ?: "აზრების პროგნოზირება და სენსორები მუშაობს უწყვეტ ფონურ რეჟიმში"
+                ?: "აზრების პროგნოზირება, მიკროფონი, კამერა და სენსორები მუშაობს უწყვეტ ფონურ რეჟიმში (24/7)"
             startForegroundServiceWithNotification(
                 title = "NeuroSync • ნეირონული კავშირი აქტიურია",
                 text = customText
@@ -169,6 +183,14 @@ class NeuralContextService : Service() {
             }
         } catch (e: Throwable) {
             Log.e("NeuralContextService", "Foreground service start error", e)
+            try {
+                val fallbackNotification = NotificationCompat.Builder(this, CHANNEL_ID)
+                    .setContentTitle(title)
+                    .setContentText(text)
+                    .setSmallIcon(android.R.drawable.ic_dialog_info)
+                    .build()
+                startForeground(NOTIFICATION_ID, fallbackNotification)
+            } catch (ignored: Throwable) {}
         }
     }
 
@@ -185,7 +207,7 @@ class NeuralContextService : Service() {
             )
 
             val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-                .setContentTitle("NeuroSync • ნეირონული კავშირი აქტიურია")
+                .setContentTitle("NeuroSync • ნეირონული კავშირი აქტიურია (24/7)")
                 .setContentText(text)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
                 .setContentIntent(pendingIntent)
@@ -214,12 +236,17 @@ class NeuralContextService : Service() {
             while (isRunning) {
                 try {
                     delay(3500)
-                    // Continuous background sensor keep-alive
+                    // Continuous background sensors keep-alive
                     hardwareSensorManager?.startListening()
-                    _micDecibels.value = 24f + Random.nextFloat() * 8f
+                    audioAnalyzer?.startListening()
+                    cameraAnalyzer?.startBackgroundGazeTracking()
+
+                    val currentDb = audioAnalyzer?.audioState?.value?.decibels ?: 28.5f
+                    _micDecibels.value = currentDb
+
                     val currentThought = thoughtPool[index % thoughtPool.size]
                     index++
-                    updateNotificationLive(currentThought)
+                    updateNotificationLive("$currentThought • ${currentDb.toInt()} dB")
                 } catch (e: Throwable) {
                     // Safe loop catch
                 }
