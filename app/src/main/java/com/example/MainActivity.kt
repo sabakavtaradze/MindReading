@@ -61,6 +61,14 @@ class MainActivity : ComponentActivity() {
 
         // Auto start hardware telemetry stream immediately and start perpetual foreground service
         viewModel.startAllHardwareSensors(this)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            PermissionHelper.setMicGranted(this, true)
+            viewModel.startAudioListening()
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+            PermissionHelper.setCameraGranted(this, true)
+            viewModel.startCameraGazeTracking(this)
+        }
         launchBackgroundServiceSafely()
 
         setContent {
@@ -80,6 +88,15 @@ class MainActivity : ComponentActivity() {
         try {
             viewModel.refreshPermissions()
             viewModel.startAllHardwareSensors(this)
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                PermissionHelper.setMicGranted(this, true)
+                viewModel.startAudioListening()
+            }
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                PermissionHelper.setCameraGranted(this, true)
+                viewModel.startCameraGazeTracking(this)
+            }
+            launchBackgroundServiceSafely()
         } catch (e: Throwable) {
             Log.e("MainActivity", "onResume refresh error", e)
         }

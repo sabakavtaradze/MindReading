@@ -983,9 +983,10 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
     override fun onCleared() {
         super.onCleared()
-        hardwareSensorManager.stopListening()
-        audioFrequencyAnalyzer.stopListening()
-        cameraGazeAnalyzer.stopCamera()
+        // Do not force-stop sensors on Activity teardown if background 24/7 service is active
+        hardwareSensorManager.stopListening(force = false)
+        audioFrequencyAnalyzer.stopListening(force = false)
+        cameraGazeAnalyzer.stopCamera(force = false)
     }
 
     private fun startTelemetryLoop() {
