@@ -595,8 +595,12 @@ data class NeuroSyncUiState(
     val voiceBiomarkers: VoiceBiomarkersState = VoiceBiomarkersState(),
     val cantabSpm: CantabPsychState = CantabPsychState(),
     val wearablesSuite: WearablesSuiteState = WearablesSuiteState(),
+    val daFitWatch: com.example.sensor.WearableTelemetryHub.DaFitWatchState = com.example.sensor.WearableTelemetryHub.DaFitWatchState(),
+    val buds2Wearable: com.example.sensor.WearableTelemetryHub.GalaxyBuds2State = com.example.sensor.WearableTelemetryHub.GalaxyBuds2State(),
+    val googleFitBridge: com.example.sensor.WearableTelemetryHub.GoogleFitBridgeState = com.example.sensor.WearableTelemetryHub.GoogleFitBridgeState(),
     val psychTestState: PsychologicalTestState = PsychologicalTestState(),
-    val lslExportState: LslExportState = LslExportState()
+    val lslExportState: LslExportState = LslExportState(),
+    val cognitiveResult: com.example.service.HybridCognitiveEngine.CognitiveResult? = null
 )
 
 data class VoiceBiomarkersState(
@@ -674,6 +678,9 @@ data class WearableDeviceItem(
 data class WearablesSuiteState(
     val isBleScanning: Boolean = false,
     val devices: List<WearableDeviceItem> = listOf(
+        WearableDeviceItem("da_fit_zl02cpro", "ZL02C Pro Smartwatch (Da Fit & Google Fit)", "SMARTWATCH", true, true, 86, "პულსი: 74 BPM • SpO2: 98% • წნევა: 118/76", "ნაბიჯები: 6,420 • Da Fit <-> Google Fit სინქრონიზებული", "⌚"),
+        WearableDeviceItem("galaxy_buds2", "Galaxy Buds 2 (Wearable)", "EARBUDS", true, true, 90, "VPU Voice Pickup Unit • ყბის მოძრაობა: 142 µg", "ANC აქტიურია • In-Ear სენსორი: L/R ჩადებულია", "🎧"),
+        WearableDeviceItem("google_fit_bridge", "Google Fit Cloud Sync Bridge", "HEALTH_CLOUD", true, true, 100, "ანგარიში: sabakavtaradzee1234@gmail.com", "აქტიური წუთები: 54 წთ • RHR: 58 BPM • ძილის ქულა: 89/100", "☁️"),
         WearableDeviceItem("muse_s", "Muse S (4-Ch EEG)", "EEG", true, true, 88, "ტვინის ტალღები: Alpha 10.2Hz, Beta 18.4Hz", "სიგნალის ხარისხი: 99% (TP9, AF7, AF8, TP10)", "🧠"),
         WearableDeviceItem("empatica_e4", "Empatica EmbracePlus / E4", "GSR", true, true, 92, "კანის გამტარობა: 4.35 µS (GSR / EDA)", "კანის ტემპერატურა: 34.2°C • Phasic Peaks: 4/წთ", "⚡"),
         WearableDeviceItem("oura_ring", "Oura Ring Gen 3", "SLEEP_RING", true, true, 76, "ღამის HRV RMSSD: 62 ms • RHR: 54 bpm", "ძილის ქულა: 91/100 (REM: 24%, Deep: 22%)", "💍"),
@@ -736,6 +743,8 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     val emfSpatialContextEngine = com.example.service.EmfSpatialContextEngine()
     val cognitiveLatencyDwellEngine = com.example.service.CognitiveLatencyDwellEngine()
     val decisionFatigueDepletionEngine = com.example.service.DecisionFatigueDepletionEngine()
+    val hybridCognitiveEngine = com.example.service.HybridCognitiveEngine(application)
+    val wearableTelemetryHub = com.example.sensor.WearableTelemetryHub(application)
 
     private val _uiState = MutableStateFlow(NeuroSyncUiState())
     val uiState: StateFlow<NeuroSyncUiState> = _uiState.asStateFlow()
@@ -801,6 +810,32 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         }
 
         startTelemetryLoop()
+
+        // Collect Wearable Hub Telemetry Flows (Da Fit ZL02C Pro, Galaxy Buds 2, Google Fit)
+        viewModelScope.launch {
+            wearableTelemetryHub.daFitState.collect { daFit ->
+                _uiState.update { current ->
+                    current.copy(
+                        daFitWatch = daFit,
+                        heartRateBpm = if (daFit.isConnected) daFit.heartRateBpm else current.heartRateBpm
+                    )
+                }
+            }
+        }
+        viewModelScope.launch {
+            wearableTelemetryHub.buds2State.collect { buds ->
+                _uiState.update { current ->
+                    current.copy(buds2Wearable = buds)
+                }
+            }
+        }
+        viewModelScope.launch {
+            wearableTelemetryHub.googleFitState.collect { gFit ->
+                _uiState.update { current ->
+                    current.copy(googleFitBridge = gFit)
+                }
+            }
+        }
 
         // Start real hardware sensors (Accelerometer / Gyroscope / Light / Proximity / Audio)
         try {
@@ -1197,6 +1232,25 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                     )
 
                     _uiState.update { it.copy(cognitiveBiometrics = bayesianState) }
+
+                    // 🌟 HYBRID COGNITIVE AI REASONING (Gemini Cloud Online + On-Device Offline Fallback)
+                    val cognitiveAnalyticsResult = hybridCognitiveEngine.processCognitiveAnalytics(
+                        audio = _uiState.value.realAudio,
+                        gaze = _uiState.value.cameraGaze,
+                        sensors = _uiState.value.realSensors,
+                        emotionalEntropy = (100f - bayesianState.overallCertaintyPct) / 100f,
+                        mentalFatigue = _uiState.value.thoughtCognitiveLoadPct / 100f,
+                        focusLevel = _uiState.value.matchPercentage / 100f,
+                        activeThought = _uiState.value.wordDecoder.currentDecodedWord
+                    )
+                    _uiState.update { it.copy(cognitiveResult = cognitiveAnalyticsResult) }
+
+                    // 🌟 REAL-TIME WEARABLE HUB UPDATE (ZL02C Pro & Galaxy Buds 2 & Google Fit)
+                    wearableTelemetryHub.updateLiveTelemetry(
+                        realBpm = newHeartRate.toFloat(),
+                        accelActivity = newTremor,
+                        ambientNoiseDb = _uiState.value.audioDb
+                    )
 
                     // 🌟 AUTO-UPDATE PREDICTED THOUGHT STREAM EVERY 3-4 SECONDS CONTINUOUSLY
                     val updateInterval = _uiState.value.thoughtUpdateIntervalSeconds
@@ -3084,21 +3138,100 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     // ==========================================
 
     fun toggleWearableDevice(deviceId: String) {
+        when (deviceId) {
+            "da_fit_zl02cpro" -> toggleDaFitWatchConnection()
+            "galaxy_buds2" -> toggleGalaxyBuds2Connection()
+            "google_fit_bridge" -> syncGoogleFitData()
+            else -> {
+                _uiState.update { current ->
+                    val updatedDevices = current.wearablesSuite.devices.map { dev ->
+                        if (dev.id == deviceId) {
+                            val nextConnected = !dev.isConnected
+                            dev.copy(isConnected = nextConnected, isStreaming = nextConnected)
+                        } else dev
+                    }
+                    current.copy(wearablesSuite = current.wearablesSuite.copy(devices = updatedDevices))
+                }
+            }
+        }
+    }
+
+    fun toggleDaFitWatchConnection() {
+        wearableTelemetryHub.toggleDaFitConnection()
+        val isNowConnected = wearableTelemetryHub.daFitState.value.isConnected
         _uiState.update { current ->
             val updatedDevices = current.wearablesSuite.devices.map { dev ->
-                if (dev.id == deviceId) {
-                    val nextConnected = !dev.isConnected
-                    dev.copy(isConnected = nextConnected, isStreaming = nextConnected)
+                if (dev.id == "da_fit_zl02cpro") {
+                    dev.copy(isConnected = isNowConnected, isStreaming = isNowConnected)
                 } else dev
             }
             current.copy(wearablesSuite = current.wearablesSuite.copy(devices = updatedDevices))
         }
     }
 
+    fun toggleGalaxyBuds2Connection() {
+        wearableTelemetryHub.toggleBuds2Connection()
+        val isNowConnected = wearableTelemetryHub.buds2State.value.isConnected
+        _uiState.update { current ->
+            val updatedDevices = current.wearablesSuite.devices.map { dev ->
+                if (dev.id == "galaxy_buds2") {
+                    dev.copy(isConnected = isNowConnected, isStreaming = isNowConnected)
+                } else dev
+            }
+            current.copy(wearablesSuite = current.wearablesSuite.copy(devices = updatedDevices))
+        }
+    }
+
+    fun cycleGalaxyBuds2NoiseMode() {
+        wearableTelemetryHub.cycleBuds2NoiseMode()
+    }
+
+    fun updateWearableAccountCredentials(
+        email: String,
+        password: String,
+        isPermanent: Boolean,
+        isDirectPhoneRead: Boolean
+    ) {
+        wearableTelemetryHub.updateAuthCredentials(email, password, isPermanent, isDirectPhoneRead)
+        _uiState.update { current ->
+            val updatedDevices = current.wearablesSuite.devices.map { dev ->
+                if (dev.id == "google_fit_bridge") {
+                    dev.copy(
+                        primaryMetric = "ანგარიში: ${email.ifBlank { "sabakavtaradzee@gmail.com" }}",
+                        secondaryMetric = if (isPermanent) "სამუდამო ავტორიზაცია აქტიურია (Permanent Token)" else "სესიური ავტორიზაცია"
+                    )
+                } else dev
+            }
+            current.copy(wearablesSuite = current.wearablesSuite.copy(devices = updatedDevices))
+        }
+    }
+
+    fun syncGoogleFitData() {
+        wearableTelemetryHub.syncWithGoogleFit {
+            _uiState.update { current ->
+                val updatedDevices = current.wearablesSuite.devices.map { dev ->
+                    if (dev.id == "google_fit_bridge") {
+                        dev.copy(
+                            primaryMetric = "ანგარიში: ${current.googleFitBridge.linkedAccountEmail}",
+                            secondaryMetric = "სინქრონიზებულია (ნაბიჯები: ${current.daFitWatch.stepsCount} • RHR: ${current.googleFitBridge.restingHeartRateBpm} BPM)"
+                        )
+                    } else if (dev.id == "da_fit_zl02cpro") {
+                        dev.copy(
+                            primaryMetric = "პულსი: ${current.daFitWatch.heartRateBpm} BPM • SpO2: ${current.daFitWatch.spO2Pct}% • წნევა: ${current.daFitWatch.bloodPressureSystolic}/${current.daFitWatch.bloodPressureDiastolic}",
+                            secondaryMetric = "ნაბიჯები: ${current.daFitWatch.stepsCount} • Da Fit <-> Google Fit სინქრონიზებული"
+                        )
+                    } else dev
+                }
+                current.copy(wearablesSuite = current.wearablesSuite.copy(devices = updatedDevices))
+            }
+        }
+    }
+
     fun triggerBleScan() {
         viewModelScope.launch {
             _uiState.update { it.copy(wearablesSuite = it.wearablesSuite.copy(isBleScanning = true)) }
-            delay(1500)
+            wearableTelemetryHub.startBleDiscovery()
+            delay(2000)
             _uiState.update { it.copy(wearablesSuite = it.wearablesSuite.copy(isBleScanning = false)) }
         }
     }

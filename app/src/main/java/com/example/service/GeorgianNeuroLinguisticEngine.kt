@@ -386,6 +386,48 @@ object GeorgianNeuroLinguisticEngine {
         return variants.distinct()
     }
 
+    // Dynamic Lexicon Cache for newly learned vocabulary from AI & Environment
+    val DYNAMIC_LEXICON_REGISTRY = mutableListOf<MindLexiconEntry>()
+
+    fun getAllLexiconEntries(): List<MindLexiconEntry> {
+        return if (DYNAMIC_LEXICON_REGISTRY.isEmpty()) {
+            MIND_LEXICON_DATABASE
+        } else {
+            (DYNAMIC_LEXICON_REGISTRY + MIND_LEXICON_DATABASE).distinctBy { it.word }
+        }
+    }
+
+    fun registerNewLearnedWord(
+        word: String,
+        category: String = "AI_LEARNED",
+        definition: String = "ავტონომიურად ნასწავლი სიტყვა",
+        synonyms: List<String> = emptyList()
+    ): Boolean {
+        val cleanWord = word.trim()
+        if (cleanWord.isBlank() || cleanWord.length < 2) return false
+        val exists = getAllLexiconEntries().any { it.word.equals(cleanWord, ignoreCase = true) }
+        if (exists) return false
+
+        val phonemes = cleanWord.map { it.toString() }
+        val entry = MindLexiconEntry(
+            word = cleanWord,
+            category = category,
+            language = if (cleanWord.any { it in 'ა'..'ჰ' }) "GEORGIAN" else "ENGLISH",
+            emgFrequencyHz = 110f + (cleanWord.length * 5f),
+            phonemes = phonemes,
+            description = definition,
+            rootStem = cleanWord.take(minOf(4, cleanWord.length)),
+            typicalNextWords = synonyms
+        )
+        synchronized(DYNAMIC_LEXICON_REGISTRY) {
+            DYNAMIC_LEXICON_REGISTRY.add(0, entry)
+            if (DYNAMIC_LEXICON_REGISTRY.size > 500) {
+                DYNAMIC_LEXICON_REGISTRY.removeAt(DYNAMIC_LEXICON_REGISTRY.lastIndex)
+            }
+        }
+        return true
+    }
+
     /**
      * Scored prediction based on multi-factor neural context.
      */
@@ -396,7 +438,8 @@ object GeorgianNeuroLinguisticEngine {
         circadianHour: Int,
         limit: Int = 12
     ): List<MindLexiconEntry> {
-        val scoredList = MIND_LEXICON_DATABASE.map { entry ->
+        val allEntries = getAllLexiconEntries()
+        val scoredList = allEntries.map { entry ->
             var score = 10.0f
 
             // 1. Screen Context Affinity

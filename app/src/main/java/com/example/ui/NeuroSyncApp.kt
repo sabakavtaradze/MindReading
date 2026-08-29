@@ -48,6 +48,7 @@ import com.example.ui.components.DirectWordDecoderView
 import com.example.ui.components.ExplanationModal
 import com.example.ui.components.HeaderView
 import com.example.ui.components.HeroNeuralOverlay
+import com.example.ui.components.HybridCognitiveAiCard
 import com.example.ui.components.IntentPredictionCard
 import com.example.ui.components.MindBandData
 import com.example.ui.components.InteractiveTouchPad
@@ -137,6 +138,12 @@ fun NeuroSyncApp(
                     neuralValue = uiState.telemetry.neuralValue,
                     isSyncing = uiState.isSyncing,
                     onCenterCoreClick = { viewModel.runNeuralPredictionInference() },
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
+
+                // Hybrid Cognitive AI Reasoning Card (Cloud Gemini + On-Device Offline Fallback)
+                HybridCognitiveAiCard(
+                    result = uiState.cognitiveResult,
                     modifier = Modifier.padding(horizontal = 24.dp)
                 )
 
@@ -268,9 +275,19 @@ fun NeuroSyncApp(
                                 voiceState = uiState.voiceBiomarkers,
                                 cantabState = uiState.cantabSpm,
                                 wearablesState = uiState.wearablesSuite,
+                                daFitState = uiState.daFitWatch,
+                                buds2State = uiState.buds2Wearable,
+                                googleFitState = uiState.googleFitBridge,
                                 testState = uiState.psychTestState,
                                 lslState = uiState.lslExportState,
                                 onToggleDevice = { viewModel.toggleWearableDevice(it) },
+                                onToggleDaFit = { viewModel.toggleDaFitWatchConnection() },
+                                onToggleBuds2 = { viewModel.toggleGalaxyBuds2Connection() },
+                                onCycleBuds2NoiseMode = { viewModel.cycleGalaxyBuds2NoiseMode() },
+                                onSyncGoogleFit = { viewModel.syncGoogleFitData() },
+                                onUpdateAccountCredentials = { email, pass, isPerm, isDirect ->
+                                    viewModel.updateWearableAccountCredentials(email, pass, isPerm, isDirect)
+                                },
                                 onScanBle = { viewModel.triggerBleScan() },
                                 onSwitchTestType = { viewModel.switchPsychTestType(it) },
                                 onAnswerStroop = { viewModel.answerStroopTest(it) },

@@ -448,8 +448,8 @@ object UnifiedPredictiveThoughtEngine {
         // 4. Gaze Intent with Kalman-smoothed gaze coordinates
         val gazeIntent = computeGazeIntentPreFetch(cameraGaze, cleanGazeX, cleanGazeY)
 
-        // 5. Bayesian Synthesis across Lexicon
-        val scoredList = GeorgianNeuroLinguisticEngine.MIND_LEXICON_DATABASE.map { entry ->
+        // 5. Bayesian Synthesis across Dynamic + Static Lexicon
+        val scoredList = GeorgianNeuroLinguisticEngine.getAllLexiconEntries().map { entry ->
             // Base score & N-Gram
             var ngramScore = 1.0f
             if (markovMatches.contains(entry.word)) {

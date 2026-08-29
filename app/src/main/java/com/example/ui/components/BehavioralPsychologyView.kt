@@ -52,6 +52,7 @@ import com.example.viewmodel.CantabPsychState
 import com.example.viewmodel.LslExportState
 import com.example.viewmodel.PsychologicalTestState
 import com.example.viewmodel.VoiceBiomarkersState
+import com.example.sensor.WearableTelemetryHub
 import com.example.viewmodel.WearableDeviceItem
 import com.example.viewmodel.WearablesSuiteState
 
@@ -61,9 +62,17 @@ fun BehavioralPsychologyView(
     voiceState: VoiceBiomarkersState,
     cantabState: CantabPsychState,
     wearablesState: WearablesSuiteState,
+    daFitState: WearableTelemetryHub.DaFitWatchState = WearableTelemetryHub.DaFitWatchState(),
+    buds2State: WearableTelemetryHub.GalaxyBuds2State = WearableTelemetryHub.GalaxyBuds2State(),
+    googleFitState: WearableTelemetryHub.GoogleFitBridgeState = WearableTelemetryHub.GoogleFitBridgeState(),
     testState: PsychologicalTestState,
     lslState: LslExportState,
     onToggleDevice: (String) -> Unit,
+    onToggleDaFit: () -> Unit = {},
+    onToggleBuds2: () -> Unit = {},
+    onCycleBuds2NoiseMode: () -> Unit = {},
+    onSyncGoogleFit: () -> Unit = {},
+    onUpdateAccountCredentials: (String, String, Boolean, Boolean) -> Unit = { _, _, _, _ -> },
     onScanBle: () -> Unit,
     onSwitchTestType: (String) -> Unit,
     onAnswerStroop: (String) -> Unit,
@@ -127,10 +136,18 @@ fun BehavioralPsychologyView(
         // 9. Circadian & Sleep Architecture Phenotyping
         CircadianSleepCard(psychologyState)
 
-        // 10. External BLE Wearables Suite (Muse, Empatica, Oura, BioAmp, Tobii)
-        WearablesSuiteCard(
-            wearablesState = wearablesState,
+        // 10. External BLE Wearables Suite & Google Fit Integration Hub (ZL02C Pro, Galaxy Buds 2, Google Fit Cloud)
+        WearableHubIntegrationCard(
+            daFitState = daFitState,
+            buds2State = buds2State,
+            googleFitState = googleFitState,
+            wearablesSuite = wearablesState,
             onToggleDevice = onToggleDevice,
+            onToggleDaFit = onToggleDaFit,
+            onToggleBuds2 = onToggleBuds2,
+            onCycleBuds2NoiseMode = onCycleBuds2NoiseMode,
+            onSyncGoogleFit = onSyncGoogleFit,
+            onUpdateAccountCredentials = onUpdateAccountCredentials,
             onScanBle = onScanBle
         )
 
