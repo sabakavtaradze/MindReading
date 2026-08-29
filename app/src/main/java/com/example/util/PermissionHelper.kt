@@ -245,6 +245,29 @@ object PermissionHelper {
         }
     }
 
+    fun openSamsungBackgroundUsageLimits(context: Context) {
+        val samsungIntents = listOf(
+            Intent().setClassName("com.samsung.android.lool", "com.samsung.android.sm.battery.ui.BatteryActivity"),
+            Intent().setClassName("com.samsung.android.lool", "com.samsung.android.sm.ui.battery.BatteryActivity"),
+            Intent("com.samsung.android.sm.ACTION_BATTERY"),
+            Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS),
+            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                data = Uri.parse("package:${context.packageName}")
+            }
+        )
+
+        for (intent in samsungIntents) {
+            try {
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                context.startActivity(intent)
+                return
+            } catch (e: Throwable) {
+                // try next
+            }
+        }
+        openAppSettings(context)
+    }
+
     fun openAppSettings(context: Context) {
         try {
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {

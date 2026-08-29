@@ -534,18 +534,22 @@ object UnifiedPredictiveThoughtEngine {
             it.copy(finalProbabilityPct = pct)
         }
 
-        // Run Beam Search Viterbi sequence decoder on top candidates
-        val beamCandidates = normalizedCandidates.map { Pair(it.word, it.finalProbabilityPct / 100.0f) }
+        // Run Beam Search Viterbi sequence decoder on top candidates with anti-repetition constraint
+        val existingWords = lastAccumulatedSentence.trim().lowercase(Locale.ROOT).split("\\s+".toRegex()).toSet()
+        val nonRepeatingCandidates = normalizedCandidates.filterNot { existingWords.contains(it.word.lowercase(Locale.ROOT)) }
+        val effectiveCandidates = if (nonRepeatingCandidates.isNotEmpty()) nonRepeatingCandidates else normalizedCandidates
+
+        val beamCandidates = effectiveCandidates.map { Pair(it.word, it.finalProbabilityPct / 100.0f) }
         val beamResult = BeamSearchViterbiDecoder.decodeSentence(
             initialContext = lastAccumulatedSentence,
             candidatePredictions = beamCandidates,
             maxSteps = 2
         )
 
-        // Construct sentence
-        val topWord = normalizedCandidates.firstOrNull()?.word ?: "შევამოწმოთ"
-        val nextPredictedSentence = if (lastAccumulatedSentence.isBlank()) {
-            beamResult.bestHypothesisSentence.ifBlank { "$topWord სისტემის არქიტექტურა და გავუშვათ" }
+        // Construct sentence cleanly without infinite concatenation
+        val topWord = effectiveCandidates.firstOrNull()?.word ?: "ოპტიმიზაცია"
+        val nextPredictedSentence = if (lastAccumulatedSentence.isBlank() || lastAccumulatedSentence.length > 60) {
+            "კოდის რეფაქტორინგი და $topWord"
         } else {
             beamResult.bestHypothesisSentence.ifBlank { "$lastAccumulatedSentence $topWord" }
         }

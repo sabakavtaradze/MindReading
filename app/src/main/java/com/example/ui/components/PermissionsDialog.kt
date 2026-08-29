@@ -264,6 +264,77 @@ fun PermissionsDialog(
                     }
                 )
 
+                // Samsung Galaxy One UI "Never auto sleeping apps" dedicated Card
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(NeuralDeepPurple)
+                        .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                        .padding(14.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(
+                                imageVector = AppIcons.Bolt,
+                                contentDescription = "Samsung Never Sleeping",
+                                tint = Color(0xFF00E5FF),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = "Samsung One UI: Never auto sleeping apps",
+                                color = Color(0xFF00E5FF),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Text(
+                            text = "როგორ დავამატოთ აპლიკაცია Samsung-ის 'Never auto sleeping apps'-ში:\n1. დააჭირეთ 'Never auto sleeping apps' ხაზს.\n2. ზედა მარჯვენა კუთხეში დააჭირეთ '+' (პლუს) ღილაკს.\n3. მონიშნეთ 'AI Intent Predictor' და დააჭირეთ 'Add'.\nან აპლიკაციის პარამეტრებში (Battery) აირჩიეთ 'Unrestricted'.",
+                            color = Color.White.copy(alpha = 0.9f),
+                            fontSize = 11.sp,
+                            lineHeight = 16.sp
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    PermissionHelper.openSamsungBackgroundUsageLimits(context)
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text(
+                                    text = "🔋 Device Care გახსნა",
+                                    color = NeuralDeepPurple,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Button(
+                                onClick = {
+                                    PermissionHelper.openAppSettings(context)
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = NeuralAccent),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text(
+                                    text = "⚙️ App Battery გახსნა",
+                                    color = NeuralDeepPurple,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+
                 // Direct Button to System App Settings
                 OutlinedButton(
                     onClick = {

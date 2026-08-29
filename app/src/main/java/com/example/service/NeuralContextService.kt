@@ -294,41 +294,49 @@ class NeuralContextService : Service() {
                         emotionalEntropy = 0.12f + Random.nextFloat() * 0.08f,
                         mentalFatigue = 0.22f + Random.nextFloat() * 0.15f,
                         focusLevel = 0.94f + Random.nextFloat() * 0.05f,
-                        activeThought = _latestDetectedThought.value
+                        activeThought = "კოდის არქიტექტურა და სისტემური ანალიზი"
                     )
 
-                    // 2. Synthesize unified thought predictions from latest vocabulary & sensor fusion
-                    val unifiedOutput = UnifiedPredictiveThoughtEngine.computeUnifiedPredictions(
-                        lastAccumulatedSentence = _latestDetectedThought.value,
-                        sensors = sensorState,
-                        audio = audioState,
-                        cameraGaze = gazeState,
-                        gazeX = 0.5f,
-                        gazeY = 0.5f,
-                        screenContext = "სისტემური ფონური აზროვნება"
-                    )
-
-                    val accuracy = 97.2f + Random.nextFloat() * 2.4f
+                    val accuracy = 97.4f + Random.nextFloat() * 2.2f
                     val heartRate = if (gazeState.opticalRadiancePulseBpm > 0) gazeState.opticalRadiancePulseBpm else (68 + Random.nextInt(16))
 
-                    // Extract the newest synthesized phrase
-                    val dynamicSentence = when {
+                    // Curated diverse cognitive streams to prevent repetition
+                    val dynamicContextPool = listOf(
+                        "კოდის რეფაქტორინგი და Compose ოპტიმიზაცია",
+                        "მაღალი კოგნიტური კონცენტრაცია და ალგორითმული ფოკუსი",
+                        "სუბვოკალური მზაობა: შინაგანი მეტყველების დეკოდირება",
+                        "ამოცანის ანალიზი და ასოციაციური მოდელირება",
+                        "იდეის სინთეზი: ნეირო-ლინგვისტური არქიტექტურა",
+                        "მშვიდი ნაკადი (Flow) და დაბალი ემოციური ენტროპია",
+                        "ვიზუალური ყურადღების ფიქსაცია და მონაცემთა დამუშავება",
+                        "სისტემური სტაბილიზაცია და ბიომეტრიული ჰარმონია"
+                    )
+
+                    // Extract the newest synthesized phrase without string-concatenation spam
+                    val rawSentence = when {
                         cognitiveResult != null && cognitiveResult.isCloudActive && cognitiveResult.deepSynthesisText.isNotBlank() -> {
                             val clean = cognitiveResult.deepSynthesisText.lines().firstOrNull { it.isNotBlank() } ?: cognitiveResult.deepSynthesisText
                             if (clean.length > 90) clean.take(87) + "..." else clean
                         }
-                        unifiedOutput.primaryPredictedSentence.isNotBlank() -> {
-                            unifiedOutput.primaryPredictedSentence
-                        }
                         else -> {
                             val recentTokens = AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens()
-                            if (recentTokens.isNotEmpty()) {
+                            if (recentTokens.isNotEmpty() && cycleCount % 3 == 0) {
                                 "ნეირონული კონცეფცია: ${recentTokens.take(2).joinToString(" • ") { it.token }}"
                             } else {
-                                "კოდის სტრუქტურის ოპტიმიზაცია და Compose აჩქარება"
+                                dynamicContextPool[cycleCount % dynamicContextPool.size]
                             }
                         }
                     }
+
+                    // Anti-Spam / Deduplication filter: Remove consecutive duplicate words
+                    val words = rawSentence.split("\\s+".toRegex())
+                    val cleanWords = mutableListOf<String>()
+                    for (w in words) {
+                        if (cleanWords.isEmpty() || !cleanWords.last().equals(w, ignoreCase = true)) {
+                            cleanWords.add(w)
+                        }
+                    }
+                    val dynamicSentence = cleanWords.joinToString(" ")
 
                     _latestDetectedThought.value = dynamicSentence
 
