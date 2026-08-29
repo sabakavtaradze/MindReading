@@ -811,6 +811,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
         startTelemetryLoop()
 
+        // Automatically connect to paired Bluetooth devices (Smartwatch & Galaxy Buds)
+        wearableTelemetryHub.checkAndConnectBondedDevices()
+
         // Collect Wearable Hub Telemetry Flows (Da Fit ZL02C Pro, Galaxy Buds 2, Google Fit)
         viewModelScope.launch {
             wearableTelemetryHub.daFitState.collect { daFit ->

@@ -126,6 +126,14 @@ fun NeuroSyncApp(
                     }
                 )
 
+                // Section Navigation Tabs (Moved to Top for Fast Access)
+                TabSelectorBar(
+                    activeTab = activeTab,
+                    onTabSelected = { activeTab = it },
+                    onInfoClick = { viewModel.setExplanationModalOpen(true) },
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
+
                 // Hero Synaptic Overlay Visualizer
                 HeroNeuralOverlay(
                     matchPercentage = uiState.matchPercentage,
@@ -144,14 +152,6 @@ fun NeuroSyncApp(
                 // Hybrid Cognitive AI Reasoning Card (Cloud Gemini + On-Device Offline Fallback)
                 HybridCognitiveAiCard(
                     result = uiState.cognitiveResult,
-                    modifier = Modifier.padding(horizontal = 24.dp)
-                )
-
-                // Section Navigation Tabs
-                TabSelectorBar(
-                    activeTab = activeTab,
-                    onTabSelected = { activeTab = it },
-                    onInfoClick = { viewModel.setExplanationModalOpen(true) },
                     modifier = Modifier.padding(horizontal = 24.dp)
                 )
 
