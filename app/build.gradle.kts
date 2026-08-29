@@ -36,14 +36,16 @@ android {
     }
     getByName("debug") {
       val rootKeystore = file("${rootDir}/debug.keystore")
+      val appKeystore = file("${projectDir}/debug.keystore")
       val homeKeystore = file("${System.getProperty("user.home")}/.android/debug.keystore")
-      if (rootKeystore.exists()) {
-        storeFile = rootKeystore
-        storePassword = "android"
-        keyAlias = "androiddebugkey"
-        keyPassword = "android"
-      } else if (homeKeystore.exists()) {
-        storeFile = homeKeystore
+      val selectedKeystore = when {
+        rootKeystore.exists() -> rootKeystore
+        appKeystore.exists() -> appKeystore
+        homeKeystore.exists() -> homeKeystore
+        else -> null
+      }
+      if (selectedKeystore != null) {
+        storeFile = selectedKeystore
         storePassword = "android"
         keyAlias = "androiddebugkey"
         keyPassword = "android"
