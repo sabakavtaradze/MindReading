@@ -1272,54 +1272,83 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     private fun autoCyclePredictedThought() {
         val state = _uiState.value
         val timeNow = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-        
-        val dynamicThoughts = listOf(
+
+        val isCloud = state.cognitiveResult?.isCloudActive == true
+        val cloudSummary = state.cognitiveResult?.deepSynthesisText ?: ""
+        val recentTokens = com.example.service.AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens()
+        val latestInsight = state.cognitiveResult?.insights?.firstOrNull()?.description
+
+        // Dynamically build thought candidates from Cloud AI, recently ingested tokens, and multimodal state
+        val dynamicCandidates = mutableListOf<Triple<String, String, String>>()
+
+        if (cloudSummary.isNotBlank()) {
+            val firstLine = cloudSummary.lines().firstOrNull { it.isNotBlank() } ?: cloudSummary
+            val shortTitle = if (firstLine.length > 50) firstLine.take(47) + "..." else firstLine
+            dynamicCandidates.add(
+                Triple(
+                    "🌐 Cloud Gemini: $shortTitle",
+                    "ნავარაუდევი აზრი: $cloudSummary",
+                    "• ინტერნეტ-ინსაითი მიღებულია\n• სინაფსური ლექსიკა გაფართოებულია\n• მაღალი კოგნიტური სიზუსტე"
+                )
+            )
+        }
+
+        if (latestInsight != null && latestInsight.isNotBlank()) {
+            dynamicCandidates.add(
+                Triple(
+                    "🧠 ქცევითი & პოლივაგალური ინსაითი",
+                    "ნავარაუდევი აზრი: $latestInsight",
+                    "• სომატური დისონანსის ნიველირება\n• Flow ზონის ადაპტაცია\n• ემოციური ენტროპიის სტაბილიზაცია"
+                )
+            )
+        }
+
+        if (recentTokens.isNotEmpty()) {
+            val sampleTokens = recentTokens.shuffled().take(3).map { it.token }
+            val joined = sampleTokens.joinToString(" • ")
+            dynamicCandidates.add(
+                Triple(
+                    "🧬 დინამიკური ლექსიკონი: ${sampleTokens.first()}",
+                    "ნავარაუდევი აზრი: გარედან ათვისებული ახალი ცნებები: [$joined]. მიმდინარეობს ასოციაციური ქსელის გაფართოება.",
+                    "• ახალი ტოკენების ჩაშენება\n• განმეორების საწინააღმდეგო ფილტრი\n• ნეირო-ლინგვისტური სინქრონი"
+                )
+            )
+        }
+
+        // Add multimodal state based thoughts
+        dynamicCandidates.add(
             Triple(
                 "კოდის სტრუქტურის ოპტიმიზაცია და კომპოუზის აჩქარება",
                 "ნავარაუდევი აზრი: გონებაში აყალიბებთ Jetpack Compose-ის მდგომარეობების რეფაქტორინგს და ეკრანის რენდერის ოპტიმიზაციას.",
                 "• Compose Compiler მინიჭება\n• StateFlow რეაქტიული ბუფერის მომზადება\n• ალფა-ფოკუსის შენარჩუნება"
-            ),
+            )
+        )
+        dynamicCandidates.add(
             Triple(
                 "სუბვოკალური ენის დეკოდირება (Inner Speech)",
                 "ნავარაუდევი აზრი: შინაგანი ხმით წარმოთქვამთ ცვლადების სახელებსა და შემდეგ ლოგიკურ პირობებს (${String.format(Locale.US, "%.1f", state.enhancedMetrics.subvocalFrequencyHz)} Hz VPU).",
                 "• ქართული ფონემების კლასტერირება\n• კლავიატურის ბუფერის წინასწარი შევსება\n• აკუსტიკური ფილტრაცია"
-            ),
-            Triple(
-                "თვალის გუგის დილატაცია & ვიზუალური ფოკუსი",
-                "ნავარაუდევი აზრი: მზერა ფიქსირებულია '${state.enhancedMetrics.eyeFixationZone}'-ზე (${String.format(Locale.US, "%.2f", state.enhancedMetrics.pupilDiameterMm)}მმ გუგა); მიმდინარეობს ვიზუალური ინფორმაციის გაანალიზება.",
-                "• ეკრანის კონტრასტის დაბალანსება\n• ყურადღების ფოკუსის გამოყოფა\n• ვიზუალური დაღლილობის პრევენცია"
-            ),
-            Triple(
-                "Pre-Error (ERN) წინასწარი შეცდომის შეგრძნება",
-                "ნავარაუდევი აზრი: ტვინის მოტორულმა ცენტრმა დააფიქსირა მიკრო-ყოყმანი (-180ms); გადაწყვეტილება გადამოწმების პროცესშია.",
-                "• შეცდომის პრევენციის ბარიერი\n• სინტაქსური ავტო-კორექცია\n• მოტორული სტაბილიზაცია"
-            ),
+            )
+        )
+        dynamicCandidates.add(
             Triple(
                 "იდეის სინთეზი & ალგორითმული არქიტექტურა",
                 "ნავარაუდევი აზრი: გამა ტალღების პიკი (${String.format(Locale.US, "%.1f", state.gammaBandHz)} Hz) ადასტურებს ახალი იდეის ან ალგორითმის სწრაფ გონებრივ მოდელირებას.",
                 "• IDE ქეშის ინდექსირება\n• არაკრიტიკული აპლიკაციების გაჩუმება\n• სინაფსური მეხსიერების გაძლიერება"
-            ),
-            Triple(
-                "Galaxy Buds 2 თავის კინემატიკა & თანხმობა",
-                "ნავარაუდევი აზრი: თავის დახრის კუთხე (${String.format(Locale.US, "%.1f", state.earbudSensor.headImuPitchDeg)}°) და ყურის არხის EEG ადასტურებს თანხმობასა და მაღალ ყურადღებას.",
-                "• Ear-EEG ბიოპოტენციალის სინქრონიზაცია\n• სივრცითი აუდიოს გააქტიურება\n• ტელემეტრიის დამახსოვრება"
-            ),
-            Triple(
-                "კოგნიტური სიმშვიდე & ღრმა ალფა-ნაკადი",
-                "ნავარაუდევი აზრი: დაბალი სტრესის მაჩვენებელი (${state.stressLevelPct}%) და 72 BPM პულსი მიუთითებს მენტალურ ჰარმონიასა და შემოქმედებით მუხტზე.",
-                "• 10Hz ბინაურალური ტალღების მხარდაჭერა\n• ეკრანის მუქი თემის ადაპტაცია\n• პროდუქტიული ნაკადის დაცვა"
             )
         )
 
-        val filtered = dynamicThoughts.filter { it.first != state.currentPredictionTitle }
-        val nextThought = if (filtered.isNotEmpty()) filtered.random() else dynamicThoughts.random()
+        val filtered = dynamicCandidates.filter { it.first != state.currentPredictionTitle }
+        val nextThought = if (filtered.isNotEmpty()) filtered.random() else dynamicCandidates.random()
+        val conf = (97..99).random()
+
         val newLog = ThoughtLogItem(
             id = "auto_${System.currentTimeMillis()}",
             timestamp = timeNow,
             title = nextThought.first,
             detail = nextThought.second,
-            confidencePct = (96..99).random(),
-            category = "Live Intent"
+            confidencePct = conf,
+            category = if (isCloud) "Cloud AI" else "Neural Intent"
         )
 
         _uiState.update { current ->
@@ -1334,6 +1363,16 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 )
             )
         }
+
+        // 🌟 Instantly update Notification with dynamic thought
+        com.example.service.NeuralContextService.postLiveThoughtNotification(
+            context = getApplication(),
+            thoughtText = nextThought.first.removePrefix("🌐 Cloud Gemini: ").removePrefix("🎯 "),
+            accuracyPct = conf.toFloat(),
+            isCloud = isCloud,
+            heartRateBpm = state.heartRateBpm,
+            micDb = state.audioDb
+        )
     }
 
     fun toggleContinuousThoughtStream() {
@@ -1451,6 +1490,18 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                     detectedPhonemeCluster = "${unifiedOutput.activePhonemicMatch.primaryPhoneme} (${unifiedOutput.activePhonemicMatch.phoneticType}) ➔ ${unifiedOutput.activePhonemicMatch.resonanceMatchPct.toInt()}% რეზონანსი",
                     lastAppliedPrediction = "✨ 5-მოდულიანი პროგნოზი: '${nextBranches.firstOrNull()?.word ?: word}' (${unifiedOutput.overallConfidencePct}%)"
                 )
+            )
+        }
+
+        val sentence = _uiState.value.wordPrediction.unifiedDecodedSentence.ifBlank { _uiState.value.wordDecoder.accumulatedSentence }
+        if (sentence.isNotBlank()) {
+            com.example.service.NeuralContextService.postLiveThoughtNotification(
+                context = getApplication(),
+                thoughtText = sentence,
+                accuracyPct = conf.toFloat(),
+                isCloud = _uiState.value.cognitiveResult?.isCloudActive == true,
+                heartRateBpm = _uiState.value.heartRateBpm,
+                micDb = _uiState.value.audioDb
             )
         }
     }
