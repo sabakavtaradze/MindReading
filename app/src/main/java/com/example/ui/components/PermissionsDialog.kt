@@ -354,7 +354,7 @@ fun PermissionsDialog(
                         .background(Color(0xFF0D1B2A))
                         .border(
                             1.dp,
-                            if (hasKey) Color(0xFF00E5FF).copy(alpha = 0.6f) else Color(0xFFFF9100).copy(alpha = 0.5f),
+                            if (hasKey) Color(0xFF00E5FF).copy(alpha = 0.6f) else Color(0xFF00E676).copy(alpha = 0.5f),
                             RoundedCornerShape(16.dp)
                         )
                         .padding(14.dp)
@@ -370,21 +370,21 @@ fun PermissionsDialog(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Icon(
-                                    imageVector = AppIcons.AutoAwesome,
+                                    imageVector = if (hasKey) AppIcons.AutoAwesome else AppIcons.Psychology,
                                     contentDescription = null,
-                                    tint = if (hasKey) Color(0xFF00E5FF) else Color(0xFFFF9100),
+                                    tint = if (hasKey) Color(0xFF00E5FF) else Color(0xFF00E676),
                                     modifier = Modifier.size(20.dp)
                                 )
                                 Column {
                                     Text(
-                                        text = "Gemini 2.5 Flash Cloud AI",
+                                        text = if (hasKey) "Gemini 2.5 Flash Cloud AI (Hybrid)" else "On-Device Autonomous Neural Core",
                                         color = NeuralTextPrimary,
                                         fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = if (hasKey) "ინტერნეტ-სინთეზი აქტიურია" else "On-Device Offline რეჟიმი",
-                                        color = if (hasKey) Color(0xFF00E5FF) else Color(0xFFFF9100),
+                                        text = if (hasKey) "🌐 Cloud AI + SNN + HTM + Hopfield აქტიურია" else "⚡ 100% On-Device ავტონომიური (SNN, HTM, Hopfield)",
+                                        color = if (hasKey) Color(0xFF00E5FF) else Color(0xFF00E676),
                                         fontSize = 11.sp
                                     )
                                 }
@@ -393,12 +393,12 @@ fun PermissionsDialog(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(if (hasKey) Color(0xFF00E5FF).copy(alpha = 0.15f) else Color(0xFFFF9100).copy(alpha = 0.15f))
+                                    .background(if (hasKey) Color(0xFF00E5FF).copy(alpha = 0.15f) else Color(0xFF00E676).copy(alpha = 0.15f))
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = if (hasKey) "CONNECTED" else "OFFLINE",
-                                    color = if (hasKey) Color(0xFF00E5FF) else Color(0xFFFF9100),
+                                    text = if (hasKey) "ONLINE AI" else "ON-DEVICE CORE",
+                                    color = if (hasKey) Color(0xFF00E5FF) else Color(0xFF00E676),
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -406,7 +406,10 @@ fun PermissionsDialog(
                         }
 
                         Text(
-                            text = "ინტერნეტიდან ცოცხალი AI აზრების გენერაციისთვის შეიყვანეთ Gemini API Key (ან გამოიყენება ავტომატური ინტეგრაცია):",
+                            text = if (hasKey)
+                                "Gemini 2.5 Flash უწყვეტ რეჟიმში უკავშირდება Google Cloud AI-ს და ახდენს SNN, HTM და Hopfield ქსელების ორმხრივ ნეირომოდულაციას."
+                            else
+                                "სისტემა მუშაობს სრულიად ლოკალურად და ავტონომიურად (SNN + HTM + Hopfield + Bayesian). Cloud AI-ს ჩასართავად შეიყვანეთ Gemini API Key:",
                             color = NeuralTextSecondary,
                             fontSize = 11.sp,
                             lineHeight = 15.sp

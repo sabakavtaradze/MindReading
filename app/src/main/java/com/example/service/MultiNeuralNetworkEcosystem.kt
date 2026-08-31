@@ -3,17 +3,28 @@ package com.example.service
 import com.example.sensor.RealAudioState
 import com.example.sensor.RealCameraGazeState
 import com.example.sensor.RealHardwareSensorState
+import java.util.concurrent.ConcurrentLinkedDeque
 
 /**
  * Unified Inter-Connected Multi-Neural Network Ecosystem.
- * Bridges SNN, Hopfield Network, HTM Cortical Columns, and Gemini AI with
- * closed-loop bidirectional cross-talk, cross-modulation, and unified telemetry.
+ * Bridges SNN, Hopfield Network, HTM Cortical Columns, Polyvagal Engine, Bayesian Reasoning, and Gemini AI with
+ * closed-loop bidirectional cross-talk, cross-modulation, live message bus, and unified telemetry.
  */
 class MultiNeuralNetworkEcosystem {
 
     val snnEngine = SpikingNeuralNetworkEngine()
     val hopfieldEngine = HopfieldMemoryNetwork(patternDimension = 32)
     val htmEngine = HierarchicalTemporalMemoryEngine(numColumns = 40, cellsPerColumn = 4)
+
+    data class InterNeuralSignal(
+        val id: Long = System.currentTimeMillis(),
+        val source: String,
+        val target: String,
+        val signalType: String,
+        val descriptionKa: String,
+        val intensity: Float, // 0..1
+        val timestampMs: Long = System.currentTimeMillis()
+    )
 
     data class UnifiedNeuralEcosystemTelemetry(
         val snnTelemetry: SpikingNeuralNetworkEngine.SnnTelemetrySnapshot,
@@ -22,10 +33,27 @@ class MultiNeuralNetworkEcosystem {
         val interNetworkCrossTalkSummary: String,
         val globalSynergyScore: Float, // 0..100%
         val totalActiveSynapticPipes: Int,
-        val isBidirectionalSyncActive: Boolean
+        val isBidirectionalSyncActive: Boolean,
+        val liveSignals: List<InterNeuralSignal> = emptyList()
     )
 
+    private val liveSignalQueue = ConcurrentLinkedDeque<InterNeuralSignal>()
     private var crossTalkSummary = "სრული მულტი-ნეირონული ქსელური სიმბიოზი აქტიურია (SNN ⇄ HTM ⇄ Hopfield ⇄ Gemini)"
+
+    private fun postSignal(source: String, target: String, type: String, descKa: String, intensity: Float) {
+        liveSignalQueue.addFirst(
+            InterNeuralSignal(
+                source = source,
+                target = target,
+                signalType = type,
+                descriptionKa = descKa,
+                intensity = intensity.coerceIn(0f, 1f)
+            )
+        )
+        while (liveSignalQueue.size > 20) {
+            liveSignalQueue.pollLast()
+        }
+    }
 
     /**
      * Executes one unified multi-network cycle with mutual inter-communication:
@@ -33,6 +61,7 @@ class MultiNeuralNetworkEcosystem {
      * 2. SNN + Sensors -> Hopfield vector associative recall & energy minimization
      * 3. Hopfield attractor + SNN spikes -> HTM Cortical Columns Spatial Pooling & Sequence Prediction
      * 4. HTM anomaly & Hopfield energy -> feedback modulates SNN membrane threshold
+     * 5. Polyvagal tone -> modulates neurotransmitter concentrations
      */
     @Synchronized
     fun stepUnified(
@@ -53,6 +82,15 @@ class MultiNeuralNetworkEcosystem {
             cognitiveFocus = cognitiveFocus
         )
 
+        // SNN -> HTM/Hopfield signal
+        postSignal(
+            source = "SNN (Spiking Core)",
+            target = "HTM + Hopfield",
+            type = "SPIKE_BURST_STREAM",
+            descKa = "${snnSnapshot.dominantActiveCluster.labelKa} კლასტერი: ${snnSnapshot.totalSpikesPerSec.toInt()} Hz იმპულსი გაეგზავნა ასოციაციურ ქსელებს",
+            intensity = (snnSnapshot.totalSpikesPerSec / 120f).coerceIn(0.1f, 1f)
+        )
+
         // Form 32-dimensional multimodal latent vector for Hopfield & HTM
         val inputVector = FloatArray(32) { idx ->
             when (idx % 8) {
@@ -71,6 +109,14 @@ class MultiNeuralNetworkEcosystem {
         // Step 2: Run Hopfield Associative Memory
         val hopfieldResult = hopfieldEngine.recallAndMinimizeEnergy(inputVector, temperatureBeta = 4.5f)
 
+        postSignal(
+            source = "Hopfield Network",
+            target = "HTM + Bayesian Mind",
+            type = "ATTRACTOR_CONVERGENCE",
+            descKa = "ატრაქტორის ენერგია E=${String.format(java.util.Locale.US, "%.2f", hopfieldResult.energy)}: აღდგენილია '${hopfieldResult.recalledPatternLabel}' (${(hopfieldResult.similarityScore * 100).toInt()}%)",
+            intensity = hopfieldResult.similarityScore
+        )
+
         // Step 3: Run HTM with inputs from SNN spike frequencies & Hopfield reconstructed state
         val clusterFreqArray = FloatArray(SpikingNeuralNetworkEngine.CorticalCluster.values().size) { i ->
             snnSnapshot.clusterSpikeFrequencies[SpikingNeuralNetworkEngine.CorticalCluster.values()[i]] ?: 5.0f
@@ -82,6 +128,14 @@ class MultiNeuralNetworkEcosystem {
             hopfieldState = hopfieldResult.reconstructedVector
         )
 
+        postSignal(
+            source = "HTM Columns",
+            target = "SNN Plasticity",
+            type = "TEMPORAL_PREDICTION",
+            descKa = "აქტიურია ${htmTelemetry.activeColumnsCount}/40 სვეტი (SDR ${(htmTelemetry.sdrSparsityPercentage).toInt()}%). ანომალია: ${(htmTelemetry.anomalyScore * 100).toInt()}%",
+            intensity = htmTelemetry.sequenceCoherence
+        )
+
         // Step 4: Cross-talk interaction - HTM Anomaly & Hopfield Energy modulate SNN & HTM learning
         if (htmTelemetry.anomalyScore > 0.4f) {
             // High novelty: boost noradrenaline in SNN and tune HTM receptive fields
@@ -89,6 +143,13 @@ class MultiNeuralNetworkEcosystem {
             htmEngine.tuneHtmReceptiveFields(
                 dopamine = snnSnapshot.neuromodulation.dopamineLevel,
                 noradrenaline = snnSnapshot.neuromodulation.noradrenalineLevel
+            )
+            postSignal(
+                source = "HTM Anomaly Sensor",
+                target = "SNN Neuromodulation",
+                type = "NORADRENALINE_SURGE",
+                descKa = "სიახლის დეტექცია: ნორადრენალინი გაიზარდა ყურადღების მობილიზებისთვის",
+                intensity = htmTelemetry.anomalyScore
             )
         }
 
@@ -106,7 +167,8 @@ class MultiNeuralNetworkEcosystem {
             interNetworkCrossTalkSummary = crossTalkSummary,
             globalSynergyScore = synergy.coerceIn(0f, 100f),
             totalActiveSynapticPipes = 80 + 40 + 32, // SNN + HTM + Hopfield
-            isBidirectionalSyncActive = true
+            isBidirectionalSyncActive = true,
+            liveSignals = liveSignalQueue.toList()
         )
     }
 
@@ -141,5 +203,13 @@ class MultiNeuralNetworkEcosystem {
             val latentVec = FloatArray(32) { i -> ((i * 7 + 13) % 19) / 19.0f * (if (i % 2 == 0) 1f else -0.8f) }
             hopfieldEngine.storePattern(memoryConsolidationPattern, latentVec)
         }
+
+        postSignal(
+            source = "Gemini Cloud AI",
+            target = "SNN + HTM + Hopfield",
+            type = "BIDIRECTIONAL_DOWNLINK",
+            descKa = aiExplanation.ifBlank { "Gemini AI-მ დაარეგულირა დოფამინი ($dopamine), სეროტონინი ($serotonin) და $targetClusterName კლასტერი" },
+            intensity = 0.95f
+        )
     }
 }

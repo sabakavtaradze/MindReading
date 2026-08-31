@@ -48,4 +48,5 @@ object AppIcons {
     val Layers: ImageVector = Icons.Default.Menu
     val Bolt: ImageVector = Icons.Default.Star
     val AutoGraph: ImageVector = Icons.Default.Share
+    val Memory: ImageVector = Icons.Default.Settings
 }

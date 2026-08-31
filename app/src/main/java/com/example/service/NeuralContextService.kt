@@ -215,7 +215,9 @@ class NeuralContextService : Service() {
         dominantFreqHz: Float,
         synthesisSummary: String = "",
         logicChain: List<String> = emptyList(),
-        topAlgorithmStep: String = ""
+        topAlgorithmStep: String = "",
+        ecosystemCrossTalk: String = "",
+        topInterSignal: String = ""
     ) {
         try {
             val notificationIntent = Intent(this, MainActivity::class.java).apply {
@@ -234,6 +236,10 @@ class NeuralContextService : Service() {
             val expandedText = buildString {
                 append("🎯 ამოცნობილია: ")
                 append(thoughtText)
+                if (topInterSignal.isNotBlank()) {
+                    append("\n\n📡 ნეირო-ხიდი (Live Bus): ")
+                    append(topInterSignal)
+                }
                 if (synthesisSummary.isNotBlank()) {
                     append("\n\n💡 AI ანალიზი: ")
                     append(synthesisSummary)
@@ -248,6 +254,10 @@ class NeuralContextService : Service() {
                 if (topAlgorithmStep.isNotBlank()) {
                     append("\n\n⚡ ალგორითმი: ")
                     append(topAlgorithmStep)
+                }
+                if (ecosystemCrossTalk.isNotBlank()) {
+                    append("\n\n🧬 ეკოსისტემა: ")
+                    append(ecosystemCrossTalk)
                 }
                 append("\n\n• წყარო: ")
                 append(if (isCloud) "🌐 Cloud AI (Gemini 2.5 Flash ონლაინ სინთეზი)" else "⚡ On-Device Autonomous Neural Engine")
@@ -337,6 +347,8 @@ class NeuralContextService : Service() {
                     val summary = cognitiveResult?.deepSynthesisText ?: ""
                     val logicChain = cognitiveResult?.logicalDeductionChain ?: emptyList()
                     val topAlgo = cognitiveResult?.algorithmicSteps?.firstOrNull()?.let { "${it.stageName}: ${it.conditionOrAction}" } ?: ""
+                    val ecosystemSummary = cognitiveResult?.ecosystemTelemetry?.interNetworkCrossTalkSummary ?: ""
+                    val topSignal = cognitiveResult?.ecosystemTelemetry?.liveSignals?.firstOrNull()?.let { "${it.source} ➔ ${it.target}: ${it.descriptionKa}" } ?: ""
 
                     // 3. Update the persistent notification with live rich text
                     updateNotificationLive(
@@ -349,7 +361,9 @@ class NeuralContextService : Service() {
                         dominantFreqHz = audioState.dominantFrequencyHz,
                         synthesisSummary = summary,
                         logicChain = logicChain,
-                        topAlgorithmStep = topAlgo
+                        topAlgorithmStep = topAlgo,
+                        ecosystemCrossTalk = ecosystemSummary,
+                        topInterSignal = topSignal
                     )
 
                 } catch (e: Throwable) {

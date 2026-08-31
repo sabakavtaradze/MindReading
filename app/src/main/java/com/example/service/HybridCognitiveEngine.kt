@@ -90,17 +90,16 @@ class HybridCognitiveEngine(private val context: Context) {
     )
 
     /**
-     * Checks if actual Internet connection is available
+     * Checks if actual Internet connection capability is available
      */
     private fun isNetworkAvailable(): Boolean {
         return try {
             val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
             val activeNetwork = connectivityManager?.activeNetwork ?: return false
             val capabilities = connectivityManager.getNetworkCapabilities(activeNetwork) ?: return false
-            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
-                    capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
+            capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
         } catch (e: Exception) {
-            false
+            true // Allow attempt to fail gracefully if needed
         }
     }
 
