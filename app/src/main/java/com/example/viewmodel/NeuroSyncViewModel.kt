@@ -1274,6 +1274,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         val timeNow = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
 
         val isCloud = state.cognitiveResult?.isCloudActive == true
+        val cloudThought = state.cognitiveResult?.synthesizedThoughtSentence.orEmpty()
         val cloudSummary = state.cognitiveResult?.deepSynthesisText ?: ""
         val recentTokens = com.example.service.AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens()
         val latestInsight = state.cognitiveResult?.insights?.firstOrNull()?.description
@@ -1281,12 +1282,22 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         // Dynamically build thought candidates from Cloud AI, recently ingested tokens, and multimodal state
         val dynamicCandidates = mutableListOf<Triple<String, String, String>>()
 
-        if (cloudSummary.isNotBlank()) {
+        if (cloudThought.isNotBlank()) {
+            dynamicCandidates.add(
+                Triple(
+                    if (isCloud) "🌐 Cloud AI: $cloudThought" else "⚡ ნეირო-აზრი: $cloudThought",
+                    "ნავარაუდევი აზრი: $cloudThought",
+                    if (cloudSummary.isNotBlank()) "• AI ანალიზი: $cloudSummary" else "• სენსორული & კოგნიტური სინთეზი\n• მაღალი სიზუსტე"
+                )
+            )
+        }
+
+        if (cloudSummary.isNotBlank() && cloudSummary != cloudThought) {
             val firstLine = cloudSummary.lines().firstOrNull { it.isNotBlank() } ?: cloudSummary
             val shortTitle = if (firstLine.length > 50) firstLine.take(47) + "..." else firstLine
             dynamicCandidates.add(
                 Triple(
-                    "🌐 Cloud Gemini: $shortTitle",
+                    "💡 AI ინსაითი: $shortTitle",
                     "ნავარაუდევი აზრი: $cloudSummary",
                     "• ინტერნეტ-ინსაითი მიღებულია\n• სინაფსური ლექსიკა გაფართოებულია\n• მაღალი კოგნიტური სიზუსტე"
                 )

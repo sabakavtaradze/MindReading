@@ -213,7 +213,9 @@ class NeuralContextService : Service() {
         heartRateBpm: Int,
         micDb: Float,
         dominantFreqHz: Float,
-        synthesisSummary: String = ""
+        synthesisSummary: String = "",
+        logicChain: List<String> = emptyList(),
+        topAlgorithmStep: String = ""
     ) {
         try {
             val notificationIntent = Intent(this, MainActivity::class.java).apply {
@@ -235,6 +237,17 @@ class NeuralContextService : Service() {
                 if (synthesisSummary.isNotBlank()) {
                     append("\n\n💡 AI ანალიზი: ")
                     append(synthesisSummary)
+                }
+                if (logicChain.isNotEmpty()) {
+                    append("\n\n🔗 ლოგიკური ჯაჭვი:")
+                    logicChain.take(3).forEach { step ->
+                        append("\n• ")
+                        append(step)
+                    }
+                }
+                if (topAlgorithmStep.isNotBlank()) {
+                    append("\n\n⚡ ალგორითმი: ")
+                    append(topAlgorithmStep)
                 }
                 append("\n\n• წყარო: ")
                 append(if (isCloud) "🌐 Cloud AI (Gemini 2.5 Flash ონლაინ სინთეზი)" else "⚡ On-Device Autonomous Neural Engine")
@@ -294,38 +307,17 @@ class NeuralContextService : Service() {
                         emotionalEntropy = 0.12f + Random.nextFloat() * 0.08f,
                         mentalFatigue = 0.22f + Random.nextFloat() * 0.15f,
                         focusLevel = 0.94f + Random.nextFloat() * 0.05f,
-                        activeThought = "კოდის არქიტექტურა და სისტემური ანალიზი"
+                        activeThought = _latestDetectedThought.value.ifBlank { "კოდის არქიტექტურა და სისტემური ანალიზი" }
                     )
 
                     val accuracy = 97.4f + Random.nextFloat() * 2.2f
                     val heartRate = if (gazeState.opticalRadiancePulseBpm > 0) gazeState.opticalRadiancePulseBpm else (68 + Random.nextInt(16))
 
-                    // Curated diverse cognitive streams to prevent repetition
-                    val dynamicContextPool = listOf(
-                        "კოდის რეფაქტორინგი და Compose ოპტიმიზაცია",
-                        "მაღალი კოგნიტური კონცენტრაცია და ალგორითმული ფოკუსი",
-                        "სუბვოკალური მზაობა: შინაგანი მეტყველების დეკოდირება",
-                        "ამოცანის ანალიზი და ასოციაციური მოდელირება",
-                        "იდეის სინთეზი: ნეირო-ლინგვისტური არქიტექტურა",
-                        "მშვიდი ნაკადი (Flow) და დაბალი ემოციური ენტროპია",
-                        "ვიზუალური ყურადღების ფიქსაცია და მონაცემთა დამუშავება",
-                        "სისტემური სტაბილიზაცია და ბიომეტრიული ჰარმონია"
-                    )
-
-                    // Extract the newest synthesized phrase without string-concatenation spam
-                    val rawSentence = when {
-                        cognitiveResult != null && cognitiveResult.isCloudActive && cognitiveResult.deepSynthesisText.isNotBlank() -> {
-                            val clean = cognitiveResult.deepSynthesisText.lines().firstOrNull { it.isNotBlank() } ?: cognitiveResult.deepSynthesisText
-                            if (clean.length > 90) clean.take(87) + "..." else clean
-                        }
-                        else -> {
-                            val recentTokens = AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens()
-                            if (recentTokens.isNotEmpty() && cycleCount % 3 == 0) {
-                                "ნეირონული კონცეფცია: ${recentTokens.take(2).joinToString(" • ") { it.token }}"
-                            } else {
-                                dynamicContextPool[cycleCount % dynamicContextPool.size]
-                            }
-                        }
+                    // Extract synthesized phrase directly from Gemini AI (Online) or Sensor Synthesis (Offline)
+                    val rawSentence = cognitiveResult?.synthesizedThoughtSentence.orEmpty().ifBlank {
+                        val recentTokens = AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens()
+                        val topWord = recentTokens.firstOrNull()?.token ?: "ოპტიმიზაცია"
+                        "ნეირონული ანალიზი: $topWord და ალგორითმული ფოკუსი"
                     }
 
                     // Anti-Spam / Deduplication filter: Remove consecutive duplicate words
@@ -343,6 +335,8 @@ class NeuralContextService : Service() {
                     val polyvagalLabel = cognitiveResult?.polyvagalResult?.dominantState?.labelKa ?: "ვენტრალ-ვაგალური (Flow)"
                     val isCloud = cognitiveResult?.isCloudActive ?: false
                     val summary = cognitiveResult?.deepSynthesisText ?: ""
+                    val logicChain = cognitiveResult?.logicalDeductionChain ?: emptyList()
+                    val topAlgo = cognitiveResult?.algorithmicSteps?.firstOrNull()?.let { "${it.stageName}: ${it.conditionOrAction}" } ?: ""
 
                     // 3. Update the persistent notification with live rich text
                     updateNotificationLive(
@@ -353,7 +347,9 @@ class NeuralContextService : Service() {
                         heartRateBpm = heartRate,
                         micDb = audioState.decibels,
                         dominantFreqHz = audioState.dominantFrequencyHz,
-                        synthesisSummary = summary
+                        synthesisSummary = summary,
+                        logicChain = logicChain,
+                        topAlgorithmStep = topAlgo
                     )
 
                 } catch (e: Throwable) {

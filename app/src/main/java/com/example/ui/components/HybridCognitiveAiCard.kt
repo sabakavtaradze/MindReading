@@ -5,6 +5,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -357,91 +362,459 @@ fun HybridCognitiveAiCard(
                 }
             }
 
-            // Deep Synthesis Speech Bubble / Reasoning Result
-            val synthesisText = result?.deepSynthesisText
-                ?: "სააზროვნო ბირთვი ამუშავებს მზა ანალიტიკას (კამერა, მიკროფონი, სენსორები)..."
-            
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(NeuralBackground.copy(alpha = 0.85f))
-                    .border(1.dp, NeuralAccent.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
-                    .padding(14.dp)
-            ) {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(
-                            imageVector = AppIcons.Lightbulb,
-                            contentDescription = null,
-                            tint = NeuralAccent,
-                            modifier = Modifier.size(15.dp)
+            // 🌟 Prominent Live Synthesized Thought Banner
+            val currentThought = result?.synthesizedThoughtSentence.orEmpty()
+            if (currentThought.isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    modeColor.copy(alpha = 0.18f),
+                                    NeuralDeepPurple.copy(alpha = 0.4f)
+                                )
+                            )
                         )
+                        .border(1.2.dp, modeColor.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+                        .padding(14.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isCloud) AppIcons.AutoAwesome else AppIcons.Speed,
+                                contentDescription = null,
+                                tint = modeColor,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = if (isCloud) "🌐 ამოცნობილი აზრი (Gemini AI):" else "⚡ ამოცნობილი აზრი (On-Device):",
+                                color = modeColor,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                         Text(
-                            text = "აზრობრივი სინთეზი & შეფასება:",
-                            color = NeuralAccent,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
+                            text = "„$currentThought“",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 20.sp
                         )
                     }
-                    Text(
-                        text = synthesisText,
-                        color = Color.White,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp
-                    )
                 }
             }
 
-            // Cognitive Insights Checklist
-            result?.insights?.let { list ->
-                if (list.isNotEmpty()) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // ==========================================
+            // 🧠 COGNITIVE LOGIC, ALGORITHMS & CONCEPTS
+            // ==========================================
+            var cognitiveSubTab by remember { mutableStateOf(0) } // 0: Insights, 1: Logic Chain, 2: Algorithm Tree, 3: Concept Hierarchy
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.Black.copy(alpha = 0.4f))
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                val tabs = listOf("💡 ინსაითი", "🔗 ლოგიკა", "⚡ ალგორითმი", "📊 კონცეფციები")
+                tabs.forEachIndexed { index, label ->
+                    val selected = cognitiveSubTab == index
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (selected) NeuralAccent.copy(alpha = 0.25f) else Color.Transparent)
+                            .border(
+                                width = if (selected) 1.dp else 0.dp,
+                                color = if (selected) NeuralAccent else Color.Transparent,
+                                shape = RoundedCornerShape(8.dp)
+                            )
+                            .clickable { cognitiveSubTab = index }
+                            .padding(vertical = 6.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         Text(
-                            text = "ნეირო-ანალიტიკის სინთეზური შრეები:",
-                            color = NeuralTextSecondary,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold
+                            text = label,
+                            color = if (selected) Color.White else NeuralTextSecondary,
+                            fontSize = 10.sp,
+                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                         )
-                        list.forEach { insight ->
+                    }
+                }
+            }
+
+            when (cognitiveSubTab) {
+                0 -> {
+                    // Deep Synthesis Speech Bubble / Reasoning Result
+                    val synthesisText = result?.deepSynthesisText
+                        ?: "სააზროვნო ბირთვი ამუშავებს მზა ანალიტიკას (კამერა, მიკროფონი, სენსორები)..."
+                    
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(NeuralBackground.copy(alpha = 0.85f))
+                            .border(1.dp, NeuralAccent.copy(alpha = 0.25f), RoundedCornerShape(14.dp))
+                            .padding(14.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(10.dp))
-                                    .background(NeuralSurface.copy(alpha = 0.6f))
-                                    .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(10.dp))
-                                    .padding(horizontal = 10.dp, vertical = 8.dp),
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(6.dp)
-                                        .clip(CircleShape)
-                                        .background(NeuralAccent)
+                                Icon(
+                                    imageVector = AppIcons.Lightbulb,
+                                    contentDescription = null,
+                                    tint = NeuralAccent,
+                                    modifier = Modifier.size(15.dp)
                                 )
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = insight.title,
-                                        color = NeuralTextPrimary,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = insight.description,
-                                        color = NeuralTextSecondary,
-                                        fontSize = 11.sp
-                                    )
-                                }
                                 Text(
-                                    text = "${(insight.confidence * 100).toInt()}%",
+                                    text = "აზრობრივი სინთეზი & შეფასება:",
                                     color = NeuralAccent,
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
                                 )
+                            }
+                            Text(
+                                text = synthesisText,
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
+
+                    // Cognitive Insights Checklist
+                    result?.insights?.let { list ->
+                        if (list.isNotEmpty()) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(
+                                    text = "ნეირო-ანალიტიკის სინთეზური შრეები:",
+                                    color = NeuralTextSecondary,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                list.forEach { insight ->
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(10.dp))
+                                            .background(NeuralSurface.copy(alpha = 0.6f))
+                                            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(10.dp))
+                                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(6.dp)
+                                                .clip(CircleShape)
+                                                .background(NeuralAccent)
+                                        )
+                                        Column(modifier = Modifier.weight(1f)) {
+                                            Text(
+                                                text = insight.title,
+                                                color = NeuralTextPrimary,
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                            Text(
+                                                text = insight.description,
+                                                color = NeuralTextSecondary,
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                        Text(
+                                            text = "${(insight.confidence * 100).toInt()}%",
+                                            color = NeuralAccent,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                1 -> {
+                    // 🔗 Logical Deduction Chain View
+                    val logicChain = result?.logicalDeductionChain ?: emptyList()
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = AppIcons.Psychology,
+                                contentDescription = null,
+                                tint = Color(0xFF00E5FF),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "🔗 ლოგიკური მსჯელობის სტრუქტურა (Logical Chain):",
+                                color = NeuralTextPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        if (logicChain.isEmpty()) {
+                            Text(
+                                text = "ლოგიკური ჯაჭვი ფორმირდება ცოცხალი სენსორებიდან...",
+                                color = NeuralTextSecondary,
+                                fontSize = 12.sp
+                            )
+                        } else {
+                            logicChain.forEachIndexed { idx, stepText ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(NeuralSurface.copy(alpha = 0.7f))
+                                        .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.2f), RoundedCornerShape(10.dp))
+                                        .padding(10.dp)
+                                ) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.Top
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(22.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF00E5FF).copy(alpha = 0.2f))
+                                                .border(1.dp, Color(0xFF00E5FF), CircleShape),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "${idx + 1}",
+                                                color = Color(0xFF00E5FF),
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        Text(
+                                            text = stepText,
+                                            color = Color.White,
+                                            fontSize = 12.sp,
+                                            lineHeight = 17.sp,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                2 -> {
+                    // ⚡ Algorithmic Action Tree View
+                    val algoSteps = result?.algorithmicSteps ?: emptyList()
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = AppIcons.Speed,
+                                contentDescription = null,
+                                tint = Color(0xFF00E676),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "⚡ ალგორითმული საფეხურები & ოპერაციები:",
+                                color = NeuralTextPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        if (algoSteps.isEmpty()) {
+                            Text(
+                                text = "ალგორითმული სქემა მზადდება...",
+                                color = NeuralTextSecondary,
+                                fontSize = 12.sp
+                            )
+                        } else {
+                            algoSteps.forEach { step ->
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFF050E18))
+                                        .border(1.dp, Color(0xFF00E676).copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                                        .padding(12.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Text(
+                                                    text = "STEP ${step.step}:",
+                                                    color = Color(0xFF00E676),
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                                Text(
+                                                    text = step.stageName,
+                                                    color = Color.White,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(Color(0xFF00E676).copy(alpha = 0.15f))
+                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                                            ) {
+                                                Text(
+                                                    text = step.status,
+                                                    color = Color(0xFF00E676),
+                                                    fontSize = 9.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+
+                                        if (step.description.isNotBlank()) {
+                                            Text(
+                                                text = step.description,
+                                                color = NeuralTextSecondary,
+                                                fontSize = 11.sp
+                                            )
+                                        }
+
+                                        if (step.conditionOrAction.isNotBlank()) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(Color.Black.copy(alpha = 0.5f))
+                                                    .padding(horizontal = 8.dp, vertical = 5.dp)
+                                            ) {
+                                                Text(
+                                                    text = "▸ ${step.conditionOrAction}",
+                                                    color = Color(0xFF80D8FF),
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Medium
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                3 -> {
+                    // 📊 Concept Hierarchy View
+                    val concepts = result?.conceptHierarchy ?: emptyList()
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = AppIcons.AccountTree,
+                                contentDescription = null,
+                                tint = Color(0xFFFF9100),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = "📊 კონცეპტუალური იერარქია & პრიორიტეტები:",
+                                color = NeuralTextPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+
+                        if (concepts.isEmpty()) {
+                            Text(
+                                text = "კონცეფციების იერარქია მუშავდება...",
+                                color = NeuralTextSecondary,
+                                fontSize = 12.sp
+                            )
+                        } else {
+                            concepts.forEach { conceptNode ->
+                                val prioColor = when (conceptNode.priority) {
+                                    "HIGH" -> Color(0xFFFF5252)
+                                    "MEDIUM" -> Color(0xFFFF9100)
+                                    else -> Color(0xFF00E5FF)
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(NeuralSurface.copy(alpha = 0.6f))
+                                        .border(1.dp, prioColor.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                        .padding(10.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .clip(RoundedCornerShape(6.dp))
+                                                        .background(prioColor.copy(alpha = 0.15f))
+                                                        .border(1.dp, prioColor.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = conceptNode.category,
+                                                        color = prioColor,
+                                                        fontSize = 10.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                }
+                                                Text(
+                                                    text = conceptNode.concept,
+                                                    color = Color.White,
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+
+                                            Text(
+                                                text = "${conceptNode.weightPct}%",
+                                                color = prioColor,
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+
+                                        LinearProgressIndicator(
+                                            progress = { conceptNode.weightPct / 100f },
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .height(3.dp)
+                                                .clip(CircleShape),
+                                            color = prioColor,
+                                            trackColor = Color.White.copy(alpha = 0.08f)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }

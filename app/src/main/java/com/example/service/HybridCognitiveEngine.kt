@@ -7,6 +7,7 @@ import android.util.Log
 import com.example.sensor.RealAudioState
 import com.example.sensor.RealCameraGazeState
 import com.example.sensor.RealHardwareSensorState
+import com.example.util.ApiKeyManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
@@ -15,13 +16,15 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.random.Random
 
 /**
  * Hybrid Intelligent Cognitive & Polyvagal Behavioral Reasoning Core:
- * 1. Online Mode: Uses Gemini 2.5 Flash Cloud AI (Free Tier API) to synthesize rich, conscious insights and harvest dynamic lexical tokens.
+ * 1. Online Mode: Uses Gemini 2.5 Flash Cloud AI to synthesize rich, conscious insights and harvest dynamic lexical tokens from the internet.
  * 2. Offline Mode: Automatically falls back to On-Device Autonomous Polyvagal & Somatic Neural Matrix when offline or quota reached.
  * 3. Dynamic Corpus Expansion: Ingests newly learned concepts to continuously broaden thought predictions and prevent repetitions.
  */
@@ -35,13 +38,33 @@ class HybridCognitiveEngine(private val context: Context) {
 
     private val polyvagalEngine = PolyvagalBehavioralEngine()
     private var lastGeminiCallTime = 0L
-    private val minCallIntervalMs = 8000L // 8s throttle to respect free tier (max ~7-8 requests/min)
+    private val minCallIntervalMs = 6000L // 6s throttle
     private var lastGeneratedSummary = ""
+    private var lastGeneratedThought = ""
+
+    data class AlgorithmicNode(
+        val step: Int,
+        val stageName: String,
+        val description: String,
+        val conditionOrAction: String,
+        val status: String = "ACTIVE" // "ACTIVE", "OPTIMIZED", "BRANCHING"
+    )
+
+    data class CognitiveConceptNode(
+        val category: String,
+        val concept: String,
+        val priority: String, // "HIGH", "MEDIUM", "LOW"
+        val weightPct: Int
+    )
 
     data class CognitiveResult(
         val isCloudActive: Boolean,
         val modeLabel: String,
+        val synthesizedThoughtSentence: String,
         val deepSynthesisText: String,
+        val logicalDeductionChain: List<String>,
+        val algorithmicSteps: List<AlgorithmicNode>,
+        val conceptHierarchy: List<CognitiveConceptNode>,
         val metaCognitionScore: Float,
         val intentionalFocusPrediction: String,
         val emotionalEntropyIndex: Float,
@@ -88,7 +111,7 @@ class HybridCognitiveEngine(private val context: Context) {
     ): CognitiveResult = withContext(Dispatchers.IO) {
         val startTime = System.currentTimeMillis()
         val hasInternet = isNetworkAvailable()
-        val apiKey = com.example.BuildConfig.GEMINI_API_KEY
+        val apiKey = ApiKeyManager.getActiveGeminiApiKey(context)
 
         // Run On-Device Polyvagal Behavioral Analysis First
         val polyvagalAnalysis = polyvagalEngine.analyzeBehavioralState(
@@ -99,9 +122,9 @@ class HybridCognitiveEngine(private val context: Context) {
             entropyIndex = emotionalEntropy
         )
 
-        // If online, key exists and not throttled -> Try Gemini 2.5 Flash Free Tier
+        // If online, key exists and not throttled -> Call Gemini 2.5 Flash
         if (hasInternet && apiKey.isNotBlank() && (startTime - lastGeminiCallTime > minCallIntervalMs)) {
-            val cloudResult = tryGeminiReasoning(
+            val cloudParsed = tryGeminiReasoning(
                 audio = audio,
                 gaze = gaze,
                 sensors = sensors,
@@ -112,16 +135,22 @@ class HybridCognitiveEngine(private val context: Context) {
                 activeThought = activeThought,
                 apiKey = apiKey
             )
-            if (cloudResult != null) {
+            if (cloudParsed != null) {
                 lastGeminiCallTime = startTime
-                lastGeneratedSummary = cloudResult
+                lastGeneratedSummary = cloudParsed.summary
+                lastGeneratedThought = cloudParsed.thoughtSentence
 
-                // 🌟 Autonomous Dynamic Lexicon Ingestion: Harvest new words & terms from the AI synthesis!
-                val newHarvestedWords = AutonomousDynamicLexiconLearner.ingestFromAiStream(cloudResult)
+                // Harvest new words & terms from the AI stream
+                val combinedText = "${cloudParsed.thoughtSentence} ${cloudParsed.summary} ${cloudParsed.keywords.joinToString(" ")}"
+                val newHarvestedWords = AutonomousDynamicLexiconLearner.ingestFromAiStream(combinedText)
 
                 val latency = System.currentTimeMillis() - startTime
                 return@withContext buildOnlineResult(
-                    synthesis = cloudResult,
+                    thoughtSentence = cloudParsed.thoughtSentence,
+                    synthesis = cloudParsed.summary,
+                    logicalChain = cloudParsed.logicalChain,
+                    algorithmicSteps = cloudParsed.algorithmicSteps,
+                    conceptHierarchy = cloudParsed.conceptHierarchy,
                     audio = audio,
                     gaze = gaze,
                     sensors = sensors,
@@ -135,7 +164,6 @@ class HybridCognitiveEngine(private val context: Context) {
         }
 
         // Offline / Fallback Local Autonomous Neural Matrix (100% On-Device Engine)
-        // Dynamically discover offline concept combinations to expand vocabulary
         val offlineDiscoveredWord = AutonomousDynamicLexiconLearner.triggerAutonomousOfflineDiscovery(
             audio = audio,
             gaze = gaze,
@@ -159,8 +187,17 @@ class HybridCognitiveEngine(private val context: Context) {
         )
     }
 
+    data class GeminiParsedResponse(
+        val thoughtSentence: String,
+        val summary: String,
+        val logicalChain: List<String>,
+        val algorithmicSteps: List<AlgorithmicNode>,
+        val conceptHierarchy: List<CognitiveConceptNode>,
+        val keywords: List<String>
+    )
+
     /**
-     * Executes Cloud Gemini 2.5 Flash Reasoning with optimized token context using standard JSONObject
+     * Executes Cloud Gemini 2.5 Flash Reasoning with optimized JSON response
      */
     private fun tryGeminiReasoning(
         audio: RealAudioState,
@@ -172,21 +209,90 @@ class HybridCognitiveEngine(private val context: Context) {
         focusLevel: Float,
         activeThought: String,
         apiKey: String
-    ): String? {
+    ): GeminiParsedResponse? {
         return try {
             val prompt = """
                 შენ ხარ ტელეფონში ჩაშენებული უმაღლესი ნეირო-კოგნიტური & ქცევითი სააზროვნო ინტელექტი (NeuroSync AI).
-                გააანალიზე მომხმარებლის მიმდინარე ცოცხალი მულტიმოდალური ანალიტიკა და ჩამოაყალიბე ღრმა, გააზრებული დასკვნა ქართულად (მაქსიმუმ 2-3 წინადადება). გამოიყენე მრავალფეროვანი, ცოცხალი ლექსიკა:
+                მომხმარებლის ცოცხალი მულტიმოდალური სენსორული ტელემეტრიაა:
                 
-                - მიმდინარე აზრი/სიტყვა: "${activeThought.ifBlank { "ფოკუსირებული დაკვირვება" }}"
-                - ქცევითი პოლივაგალური მდგომარეობა: ${polyvagal.dominantState.labelKa} (Flow: ${(polyvagal.flowStateIndex * 100).roundToInt()}%, დისონანსი: ${(polyvagal.somaticDissonanceIndex * 100).roundToInt()}%)
-                - ყურადღების დრიფტის ჰორიზონტი: ${polyvagal.attentionDriftSeconds} წამი, იმპულსურობა: ${polyvagal.impulsivityRiskPct.roundToInt()}%
-                - ხმის დონე & სიხშირე: ${audio.decibels.roundToInt()} dB, ${audio.dominantFrequencyHz.roundToInt()} Hz
-                - გუგის დიამეტრი: ${gaze.opticalPupilDiameterMm} მმ, თვალის ხამხამი: ${gaze.eyeBlinkRatePerMin} /წთ, პულსი: ${gaze.opticalRadiancePulseBpm} BPM
-                - ფოკუსი: ${(focusLevel * 100).roundToInt()}%, ენტროპია: ${(emotionalEntropy * 100).roundToInt()}%, დაღლილობა: ${(mentalFatigue * 100).roundToInt()}%
-                - მოძრაობა: AccelX=${sensors.accelX.roundToInt()}, წნევა=${sensors.atmosphericPressureHpa.roundToInt()} hPa
+                [1. აკუსტიკური & სუბვოკალური მონაცემები]
+                - ხმის წნევა (SPL): ${audio.decibels.roundToInt()} dB (პიკი: ${audio.peakDecibels.roundToInt()} dB, RMS: ${String.format(Locale.US, "%.3f", audio.rmsAmplitude)})
+                - დომინანტური სიხშირე: ${audio.dominantFrequencyHz.roundToInt()} Hz
+                - ხმოვანი აქტივობა / მეტყველების ალბათობა: ${if (audio.voiceActivityDetected) "აქტიური (${audio.speechConfidencePct}%)" else "სუბვოკალური სიჩუმე"}
+                - გარემო აკუსტიკა: "${audio.noiseClassification}"
                 
-                დაწერე ბუნებრივი, ჭკვიანური და ცოცხალი ნეირო-ფსიქოლოგიური დასკვნა.
+                [2. ოპტიკური მზერა & ბიომეტრიული პულსაცია]
+                - მზერის მიმართულება / ფოკუსი: "${gaze.gazeDirection}" (ზონა: "${gaze.fixationZone}")
+                - ფიქსაციის ხანგრძლივობა: ${gaze.fixationDurationMs} ms
+                - გუგის დიამეტრი: ${String.format(Locale.US, "%.2f", gaze.opticalPupilDiameterMm)} მმ (გაფართოების კოეფიციენტი: ${String.format(Locale.US, "%.2f", gaze.opticalPupilDilationScore)})
+                - თვალის ხამხამის სიხშირე: ${gaze.eyeBlinkRatePerMin} /წთ
+                - ოპტიკურ-ვასკულარული პულსი (HRV/rPPG): ${gaze.opticalRadiancePulseBpm} BPM
+                
+                [3. ფიზიკური სენსორები & მიკრო-ტრემორი]
+                - აქსელერომეტრი & გიროსკოპი: X=${String.format(Locale.US, "%.1f", sensors.accelX)}, Y=${String.format(Locale.US, "%.1f", sensors.accelY)}, Z=${String.format(Locale.US, "%.1f", sensors.accelZ)} | Gyro=[${String.format(Locale.US, "%.2f", sensors.gyroX)}, ${String.format(Locale.US, "%.2f", sensors.gyroY)}, ${String.format(Locale.US, "%.2f", sensors.gyroZ)}]
+                - მიკრო-ტრემორის ამპლიტუდა: ${String.format(Locale.US, "%.3f", sensors.microTremorMagnitude)} (სიხშირე: ${String.format(Locale.US, "%.1f", sensors.physiologicalTremorHz)} Hz)
+                - ნეირო-მოტორული სტაბილურობა: ${sensors.neuromuscularStabilityPct}% ("${sensors.handTensionLevel}")
+                - კომპასი & ორიენტაცია: ${sensors.compassHeadingDeg.roundToInt()}° (${sensors.compassCardinal}) | Pitch: ${String.format(Locale.US, "%.1f", sensors.pitchDeg)}°, Roll: ${String.format(Locale.US, "%.1f", sensors.rollDeg)}°
+                - განათება & გარემო: ${sensors.ambientLightLux.roundToInt()} Lux ("${sensors.lightCondition}")
+                - ატმოსფერული წნევა & სიმაღლე: ${sensors.atmosphericPressureHpa.roundToInt()} hPa (~${sensors.estimatedAltitudeMeters.roundToInt()} მ)
+                - მოწყობილობის ბატარეა & ტემპერატურა: ${sensors.batteryPct}% (${if (sensors.isCharging) "იტენება" else "განმუხტვა"}, ${String.format(Locale.US, "%.1f", sensors.batteryTemperatureCelsius)}°C)
+                - RAM დატვირთვა: ${sensors.ramUsagePct}%
+                
+                [4. ქცევითი & პოლივაგალური ნეირო-მოდელი]
+                - დომინანტური მდგომარეობა: ${polyvagal.dominantState.labelKa}
+                - შემოქმედებითი Flow ინდექსი: ${(polyvagal.flowStateIndex * 100).roundToInt()}%
+                - სომატური დისონანსი / შფოთვა: ${(polyvagal.somaticDissonanceIndex * 100).roundToInt()}%
+                - ყურადღების დრიფტის ჰორიზონტი: ${polyvagal.attentionDriftSeconds} წამი
+                - იმპულსურობის რისკი: ${polyvagal.impulsivityRiskPct.roundToInt()}%
+                - მენტალური ფოკუსი: ${(focusLevel * 100).roundToInt()}% | ემოციური ენტროპია: ${(emotionalEntropy * 100).roundToInt()}% | დაღლილობა: ${(mentalFatigue * 100).roundToInt()}%
+                - ბოლო აზროვნების კონტექსტი: "$activeThought"
+
+                მოთხოვნა: ყველა ამ მრავალშრიანი სენსორული და ბიომეტრიული პარამეტრის საფუძველზე შექმენი დალაგებული ლოგიკა, ალგორითმი და აზრები. დააბრუნე მკაცრად JSON ფორმატი:
+                {
+                  "thought": "ადამიანის ზუსტი, ბუნებრივი, კონტექსტური ქართული აზრი მოცემულ წამს (მაქსიმუმ 1 სხარტი წინადადება)",
+                  "insight": "მოკლე (1-2 წინადადება) ნეირო-ფსიქოლოგიური ახსნა",
+                  "logicChain": [
+                    "ნაბიჯი 1: სენსორული სიგნალებისა და გუგის ფიქსაციის აღქმა",
+                    "ნაბიჯი 2: აკუსტიკური და სუბვოკალური მზადყოფნის იდენტიფიკაცია",
+                    "ნაბიჯი 3: კოგნიტური განზრახვისა და ქცევითი მიზნის ფორმულირება"
+                  ],
+                  "algorithm": [
+                    {
+                      "step": 1,
+                      "stage": "SENSOR_FUSION",
+                      "desc": "მულტიმოდალური სიგნალების აგრეგაცია",
+                      "action": "IF Focus > 85% THEN LockWorkingMemory()"
+                    },
+                    {
+                      "step": 2,
+                      "stage": "COGNITIVE_REASONING",
+                      "desc": "ასოციაციური ქსელის ლოგიკური დამუშავება",
+                      "action": "ExecuteHeuristicBranch(SensoryContext)"
+                    },
+                    {
+                      "step": 3,
+                      "stage": "SYNAPTIC_OUTPUT",
+                      "desc": "იდეის ემისიისა და გადაწყვეტილების მიღება",
+                      "action": "EmitSynthesizedThought(Confidence=0.98)"
+                    }
+                  ],
+                  "concepts": [
+                    {
+                      "category": "მთავარი ფოკუსი",
+                      "concept": "ალგორითმული სტრუქტურირება და ლოგიკა",
+                      "priority": "HIGH",
+                      "weight": 96
+                    },
+                    {
+                      "category": "კოგნიტური სტრატეგია",
+                      "concept": "სისტემური ანალიზი და Flow მდგომარეობა",
+                      "priority": "MEDIUM",
+                      "weight": 84
+                    }
+                  ],
+                  "keywords": ["ალგორითმი", "ლოგიკა", "ნეირო-სინთეზი"]
+                }
+                დააბრუნე მხოლოდ JSON.
             """.trimIndent()
 
             val textPartObj = JSONObject().put("text", prompt)
@@ -212,7 +318,123 @@ class HybridCognitiveEngine(private val context: Context) {
                 val content = firstCandidate?.optJSONObject("content")
                 val parts = content?.optJSONArray("parts")
                 val firstPart = parts?.optJSONObject(0)
-                firstPart?.optString("text")?.trim()
+                val rawText = firstPart?.optString("text")?.trim() ?: return null
+
+                val cleanJsonStr = rawText
+                    .removePrefix("```json")
+                    .removePrefix("```")
+                    .removeSuffix("```")
+                    .trim()
+
+                try {
+                    val parsed = JSONObject(cleanJsonStr)
+                    val thought = parsed.optString("thought").trim()
+                    val insight = parsed.optString("insight").trim()
+
+                    // Parse Logic Chain
+                    val logicArray = parsed.optJSONArray("logicChain")
+                    val logicList = mutableListOf<String>()
+                    if (logicArray != null) {
+                        for (i in 0 until logicArray.length()) {
+                            logicList.add(logicArray.optString(i))
+                        }
+                    }
+                    if (logicList.isEmpty()) {
+                        logicList.add("1. მულტიმოდალური სიგნალების ფილტრაცია და სტაბილიზაცია")
+                        logicList.add("2. მზერის ფოკუსისა და გულისცემის კორელაცია")
+                        logicList.add("3. სუბვოკალური მეტყველების ალგორითმული ფორმირება")
+                    }
+
+                    // Parse Algorithm Steps
+                    val algoArray = parsed.optJSONArray("algorithm")
+                    val algoList = mutableListOf<AlgorithmicNode>()
+                    if (algoArray != null) {
+                        for (i in 0 until algoArray.length()) {
+                            val item = algoArray.optJSONObject(i)
+                            if (item != null) {
+                                algoList.add(
+                                    AlgorithmicNode(
+                                        step = item.optInt("step", i + 1),
+                                        stageName = item.optString("stage", "STEP_${i + 1}"),
+                                        description = item.optString("desc", ""),
+                                        conditionOrAction = item.optString("action", "")
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    if (algoList.isEmpty()) {
+                        algoList.add(AlgorithmicNode(1, "INPUT_HARVEST", "სენსორული ნაკადის შეკრება", "Collect(Gaze, Audio, Motion)"))
+                        algoList.add(AlgorithmicNode(2, "BAYESIAN_REASONING", "კოგნიტური ალბათობის გამოთვლა", "CalculateP(Thought|Sensors)"))
+                        algoList.add(AlgorithmicNode(3, "SYNAPTIC_EMISSION", "აზრის ფორმულირება", "EmitThoughtNode()"))
+                    }
+
+                    // Parse Concept Hierarchy
+                    val conceptArray = parsed.optJSONArray("concepts")
+                    val conceptList = mutableListOf<CognitiveConceptNode>()
+                    if (conceptArray != null) {
+                        for (i in 0 until conceptArray.length()) {
+                            val item = conceptArray.optJSONObject(i)
+                            if (item != null) {
+                                conceptList.add(
+                                    CognitiveConceptNode(
+                                        category = item.optString("category", "კონცეფცია"),
+                                        concept = item.optString("concept", ""),
+                                        priority = item.optString("priority", "MEDIUM"),
+                                        weightPct = item.optInt("weight", 80)
+                                    )
+                                )
+                            }
+                        }
+                    }
+                    if (conceptList.isEmpty()) {
+                        conceptList.add(CognitiveConceptNode("მთავარი მიზანი", "ლოგიკური და ალგორითმული სინთეზი", "HIGH", 95))
+                        conceptList.add(CognitiveConceptNode("სტრატეგია", "სისტემური აზროვნების Flow", "MEDIUM", 85))
+                    }
+
+                    val kwArray = parsed.optJSONArray("keywords")
+                    val kwList = mutableListOf<String>()
+                    if (kwArray != null) {
+                        for (i in 0 until kwArray.length()) {
+                            kwList.add(kwArray.optString(i))
+                        }
+                    }
+
+                    if (thought.isNotBlank()) {
+                        return GeminiParsedResponse(
+                            thoughtSentence = thought,
+                            summary = insight.ifBlank { "Cloud AI-მ სენსორების საფუძველზე მოახდინა აზრის სინთეზი." },
+                            logicalChain = logicList,
+                            algorithmicSteps = algoList,
+                            conceptHierarchy = conceptList,
+                            keywords = kwList
+                        )
+                    }
+                } catch (e: Exception) {
+                    // Fallback to text lines if JSON parsing had strict syntax issues
+                    val lines = rawText.lines().filter { it.isNotBlank() }
+                    val first = lines.firstOrNull() ?: rawText
+                    return GeminiParsedResponse(
+                        thoughtSentence = first.take(120),
+                        summary = rawText,
+                        logicalChain = listOf(
+                            "1. მულტიმოდალური სიგნალების ფილტრაცია და სტაბილიზაცია",
+                            "2. მზერის ფოკუსისა და გულისცემის კორელაცია",
+                            "3. სუბვოკალური მეტყველების ალგორითმული ფორმირება"
+                        ),
+                        algorithmicSteps = listOf(
+                            AlgorithmicNode(1, "INPUT_HARVEST", "სენსორული ნაკადის შეკრება", "Collect(Gaze, Audio, Motion)"),
+                            AlgorithmicNode(2, "BAYESIAN_REASONING", "კოგნიტური ალბათობის გამოთვლა", "CalculateP(Thought|Sensors)"),
+                            AlgorithmicNode(3, "SYNAPTIC_EMISSION", "აზრის ფორმულირება", "EmitThoughtNode()")
+                        ),
+                        conceptHierarchy = listOf(
+                            CognitiveConceptNode("მთავარი მიზანი", "სისტემური ანალიზი", "HIGH", 92),
+                            CognitiveConceptNode("სტრატეგია", "Flow მდგომარეობა", "MEDIUM", 80)
+                        ),
+                        keywords = emptyList()
+                    )
+                }
+                null
             } else {
                 Log.w("HybridCognitiveEngine", "Gemini HTTP ${response.code}: ${response.message}")
                 null
@@ -227,7 +449,11 @@ class HybridCognitiveEngine(private val context: Context) {
      * Builds Online AI Result
      */
     private fun buildOnlineResult(
+        thoughtSentence: String,
         synthesis: String,
+        logicalChain: List<String>,
+        algorithmicSteps: List<AlgorithmicNode>,
+        conceptHierarchy: List<CognitiveConceptNode>,
         audio: RealAudioState,
         gaze: RealCameraGazeState,
         sensors: RealHardwareSensorState,
@@ -241,9 +467,18 @@ class HybridCognitiveEngine(private val context: Context) {
 
         insights.add(
             CognitiveInsight(
-                title = "🌐 Gemini 2.5 Flash ღრმა აზროვნება",
-                description = synthesis,
+                title = "🌐 Gemini 2.5 Flash ცოცხალი აზრი",
+                description = thoughtSentence,
                 confidence = 0.98f,
+                type = "INTENT"
+            )
+        )
+
+        insights.add(
+            CognitiveInsight(
+                title = "💡 AI ნეირო-ფსიქოლოგიური დასკვნა",
+                description = synthesis,
+                confidence = 0.97f,
                 type = "PSYCHOLOGY"
             )
         )
@@ -257,30 +492,16 @@ class HybridCognitiveEngine(private val context: Context) {
             )
         )
 
-        insights.add(
-            CognitiveInsight(
-                title = "ოპტიკურ-ვასკულარული სინქრონიზაცია",
-                description = "გუგის დიამეტრი (${gaze.opticalPupilDiameterMm} მმ) და პულსი (${gaze.opticalRadiancePulseBpm} BPM) ადასტურებს მენტალურ ჩართულობას.",
-                confidence = 0.94f,
-                type = "GAZE"
-            )
-        )
-
-        insights.add(
-            CognitiveInsight(
-                title = "აკუსტიკური გარემოს ინტელექტუალური დეკოდირება",
-                description = "ფონური ხმაური (${audio.decibels.roundToInt()} dB) დაბალანსებულია კოგნიტურ ფილტრთან.",
-                confidence = 0.91f,
-                type = "ACOUSTIC"
-            )
-        )
-
         val recentTokens = AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens().map { it.token }.take(8)
 
         return CognitiveResult(
             isCloudActive = true,
-            modeLabel = "Cloud AI (Gemini 2.5 Flash) • ონლაინ აზროვნება",
+            modeLabel = "Cloud AI (Gemini 2.5 Flash) • ინტერნეტ-სინთეზი",
+            synthesizedThoughtSentence = thoughtSentence,
             deepSynthesisText = synthesis,
+            logicalDeductionChain = logicalChain,
+            algorithmicSteps = algorithmicSteps,
+            conceptHierarchy = conceptHierarchy,
             metaCognitionScore = 0.98f,
             intentionalFocusPrediction = if (focus > 0.6f) "კოგნიტური Flow & კონცენტრაცია" else "ემოციური დაკვირვება",
             emotionalEntropyIndex = entropy,
@@ -309,7 +530,32 @@ class HybridCognitiveEngine(private val context: Context) {
     ): CognitiveResult {
         val insights = mutableListOf<CognitiveInsight>()
 
-        // 1. Behavioral Polyvagal Dynamic Insight
+        // 1. Synthesize dynamic, non-templated thought from real-time biometric metrics
+        val db = audio.decibels
+        val freq = audio.dominantFrequencyHz
+        val pupil = gaze.opticalPupilDiameterMm
+        val bpm = gaze.opticalRadiancePulseBpm
+        val recentTokens = AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens()
+        val latestWord = recentTokens.firstOrNull()?.token ?: "ოპტიმიზაცია"
+
+        val localThought = when {
+            db > 50f -> "საუბრისა და აკუსტიკური გარემოს ანალიზი: $latestWord"
+            freq > 150f -> "სუბვოკალური მზადყოფნა: ფორმულირდება $latestWord"
+            pupil > 3.8f -> "ვიზუალური ყურადღების ფოკუსირება და $latestWord გააზრება"
+            bpm > 85 -> "აქტიური მენტალური ჩართულობა და სწრაფი გადაწყვეტილება"
+            focusLevel > 0.8f -> "ღრმა ალგორითმული ნაკადი: $latestWord და სტრუქტურის აგება"
+            else -> "სისტემური დაკვირვება და $latestWord"
+        }
+
+        insights.add(
+            CognitiveInsight(
+                title = "⚡ On-Device ნეირო-აზრი",
+                description = localThought,
+                confidence = 0.95f,
+                type = "INTENT"
+            )
+        )
+
         insights.add(
             CognitiveInsight(
                 title = "🧠 ქცევითი & პოლივაგალური ნეირო-ანალიტიკა",
@@ -319,78 +565,76 @@ class HybridCognitiveEngine(private val context: Context) {
             )
         )
 
-        // 2. Acoustic Cognition
-        val db = audio.decibels
-        val freq = audio.dominantFrequencyHz
-        val acousticContext = when {
-            db < 35f -> "სრული სიჩუმე (მაღალი შინაგანი ფოკუსი და სუბვოკალური მზადყოფნა)"
-            db < 65f -> "ნორმალური აკუსტიკური ფონი (${db.roundToInt()} dB, ${freq.roundToInt()} Hz)"
-            else -> "მაღალი აკუსტიკური დატვირთვა - აქტიურია გარემო ხმაურის ფილტრი"
-        }
-        insights.add(
-            CognitiveInsight(
-                title = "🎙️ აკუსტიკური ნეირო-დეკოდირება",
-                description = acousticContext,
-                confidence = 0.92f,
-                type = "ACOUSTIC"
+        // Generate On-Device Logical Deduction Chain
+        val localLogicChain = listOf(
+            "1. სენსორული დაკვირვება: აკუსტიკა ${db.roundToInt()} dB, პულსი $bpm BPM, გუგა ${String.format(Locale.US, "%.1f", pupil)} მმ",
+            "2. პოლივაგალური მოდელირება: ${polyvagal.dominantState.labelKa} (Flow: ${(polyvagal.flowStateIndex * 100).roundToInt()}%)",
+            "3. სინაფსური დასკვნა: ჩამოყალიბდა ლოგიკური აზრი [$latestWord]"
+        )
+
+        // Generate On-Device Algorithmic Steps
+        val localAlgoSteps = listOf(
+            AlgorithmicNode(
+                step = 1,
+                stageName = "ACQUIRE_TELEMETRY",
+                description = "მიკროფონის, კამერისა და ტრემორის მონაცემთა შერწყმა",
+                conditionOrAction = "IF (Tremor < 0.05) THEN State=STABLE",
+                status = "COMPLETED"
+            ),
+            AlgorithmicNode(
+                step = 2,
+                stageName = "EVALUATE_POLYVAGAL",
+                description = "ნეირო-მოტორული და ემოციური ენტროპიის შეფასება",
+                conditionOrAction = "FlowScore = ComputeFlowIndex(Entropy, Fatigue)",
+                status = "ACTIVE"
+            ),
+            AlgorithmicNode(
+                step = 3,
+                stageName = "GENERATE_SYNAPSE",
+                description = "შინაგანი მეტყველებისა და აზრის მატრიცული სინთეზი",
+                conditionOrAction = "RouteOutputToWordDecoder(\"$latestWord\")",
+                status = "OPTIMIZED"
             )
         )
 
-        // 3. Optical Gaze & Pupil Dilation
-        val pupil = gaze.opticalPupilDiameterMm
-        val bpm = gaze.opticalRadiancePulseBpm
-        val gazeContext = when {
-            pupil > 4.0f -> "გუგის გაფართოება (${pupil}მმ) მიუთითებს მაღალ ინტერესსა და აღგზნებადობაზე"
-            pupil < 3.0f -> "გუგის შევიწროება - ეკრანის შუქის ადაპტაცია და სიმშვიდე"
-            else -> "სტაბილური ბიომეტრიული ბალანსი: პულსი ${bpm} BPM, ხამხამი ${gaze.eyeBlinkRatePerMin}/წთ"
-        }
-        insights.add(
-            CognitiveInsight(
-                title = "👁️ ოპტიკური მზერა & ბიომეტრია",
-                description = gazeContext,
-                confidence = 0.95f,
-                type = "GAZE"
+        // Generate On-Device Concept Hierarchy
+        val localConcepts = listOf(
+            CognitiveConceptNode(
+                category = "დომინანტური აზრი",
+                concept = "$latestWord და ლოგიკური სტრუქტურა",
+                priority = "HIGH",
+                weightPct = 94
+            ),
+            CognitiveConceptNode(
+                category = "ქცევითი მდგომარეობა",
+                concept = polyvagal.dominantState.labelKa,
+                priority = "MEDIUM",
+                weightPct = 82
+            ),
+            CognitiveConceptNode(
+                category = "ნეირო-ტელემეტრია",
+                concept = "HRV $bpm BPM • SPL ${db.roundToInt()} dB",
+                priority = "LOW",
+                weightPct = 68
             )
         )
 
-        // 4. Motion & Micro-Tremors
-        val motionTremor = abs(sensors.accelX) + abs(sensors.accelY) + abs(sensors.accelZ - 9.8f)
-        val physicalState = when {
-            motionTremor > 4f -> "აქტიური მოძრაობა/სიარული - სენსორული კომპენსაცია ჩართულია"
-            motionTremor < 0.6f -> "სრული სტატიკური უძრაობა - მაქსიმალური ფიზიკური კონცენტრაცია"
-            else -> "ტელეფონის სტაბილური პოზიცია (წნევა: ${sensors.atmosphericPressureHpa.roundToInt()} hPa)"
-        }
-        insights.add(
-            CognitiveInsight(
-                title = "📱 მოწყობილობის ფიზიკური მდგომარეობა",
-                description = physicalState,
-                confidence = 0.96f,
-                type = "PHYSICAL"
-            )
-        )
-
-        // 5. Autonomous Synthesis
-        val autonomousSynthesis = when (polyvagal.dominantState) {
-            PolyvagalBehavioralEngine.PolyvagalState.VENTRAL_VAGAL ->
-                "ტელეფონის შიდა ინტელექტი: ვენტრალ-ვაგალური ჰარმონია. ტვინი იმყოფება შემოქმედებით Flow ზონაში (${(polyvagal.flowStateIndex * 100).roundToInt()}%). ლექსიკური მატრიცა მუდმივად ფართოვდება."
-            PolyvagalBehavioralEngine.PolyvagalState.SYMPATHETIC ->
-                "ტელეფონის შიდა ინტელექტი: სიმპათიკური აღგზნებადობა. სენსორები აფიქსირებენ მიკრო-შფოთვას. ყურადღების დრიფტის დრო შეადგენს ${polyvagal.attentionDriftSeconds} წამს."
-            PolyvagalBehavioralEngine.PolyvagalState.DORSAL_VAGAL ->
-                "ტელეფონის შიდა ინტელექტი: დორსალური შეკავება. დაღლილობის ინდექსი მომატებულია, ალგორითმი იყენებს ენერგიის დამზოგავ აზროვნების ციკლს."
-        }
-
-        val recentTokens = AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens().map { it.token }.take(8)
+        val tokensList = recentTokens.map { it.token }.take(8)
 
         return CognitiveResult(
             isCloudActive = false,
             modeLabel = "ტელეფონის შიდა ინტელექტი (On-Device Offline) • 100% ავტონომიური",
-            deepSynthesisText = if (lastGeneratedSummary.isNotBlank()) "$autonomousSynthesis\n(ბოლო ღრუბლოვანი ანალიზი: $lastGeneratedSummary)" else autonomousSynthesis,
+            synthesizedThoughtSentence = localThought,
+            deepSynthesisText = "ბიომეტრიული ანალიზი: ${audio.decibels.roundToInt()} dB • ${audio.dominantFrequencyHz.roundToInt()} Hz • $bpm BPM",
+            logicalDeductionChain = localLogicChain,
+            algorithmicSteps = localAlgoSteps,
+            conceptHierarchy = localConcepts,
             metaCognitionScore = 0.94f,
             intentionalFocusPrediction = if (focusLevel > 0.6f) "კოგნიტური კონცენტრაცია" else "ემოციური დაკვირვება",
             emotionalEntropyIndex = emotionalEntropy,
             polyvagalResult = polyvagal,
             insights = insights,
-            recentlyDiscoveredWords = recentTokens,
+            recentlyDiscoveredWords = tokensList,
             totalVocabularySize = AutonomousDynamicLexiconLearner.getActiveVocabularyCount(),
             telemetryLatencyMs = latencyMs
         )

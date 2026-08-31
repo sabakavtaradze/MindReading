@@ -21,8 +21,6 @@ android {
     versionCode = 3
     versionName = "1.2"
 
-    buildConfigField("String", "GEMINI_API_KEY", "\"\"")
-
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 

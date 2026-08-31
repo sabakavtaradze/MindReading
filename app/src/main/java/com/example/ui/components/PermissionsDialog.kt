@@ -46,6 +46,13 @@ import com.example.ui.theme.NeuralDeepPurple
 import com.example.ui.theme.NeuralSurface
 import com.example.ui.theme.NeuralTextPrimary
 import com.example.ui.theme.NeuralTextSecondary
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.example.util.ApiKeyManager
 import com.example.util.PermissionHelper
 
 @Composable
@@ -245,8 +252,8 @@ fun PermissionsDialog(
                 )
 
                 // 7. Battery Optimization Exemption for Months-Long Background Run
-                val isBatteryIgnored = androidx.compose.runtime.remember {
-                    androidx.compose.runtime.mutableStateOf(PermissionHelper.isBatteryOptimizationIgnored(context))
+                val isBatteryIgnored = remember {
+                    mutableStateOf<Boolean>(PermissionHelper.isBatteryOptimizationIgnored(context))
                 }
                 PermissionRowItem(
                     icon = AppIcons.Bolt,
@@ -330,6 +337,140 @@ fun PermissionsDialog(
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold
                                 )
+                            }
+                        }
+                    }
+                }
+
+                // 🌐 GEMINI CLOUD AI CONFIGURATION CARD
+                var apiKeyInput by remember { mutableStateOf(ApiKeyManager.getActiveGeminiApiKey(context)) }
+                var showKeySavedFeedback by remember { mutableStateOf(false) }
+                val hasKey = ApiKeyManager.hasValidApiKey(context)
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(Color(0xFF0D1B2A))
+                        .border(
+                            1.dp,
+                            if (hasKey) Color(0xFF00E5FF).copy(alpha = 0.6f) else Color(0xFFFF9100).copy(alpha = 0.5f),
+                            RoundedCornerShape(16.dp)
+                        )
+                        .padding(14.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = AppIcons.AutoAwesome,
+                                    contentDescription = null,
+                                    tint = if (hasKey) Color(0xFF00E5FF) else Color(0xFFFF9100),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Column {
+                                    Text(
+                                        text = "Gemini 2.5 Flash Cloud AI",
+                                        color = NeuralTextPrimary,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = if (hasKey) "ინტერნეტ-სინთეზი აქტიურია" else "On-Device Offline რეჟიმი",
+                                        color = if (hasKey) Color(0xFF00E5FF) else Color(0xFFFF9100),
+                                        fontSize = 11.sp
+                                    )
+                                }
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (hasKey) Color(0xFF00E5FF).copy(alpha = 0.15f) else Color(0xFFFF9100).copy(alpha = 0.15f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = if (hasKey) "CONNECTED" else "OFFLINE",
+                                    color = if (hasKey) Color(0xFF00E5FF) else Color(0xFFFF9100),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Text(
+                            text = "ინტერნეტიდან ცოცხალი AI აზრების გენერაციისთვის შეიყვანეთ Gemini API Key (ან გამოიყენება ავტომატური ინტეგრაცია):",
+                            color = NeuralTextSecondary,
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp
+                        )
+
+                        OutlinedTextField(
+                            value = apiKeyInput,
+                            onValueChange = {
+                                apiKeyInput = it
+                                showKeySavedFeedback = false
+                            },
+                            placeholder = {
+                                Text(
+                                    text = "AIzaSy... (Gemini API Key)",
+                                    color = Color.Gray,
+                                    fontSize = 12.sp
+                                )
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF00E5FF),
+                                unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    ApiKeyManager.saveCustomApiKey(context, apiKeyInput)
+                                    showKeySavedFeedback = true
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00E5FF)),
+                                shape = RoundedCornerShape(10.dp)
+                            ) {
+                                Text(
+                                    text = if (showKeySavedFeedback) "✓ შენახულია" else "💾 გასაღების შენახვა",
+                                    color = Color(0xFF050B14),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            if (apiKeyInput.isNotBlank()) {
+                                OutlinedButton(
+                                    onClick = {
+                                        apiKeyInput = ""
+                                        ApiKeyManager.saveCustomApiKey(context, "")
+                                    },
+                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFFF5252)),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Text(
+                                        text = "წაშლა",
+                                        fontSize = 11.sp
+                                    )
+                                }
                             }
                         }
                     }
