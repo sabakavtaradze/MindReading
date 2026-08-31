@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.service.HybridCognitiveEngine
 import com.example.service.PolyvagalBehavioralEngine
+import com.example.service.SpikingNeuralNetworkEngine
 import com.example.ui.theme.AppIcons
 import com.example.ui.theme.NeuralAccent
 import com.example.ui.theme.NeuralBackground
@@ -410,24 +411,24 @@ fun HybridCognitiveAiCard(
             }
 
             // ==========================================
-            // 🧠 COGNITIVE LOGIC, ALGORITHMS & CONCEPTS
+            // 🧠 COGNITIVE LOGIC, ALGORITHMS, MULTI-NEURAL ECOSYSTEM & CONCEPTS
             // ==========================================
-            var cognitiveSubTab by remember { mutableStateOf(0) } // 0: Insights, 1: Logic Chain, 2: Algorithm Tree, 3: Concept Hierarchy
+            var cognitiveSubTab by remember { mutableStateOf(0) } // 0: Insights, 1: Logic Chain, 2: Algorithm Tree, 3: SNN Network, 4: HTM Cortical Columns, 5: Hopfield Memory, 6: Concept Hierarchy
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(12.dp))
                     .background(Color.Black.copy(alpha = 0.4f))
+                    .horizontalScroll(rememberScrollState())
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                val tabs = listOf("💡 ინსაითი", "🔗 ლოგიკა", "⚡ ალგორითმი", "📊 კონცეფციები")
+                val tabs = listOf("💡 ინსაითი", "🔗 ლოგიკა", "⚡ ალგორითმი", "🧠 SNN", "🧬 HTM სვეტები", "🔮 Hopfield", "📊 კონცეფცია")
                 tabs.forEachIndexed { index, label ->
                     val selected = cognitiveSubTab == index
                     Box(
                         modifier = Modifier
-                            .weight(1f)
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (selected) NeuralAccent.copy(alpha = 0.25f) else Color.Transparent)
                             .border(
@@ -436,7 +437,7 @@ fun HybridCognitiveAiCard(
                                 shape = RoundedCornerShape(8.dp)
                             )
                             .clickable { cognitiveSubTab = index }
-                            .padding(vertical = 6.dp),
+                            .padding(horizontal = 10.dp, vertical = 6.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -722,6 +723,677 @@ fun HybridCognitiveAiCard(
                 }
 
                 3 -> {
+                    // 🧠 Spiking Neural Network (SNN) & Bidirectional Neuromodulation Matrix
+                    val snn = result?.snnTelemetry
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        // Title Header
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = AppIcons.Psychology,
+                                    contentDescription = null,
+                                    tint = Color(0xFF00E5FF),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "🧠 SNN & STDP ნეირონული ბადე (80 LIF ნეირონი)",
+                                    color = NeuralTextPrimary,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            // Live Firing Badge
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFF00E5FF).copy(alpha = 0.15f))
+                                    .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${snn?.totalSpikesPerSec?.roundToInt() ?: 24} Hz Spikes",
+                                    color = Color(0xFF00E5FF),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        // SNN Key Metrics Grid
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Membrane Potential
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(NeuralSurface.copy(alpha = 0.7f))
+                                    .border(1.dp, Color(0xFFB388FF).copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(
+                                        text = "მემბრანის V_m",
+                                        color = NeuralTextSecondary,
+                                        fontSize = 9.sp
+                                    )
+                                    Text(
+                                        text = "${String.format(java.util.Locale.US, "%.1f", snn?.averageMembranePotential ?: -64.5f)} mV",
+                                        color = Color(0xFFB388FF),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            // Synaptic Weight
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(NeuralSurface.copy(alpha = 0.7f))
+                                    .border(1.dp, Color(0xFF00E676).copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(
+                                        text = "სინაფსური წონა",
+                                        color = NeuralTextSecondary,
+                                        fontSize = 9.sp
+                                    )
+                                    Text(
+                                        text = "${String.format(java.util.Locale.US, "%.2f", snn?.meanSynapticWeight ?: 0.52f)} W",
+                                        color = Color(0xFF00E676),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            // STDP Plasticity Delta
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(NeuralSurface.copy(alpha = 0.7f))
+                                    .border(1.dp, Color(0xFFFF9100).copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(
+                                        text = "STDP ΔW",
+                                        color = NeuralTextSecondary,
+                                        fontSize = 9.sp
+                                    )
+                                    Text(
+                                        text = "${if ((snn?.stdpPlasticityRateDelta ?: 0f) >= 0) "+" else ""}${String.format(java.util.Locale.US, "%.3f", snn?.stdpPlasticityRateDelta ?: 0.012f)}",
+                                        color = Color(0xFFFF9100),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        // Cortical Clusters Live Spectrum (5 Brain Clusters)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.Black.copy(alpha = 0.35f))
+                                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "🌐 5 კორტიკალური კლასტერის ცოცხალი აქტივობა:",
+                                color = NeuralTextSecondary,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+
+                            SpikingNeuralNetworkEngine.CorticalCluster.values().forEach { cluster ->
+                                val freqHz = snn?.clusterSpikeFrequencies?.get(cluster) ?: 8.0f
+                                val isDominant = snn?.dominantActiveCluster == cluster
+                                val clusterColor = when (cluster) {
+                                    SpikingNeuralNetworkEngine.CorticalCluster.FRONTAL_EXECUTIVE -> Color(0xFF00E5FF)
+                                    SpikingNeuralNetworkEngine.CorticalCluster.TEMPORAL_ACOUSTIC -> Color(0xFFFFD600)
+                                    SpikingNeuralNetworkEngine.CorticalCluster.PARIETAL_GAZE -> Color(0xFF00E676)
+                                    SpikingNeuralNetworkEngine.CorticalCluster.LIMBIC_POLYVAGAL -> Color(0xFFB388FF)
+                                    SpikingNeuralNetworkEngine.CorticalCluster.SOMATOSENSORY_MOTOR -> Color(0xFFFF4081)
+                                }
+
+                                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(6.dp)
+                                                    .clip(CircleShape)
+                                                    .background(if (isDominant) clusterColor else clusterColor.copy(alpha = 0.4f))
+                                            )
+                                            Text(
+                                                text = cluster.labelKa,
+                                                color = if (isDominant) Color.White else NeuralTextSecondary,
+                                                fontSize = 10.sp,
+                                                fontWeight = if (isDominant) FontWeight.Bold else FontWeight.Normal
+                                            )
+                                            if (isDominant) {
+                                                Text(
+                                                    text = "• დომინანტური",
+                                                    color = clusterColor,
+                                                    fontSize = 8.sp,
+                                                    fontWeight = FontWeight.Bold
+                                                )
+                                            }
+                                        }
+
+                                        Text(
+                                            text = "${String.format(java.util.Locale.US, "%.1f", freqHz)} Hz",
+                                            color = clusterColor,
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    LinearProgressIndicator(
+                                        progress = { (freqHz / 40.0f).coerceIn(0.05f, 1.0f) },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(3.dp)
+                                            .clip(CircleShape),
+                                        color = clusterColor,
+                                        trackColor = Color.White.copy(alpha = 0.05f)
+                                    )
+                                }
+                            }
+                        }
+
+                        // Bidirectional Closed-Loop Neuromodulation Box (Gemini AI ↔ On-Device SNN)
+                        val neuro = snn?.neuromodulation
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    Brush.verticalGradient(
+                                        listOf(
+                                            NeuralDeepPurple.copy(alpha = 0.85f),
+                                            NeuralSurface
+                                        )
+                                    )
+                                )
+                                .border(
+                                    1.dp,
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            Color(0xFFFFD600).copy(alpha = 0.5f),
+                                            Color(0xFF00E5FF).copy(alpha = 0.5f)
+                                        )
+                                    ),
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .padding(10.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = AppIcons.RefreshIcon,
+                                            contentDescription = null,
+                                            tint = Color(0xFFFFD600),
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                        Text(
+                                            text = "🔄 ორმხრივი ნეირომოდულაცია (Gemini ↔ SNN)",
+                                            color = Color.White,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    Text(
+                                        text = "ციკლი #${neuro?.closedLoopCycles ?: 1}",
+                                        color = Color(0xFFFFD600),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                // 3 Neuromodulators Row
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    // Dopamine
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color.Black.copy(alpha = 0.3f))
+                                            .padding(6.dp)
+                                    ) {
+                                        Column {
+                                            Text("დოფამინი (LTP)", color = NeuralTextSecondary, fontSize = 8.sp)
+                                            Text(
+                                                "${String.format(java.util.Locale.US, "%.2f", neuro?.dopamineLevel ?: 1.0f)}x",
+                                                color = Color(0xFFFFD600),
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                    // Serotonin
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color.Black.copy(alpha = 0.3f))
+                                            .padding(6.dp)
+                                    ) {
+                                        Column {
+                                            Text("სეროტონინი", color = NeuralTextSecondary, fontSize = 8.sp)
+                                            Text(
+                                                "${String.format(java.util.Locale.US, "%.2f", neuro?.serotoninLevel ?: 1.0f)}x",
+                                                color = Color(0xFF00E5FF),
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                    // Noradrenaline
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(Color.Black.copy(alpha = 0.3f))
+                                            .padding(6.dp)
+                                    ) {
+                                        Column {
+                                            Text("ნორადრენალინი", color = NeuralTextSecondary, fontSize = 8.sp)
+                                            Text(
+                                                "${String.format(java.util.Locale.US, "%.2f", neuro?.noradrenalineLevel ?: 1.0f)}x",
+                                                color = Color(0xFFFF9100),
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Status / Reason from AI
+                                Text(
+                                    text = "AI დაკალიბრება: ${neuro?.aiFeedbackStatus ?: "ორმხრივი კომუნიკაციის ჰომეოსტაზი აქტიურია"}",
+                                    color = NeuralTextSecondary,
+                                    fontSize = 10.sp,
+                                    lineHeight = 14.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                4 -> {
+                    // 🧬 Hierarchical Temporal Memory (HTM Cortical Columns & SDR) View
+                    val htm = result?.ecosystemTelemetry?.htmTelemetry
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = AppIcons.Hub,
+                                    contentDescription = null,
+                                    tint = Color(0xFF00E676),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "🧬 HTM კორტიკალური სვეტები (40 მინიკოლონა • 160 უჯრედი)",
+                                    color = NeuralTextPrimary,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFF00E676).copy(alpha = 0.15f))
+                                    .border(1.dp, Color(0xFF00E676).copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${htm?.activeColumnsCount ?: 7}/40 SDR Sparsity",
+                                    color = Color(0xFF00E676),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        // HTM 3-Card Metrics Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Active Columns & Sparsity
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(NeuralSurface.copy(alpha = 0.7f))
+                                    .border(1.dp, Color(0xFF00E676).copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text("SDR Sparsity", color = NeuralTextSecondary, fontSize = 9.sp)
+                                    Text(
+                                        "${String.format(java.util.Locale.US, "%.1f", htm?.sdrSparsityPercentage ?: 15.0f)}%",
+                                        color = Color(0xFF00E676),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            // Predictive Cells
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(NeuralSurface.copy(alpha = 0.7f))
+                                    .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text("პროგნოზირება", color = NeuralTextSecondary, fontSize = 9.sp)
+                                    Text(
+                                        "${htm?.predictiveCellsCount ?: 12} უჯრედი",
+                                        color = Color(0xFF00E5FF),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            // Anomaly Score
+                            val anomaly = htm?.anomalyScore ?: 0.15f
+                            val anomalyColor = if (anomaly > 0.6f) Color(0xFFFF5252) else if (anomaly > 0.3f) Color(0xFFFF9100) else Color(0xFF00E676)
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(NeuralSurface.copy(alpha = 0.7f))
+                                    .border(1.dp, anomalyColor.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text("ანომალია / სიახლე", color = NeuralTextSecondary, fontSize = 9.sp)
+                                    Text(
+                                        "${(anomaly * 100).roundToInt()}%",
+                                        color = anomalyColor,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        // HTM Cortical Grid Visualization (40 columns, highlighted if active)
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color.Black.copy(alpha = 0.35f))
+                                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "კორტიკალური მინიკოლონების სივრცითი ბადე (SDR):",
+                                    color = NeuralTextSecondary,
+                                    fontSize = 10.sp
+                                )
+                                Text(
+                                    text = "თანმიმდევრული კოჰერენტულობა: ${((htm?.sequenceCoherence ?: 0.85f) * 100).roundToInt()}%",
+                                    color = Color(0xFF00E676),
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            // 4 rows of 10 columns
+                            val activeIndices = htm?.activeColumnIndices?.toSet() ?: setOf(2, 5, 12, 19, 28, 33)
+                            for (row in 0 until 4) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    for (col in 0 until 10) {
+                                        val idx = row * 10 + col
+                                        val isActive = activeIndices.contains(idx)
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .height(14.dp)
+                                                .clip(RoundedCornerShape(3.dp))
+                                                .background(
+                                                    if (isActive) Color(0xFF00E676)
+                                                    else Color(0xFF00E676).copy(alpha = 0.08f)
+                                                )
+                                                .border(
+                                                    0.5.dp,
+                                                    if (isActive) Color.White else Color.White.copy(alpha = 0.05f),
+                                                    RoundedCornerShape(3.dp)
+                                                )
+                                        )
+                                    }
+                                }
+                            }
+
+                            Text(
+                                text = "დომინანტური კორტიკალური პატერნი: „${htm?.dominantCorticalPattern ?: "სენსორულ-მოტორული სტაბილური ნაკადი"}“",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+
+                5 -> {
+                    // 🔮 Modern Continuous Hopfield Memory Network View
+                    val hopfield = result?.ecosystemTelemetry?.hopfieldTelemetry
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Icon(
+                                    imageVector = AppIcons.Psychology,
+                                    contentDescription = null,
+                                    tint = Color(0xFFFFD600),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = "🔮 Hopfield ასოციაციური მეხსიერების ბადე",
+                                    color = NeuralTextPrimary,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color(0xFFFFD600).copy(alpha = 0.15f))
+                                    .border(1.dp, Color(0xFFFFD600).copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                    .padding(horizontal = 6.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${((hopfield?.convergenceScore ?: 0.95f) * 100).roundToInt()}% კონვერგენცია",
+                                    color = Color(0xFFFFD600),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        // Hopfield Metrics Row
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            // Lyapunov Energy
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(NeuralSurface.copy(alpha = 0.7f))
+                                    .border(1.dp, Color(0xFFFFD600).copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text("ლიაპუნოვის ენერგია E", color = NeuralTextSecondary, fontSize = 9.sp)
+                                    Text(
+                                        "${String.format(java.util.Locale.US, "%.2f", hopfield?.energy ?: -14.2f)}",
+                                        color = Color(0xFFFFD600),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            // Energy Delta (Minimization)
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(NeuralSurface.copy(alpha = 0.7f))
+                                    .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text("ენერგიის ΔE", color = NeuralTextSecondary, fontSize = 9.sp)
+                                    Text(
+                                        "${String.format(java.util.Locale.US, "%.3f", hopfield?.energyDelta ?: -0.012f)}",
+                                        color = Color(0xFF00E5FF),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            // Similarity Score
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(NeuralSurface.copy(alpha = 0.7f))
+                                    .border(1.dp, Color(0xFFB388FF).copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+                                    .padding(8.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text("მსგავსება", color = NeuralTextSecondary, fontSize = 9.sp)
+                                    Text(
+                                        "${((hopfield?.similarityScore ?: 0.88f) * 100).roundToInt()}%",
+                                        color = Color(0xFFB388FF),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        }
+
+                        // Hopfield Memory Attractor Card
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            Color(0xFFFFD600).copy(alpha = 0.15f),
+                                            NeuralDeepPurple.copy(alpha = 0.5f)
+                                        )
+                                    )
+                                )
+                                .border(1.dp, Color(0xFFFFD600).copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "ამოცნობილი ასოციაციური მეხსიერება:",
+                                        color = NeuralTextSecondary,
+                                        fontSize = 10.sp
+                                    )
+                                    Text(
+                                        text = "${hopfield?.storedMemoriesCount ?: 8} შენახული პატერნი",
+                                        color = Color(0xFFFFD600),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+
+                                Text(
+                                    text = "„${hopfield?.recalledPatternLabel ?: "ღრმა კონცენტრაცია და ალგორითმული Flow"}“",
+                                    color = Color.White,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+
+                                Text(
+                                    text = "Modern Hopfield ქსელი უწყვეტი განახლებით პოულობს უახლოეს ენერგეტიკულ მინიმუმს და ასოციაციურ მეხსიერებას გადასცემს Gemini AI-სა და HTM-ს.",
+                                    color = NeuralTextSecondary,
+                                    fontSize = 10.sp,
+                                    lineHeight = 14.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                6 -> {
                     // 📊 Concept Hierarchy View
                     val concepts = result?.conceptHierarchy ?: emptyList()
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -765,60 +1437,60 @@ fun HybridCognitiveAiCard(
                                         .padding(10.dp)
                                 ) {
                                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
                                         Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                                         ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(6.dp))
+                                                    .background(prioColor.copy(alpha = 0.15f))
+                                                    .border(1.dp, prioColor.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                                    .padding(horizontal = 6.dp, vertical = 2.dp)
                                             ) {
-                                                Box(
-                                                    modifier = Modifier
-                                                        .clip(RoundedCornerShape(6.dp))
-                                                        .background(prioColor.copy(alpha = 0.15f))
-                                                        .border(1.dp, prioColor.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
-                                                        .padding(horizontal = 6.dp, vertical = 2.dp)
-                                                ) {
-                                                    Text(
-                                                        text = conceptNode.category,
-                                                        color = prioColor,
-                                                        fontSize = 10.sp,
-                                                        fontWeight = FontWeight.Bold
-                                                    )
-                                                }
                                                 Text(
-                                                    text = conceptNode.concept,
-                                                    color = Color.White,
-                                                    fontSize = 12.sp,
+                                                    text = conceptNode.category,
+                                                    color = prioColor,
+                                                    fontSize = 10.sp,
                                                     fontWeight = FontWeight.Bold
                                                 )
                                             }
-
                                             Text(
-                                                text = "${conceptNode.weightPct}%",
-                                                color = prioColor,
-                                                fontSize = 11.sp,
+                                                text = conceptNode.concept,
+                                                color = Color.White,
+                                                fontSize = 12.sp,
                                                 fontWeight = FontWeight.Bold
                                             )
                                         }
 
-                                        LinearProgressIndicator(
-                                            progress = { conceptNode.weightPct / 100f },
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .height(3.dp)
-                                                .clip(CircleShape),
+                                        Text(
+                                            text = "${conceptNode.weightPct}%",
                                             color = prioColor,
-                                            trackColor = Color.White.copy(alpha = 0.08f)
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
                                         )
                                     }
+
+                                    LinearProgressIndicator(
+                                        progress = { conceptNode.weightPct / 100f },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(3.dp)
+                                            .clip(CircleShape),
+                                        color = prioColor,
+                                        trackColor = Color.White.copy(alpha = 0.08f)
+                                    )
                                 }
                             }
                         }
                     }
                 }
+            }
             }
         }
     }

@@ -37,6 +37,11 @@ class HybridCognitiveEngine(private val context: Context) {
         .build()
 
     private val polyvagalEngine = PolyvagalBehavioralEngine()
+    val neuralEcosystem = MultiNeuralNetworkEcosystem()
+    val snnEngine: SpikingNeuralNetworkEngine get() = neuralEcosystem.snnEngine
+    val hopfieldEngine: HopfieldMemoryNetwork get() = neuralEcosystem.hopfieldEngine
+    val htmEngine: HierarchicalTemporalMemoryEngine get() = neuralEcosystem.htmEngine
+
     private var lastGeminiCallTime = 0L
     private val minCallIntervalMs = 6000L // 6s throttle
     private var lastGeneratedSummary = ""
@@ -65,6 +70,8 @@ class HybridCognitiveEngine(private val context: Context) {
         val logicalDeductionChain: List<String>,
         val algorithmicSteps: List<AlgorithmicNode>,
         val conceptHierarchy: List<CognitiveConceptNode>,
+        val snnTelemetry: SpikingNeuralNetworkEngine.SnnTelemetrySnapshot,
+        val ecosystemTelemetry: MultiNeuralNetworkEcosystem.UnifiedNeuralEcosystemTelemetry,
         val metaCognitionScore: Float,
         val intentionalFocusPrediction: String,
         val emotionalEntropyIndex: Float,
@@ -122,6 +129,17 @@ class HybridCognitiveEngine(private val context: Context) {
             entropyIndex = emotionalEntropy
         )
 
+        // Run On-Device Unified Multi-Neural Network Ecosystem (SNN + Hopfield + HTM)
+        val ecosystemTelemetry = neuralEcosystem.stepUnified(
+            audio = audio,
+            gaze = gaze,
+            sensors = sensors,
+            polyvagalFlowIndex = polyvagalAnalysis.flowStateIndex,
+            emotionalEntropy = emotionalEntropy,
+            cognitiveFocus = focusLevel
+        )
+        val snnSnapshot = ecosystemTelemetry.snnTelemetry
+
         // If online, key exists and not throttled -> Call Gemini 2.5 Flash
         if (hasInternet && apiKey.isNotBlank() && (startTime - lastGeminiCallTime > minCallIntervalMs)) {
             val cloudParsed = tryGeminiReasoning(
@@ -129,6 +147,7 @@ class HybridCognitiveEngine(private val context: Context) {
                 gaze = gaze,
                 sensors = sensors,
                 polyvagal = polyvagalAnalysis,
+                ecosystem = ecosystemTelemetry,
                 emotionalEntropy = emotionalEntropy,
                 mentalFatigue = mentalFatigue,
                 focusLevel = focusLevel,
@@ -140,10 +159,22 @@ class HybridCognitiveEngine(private val context: Context) {
                 lastGeneratedSummary = cloudParsed.summary
                 lastGeneratedThought = cloudParsed.thoughtSentence
 
+                // Apply Bidirectional Cross-Modulation from Cloud AI to All 3 On-Device Neural Networks (SNN + HTM + Hopfield)
+                neuralEcosystem.applyCloudAiCrossModulation(
+                    dopamine = cloudParsed.snnFeedbackDopamine,
+                    serotonin = cloudParsed.snnFeedbackSerotonin,
+                    noradrenaline = cloudParsed.snnFeedbackNoradrenaline,
+                    targetClusterName = cloudParsed.snnTargetCluster,
+                    pruningRate = cloudParsed.snnPruningRate,
+                    memoryConsolidationPattern = cloudParsed.consolidatedMemoryPattern,
+                    aiExplanation = cloudParsed.snnModulationReason.ifBlank { "Gemini AI-მ დააკალიბრა SNN, HTM და Hopfield ნეირომოდულაცია" }
+                )
+
                 // Harvest new words & terms from the AI stream
                 val combinedText = "${cloudParsed.thoughtSentence} ${cloudParsed.summary} ${cloudParsed.keywords.joinToString(" ")}"
                 val newHarvestedWords = AutonomousDynamicLexiconLearner.ingestFromAiStream(combinedText)
 
+                val updatedEcosystem = neuralEcosystem.stepUnified(audio, gaze, sensors, polyvagalAnalysis.flowStateIndex, emotionalEntropy, focusLevel)
                 val latency = System.currentTimeMillis() - startTime
                 return@withContext buildOnlineResult(
                     thoughtSentence = cloudParsed.thoughtSentence,
@@ -151,6 +182,8 @@ class HybridCognitiveEngine(private val context: Context) {
                     logicalChain = cloudParsed.logicalChain,
                     algorithmicSteps = cloudParsed.algorithmicSteps,
                     conceptHierarchy = cloudParsed.conceptHierarchy,
+                    snnSnapshot = updatedEcosystem.snnTelemetry,
+                    ecosystem = updatedEcosystem,
                     audio = audio,
                     gaze = gaze,
                     sensors = sensors,
@@ -162,6 +195,17 @@ class HybridCognitiveEngine(private val context: Context) {
                 )
             }
         }
+
+        // On-Device Homeostatic Neuromodulation for Offline Mode
+        neuralEcosystem.applyCloudAiCrossModulation(
+            dopamine = 1.0f + (focusLevel * 0.4f),
+            serotonin = 0.8f + (1.0f - emotionalEntropy) * 0.5f,
+            noradrenaline = 1.0f + (if (audio.voiceActivityDetected) 0.25f else 0.0f),
+            targetClusterName = if (focusLevel > 0.7f) "FRONTAL_EXECUTIVE" else "TEMPORAL_ACOUSTIC",
+            pruningRate = 0.01f,
+            memoryConsolidationPattern = null,
+            aiExplanation = "On-Device ავტონომიური ჰომეოსტაზური ნეირომოდულაცია (SNN + HTM + Hopfield)"
+        )
 
         // Offline / Fallback Local Autonomous Neural Matrix (100% On-Device Engine)
         val offlineDiscoveredWord = AutonomousDynamicLexiconLearner.triggerAutonomousOfflineDiscovery(
@@ -178,6 +222,8 @@ class HybridCognitiveEngine(private val context: Context) {
             gaze = gaze,
             sensors = sensors,
             polyvagal = polyvagalAnalysis,
+            snnSnapshot = snnSnapshot,
+            ecosystem = ecosystemTelemetry,
             emotionalEntropy = emotionalEntropy,
             mentalFatigue = mentalFatigue,
             focusLevel = focusLevel,
@@ -193,6 +239,13 @@ class HybridCognitiveEngine(private val context: Context) {
         val logicalChain: List<String>,
         val algorithmicSteps: List<AlgorithmicNode>,
         val conceptHierarchy: List<CognitiveConceptNode>,
+        val snnFeedbackDopamine: Float = 1.0f,
+        val snnFeedbackSerotonin: Float = 1.0f,
+        val snnFeedbackNoradrenaline: Float = 1.0f,
+        val snnTargetCluster: String = "FRONTAL_EXECUTIVE",
+        val snnPruningRate: Float = 0.01f,
+        val snnModulationReason: String = "",
+        val consolidatedMemoryPattern: String? = null,
         val keywords: List<String>
     )
 
@@ -204,6 +257,7 @@ class HybridCognitiveEngine(private val context: Context) {
         gaze: RealCameraGazeState,
         sensors: RealHardwareSensorState,
         polyvagal: PolyvagalBehavioralEngine.BehavioralAnalysisResult,
+        ecosystem: MultiNeuralNetworkEcosystem.UnifiedNeuralEcosystemTelemetry,
         emotionalEntropy: Float,
         mentalFatigue: Float,
         focusLevel: Float,
@@ -247,7 +301,14 @@ class HybridCognitiveEngine(private val context: Context) {
                 - მენტალური ფოკუსი: ${(focusLevel * 100).roundToInt()}% | ემოციური ენტროპია: ${(emotionalEntropy * 100).roundToInt()}% | დაღლილობა: ${(mentalFatigue * 100).roundToInt()}%
                 - ბოლო აზროვნების კონტექსტი: "$activeThought"
 
-                მოთხოვნა: ყველა ამ მრავალშრიანი სენსორული და ბიომეტრიული პარამეტრის საფუძველზე შექმენი დალაგებული ლოგიკა, ალგორითმი და აზრები. დააბრუნე მკაცრად JSON ფორმატი:
+                [5. მულტი-ნეირონული ეკოსისტემა: SNN, HTM & Hopfield]
+                - SNN იმპულსები (Spikes/sec): ${ecosystem.snnTelemetry.totalSpikesPerSec.roundToInt()} Hz | მემბრანის V_m: ${String.format(Locale.US, "%.1f", ecosystem.snnTelemetry.averageMembranePotential)} mV
+                - SNN დომინანტური კლასტერი: ${ecosystem.snnTelemetry.dominantActiveCluster.labelKa} (${ecosystem.snnTelemetry.dominantActiveCluster.name}) | წონა: ${String.format(Locale.US, "%.2f", ecosystem.snnTelemetry.meanSynapticWeight)} | STDP: ${String.format(Locale.US, "%.4f", ecosystem.snnTelemetry.stdpPlasticityRateDelta)}
+                - HTM კორტიკალური სვეტები: ${ecosystem.htmTelemetry.activeColumnsCount}/40 (SDR Sparsity: ${String.format(Locale.US, "%.1f", ecosystem.htmTelemetry.sdrSparsityPercentage)}%), პროგნოზი: ${ecosystem.htmTelemetry.predictiveCellsCount} უჯრედი, ანომალია: ${(ecosystem.htmTelemetry.anomalyScore * 100).roundToInt()}%
+                - Hopfield ასოციაციური მეხსიერება: E=${String.format(Locale.US, "%.2f", ecosystem.hopfieldTelemetry.energy)}, ატრაქტორი: "${ecosystem.hopfieldTelemetry.recalledPatternLabel}" (${(ecosystem.hopfieldTelemetry.similarityScore * 100).roundToInt()}% მსგავსება)
+                - გლობალური სინერგია: ${ecosystem.globalSynergyScore.roundToInt()}% | ნეირომოდულატორები: Dopamine=${String.format(Locale.US, "%.2f", ecosystem.snnTelemetry.neuromodulation.dopamineLevel)}, Serotonin=${String.format(Locale.US, "%.2f", ecosystem.snnTelemetry.neuromodulation.serotoninLevel)}, Noradrenaline=${String.format(Locale.US, "%.2f", ecosystem.snnTelemetry.neuromodulation.noradrenalineLevel)}
+
+                მოთხოვნა: ყველა ამ მრავალშრიანი სენსორული, ბიომეტრიული, HTM, SNN და Hopfield პარამეტრის საფუძველზე შექმენი დალაგებული ლოგიკა, ალგორითმი, აზრები და დააბრუნე ორმხრივი ნეირომოდულაციური რეგულაცია მთელი On-Device ნეირო-ეკოსისტემისთვის. დააბრუნე მკაცრად JSON ფორმატი:
                 {
                   "thought": "ადამიანის ზუსტი, ბუნებრივი, კონტექსტური ქართული აზრი მოცემულ წამს (მაქსიმუმ 1 სხარტი წინადადება)",
                   "insight": "მოკლე (1-2 წინადადება) ნეირო-ფსიქოლოგიური ახსნა",
@@ -290,6 +351,14 @@ class HybridCognitiveEngine(private val context: Context) {
                       "weight": 84
                     }
                   ],
+                  "snnFeedback": {
+                    "dopamine": 1.25,
+                    "serotonin": 1.10,
+                    "noradrenaline": 0.95,
+                    "targetCluster": "FRONTAL_EXECUTIVE",
+                    "pruningRate": 0.012,
+                    "reason": "ფოკუსის გაძლიერება და სინაფსური პლასტიკურობის სტიმულირება"
+                  },
                   "keywords": ["ალგორითმი", "ლოგიკა", "ნეირო-სინთეზი"]
                 }
                 დააბრუნე მხოლოდ JSON.
@@ -400,13 +469,30 @@ class HybridCognitiveEngine(private val context: Context) {
                         }
                     }
 
+                    // Parse SNN & Multi-Neural Neuromodulation Feedback
+                    val snnObj = parsed.optJSONObject("snnFeedback")
+                    val dopa = snnObj?.optDouble("dopamine", 1.0)?.toFloat() ?: 1.0f
+                    val sero = snnObj?.optDouble("serotonin", 1.0)?.toFloat() ?: 1.0f
+                    val nora = snnObj?.optDouble("noradrenaline", 1.0)?.toFloat() ?: 1.0f
+                    val clusterTarget = snnObj?.optString("targetCluster", "FRONTAL_EXECUTIVE") ?: "FRONTAL_EXECUTIVE"
+                    val prune = snnObj?.optDouble("pruningRate", 0.01)?.toFloat() ?: 0.01f
+                    val snnReason = snnObj?.optString("reason", "Gemini AI-მ ოპტიმიზაცია გაუკეთა SNN, HTM და Hopfield სინაფსებს") ?: ""
+                    val memoryPattern = parsed.optString("memoryPattern", null)
+
                     if (thought.isNotBlank()) {
                         return GeminiParsedResponse(
                             thoughtSentence = thought,
-                            summary = insight.ifBlank { "Cloud AI-მ სენსორების საფუძველზე მოახდინა აზრის სინთეზი." },
+                            summary = insight.ifBlank { "Cloud AI-მ სენსორებისა და 3 ნეიროქსელის (SNN, HTM, Hopfield) საფუძველზე მოახდინა აზრის სინთეზი." },
                             logicalChain = logicList,
                             algorithmicSteps = algoList,
                             conceptHierarchy = conceptList,
+                            snnFeedbackDopamine = dopa,
+                            snnFeedbackSerotonin = sero,
+                            snnFeedbackNoradrenaline = nora,
+                            snnTargetCluster = clusterTarget,
+                            snnPruningRate = prune,
+                            snnModulationReason = snnReason,
+                            consolidatedMemoryPattern = if (!memoryPattern.isNullOrBlank()) memoryPattern else null,
                             keywords = kwList
                         )
                     }
@@ -418,19 +504,26 @@ class HybridCognitiveEngine(private val context: Context) {
                         thoughtSentence = first.take(120),
                         summary = rawText,
                         logicalChain = listOf(
-                            "1. მულტიმოდალური სიგნალების ფილტრაცია და სტაბილიზაცია",
-                            "2. მზერის ფოკუსისა და გულისცემის კორელაცია",
-                            "3. სუბვოკალური მეტყველების ალგორითმული ფორმირება"
+                            "1. მულტიმოდალური სიგნალების ფილტრაცია და HTM სვეტების აქტივაცია",
+                            "2. Hopfield მეხსიერების ენერგიის მინიმიზაცია",
+                            "3. SNN სინაფსური ემისია და მეტყველების ალგორითმული ფორმირება"
                         ),
                         algorithmicSteps = listOf(
                             AlgorithmicNode(1, "INPUT_HARVEST", "სენსორული ნაკადის შეკრება", "Collect(Gaze, Audio, Motion)"),
-                            AlgorithmicNode(2, "BAYESIAN_REASONING", "კოგნიტური ალბათობის გამოთვლა", "CalculateP(Thought|Sensors)"),
+                            AlgorithmicNode(2, "MULTI_NEURAL_FUSION", "HTM + Hopfield + SNN დამუშავება", "RunUnifiedNeuralCycle()"),
                             AlgorithmicNode(3, "SYNAPTIC_EMISSION", "აზრის ფორმულირება", "EmitThoughtNode()")
                         ),
                         conceptHierarchy = listOf(
-                            CognitiveConceptNode("მთავარი მიზანი", "სისტემური ანალიზი", "HIGH", 92),
-                            CognitiveConceptNode("სტრატეგია", "Flow მდგომარეობა", "MEDIUM", 80)
+                            CognitiveConceptNode("მთავარი მიზანი", "მულტი-ნეირონული ინტეგრაცია", "HIGH", 94),
+                            CognitiveConceptNode("სტრატეგია", "Flow & მეხსიერების კონვერგენცია", "MEDIUM", 84)
                         ),
+                        snnFeedbackDopamine = 1.15f,
+                        snnFeedbackSerotonin = 1.05f,
+                        snnFeedbackNoradrenaline = 1.0f,
+                        snnTargetCluster = "FRONTAL_EXECUTIVE",
+                        snnPruningRate = 0.01f,
+                        snnModulationReason = "სარეზერვო ნეირომოდულაცია",
+                        consolidatedMemoryPattern = null,
                         keywords = emptyList()
                     )
                 }
@@ -454,6 +547,8 @@ class HybridCognitiveEngine(private val context: Context) {
         logicalChain: List<String>,
         algorithmicSteps: List<AlgorithmicNode>,
         conceptHierarchy: List<CognitiveConceptNode>,
+        snnSnapshot: SpikingNeuralNetworkEngine.SnnTelemetrySnapshot,
+        ecosystem: MultiNeuralNetworkEcosystem.UnifiedNeuralEcosystemTelemetry,
         audio: RealAudioState,
         gaze: RealCameraGazeState,
         sensors: RealHardwareSensorState,
@@ -502,6 +597,8 @@ class HybridCognitiveEngine(private val context: Context) {
             logicalDeductionChain = logicalChain,
             algorithmicSteps = algorithmicSteps,
             conceptHierarchy = conceptHierarchy,
+            snnTelemetry = snnSnapshot,
+            ecosystemTelemetry = ecosystem,
             metaCognitionScore = 0.98f,
             intentionalFocusPrediction = if (focus > 0.6f) "კოგნიტური Flow & კონცენტრაცია" else "ემოციური დაკვირვება",
             emotionalEntropyIndex = entropy,
@@ -521,6 +618,8 @@ class HybridCognitiveEngine(private val context: Context) {
         gaze: RealCameraGazeState,
         sensors: RealHardwareSensorState,
         polyvagal: PolyvagalBehavioralEngine.BehavioralAnalysisResult,
+        snnSnapshot: SpikingNeuralNetworkEngine.SnnTelemetrySnapshot,
+        ecosystem: MultiNeuralNetworkEcosystem.UnifiedNeuralEcosystemTelemetry,
         emotionalEntropy: Float,
         mentalFatigue: Float,
         focusLevel: Float,
@@ -568,7 +667,7 @@ class HybridCognitiveEngine(private val context: Context) {
         // Generate On-Device Logical Deduction Chain
         val localLogicChain = listOf(
             "1. სენსორული დაკვირვება: აკუსტიკა ${db.roundToInt()} dB, პულსი $bpm BPM, გუგა ${String.format(Locale.US, "%.1f", pupil)} მმ",
-            "2. პოლივაგალური მოდელირება: ${polyvagal.dominantState.labelKa} (Flow: ${(polyvagal.flowStateIndex * 100).roundToInt()}%)",
+            "2. HTM & Hopfield მეხსიერება: ${ecosystem.hopfieldTelemetry.recalledPatternLabel} (${(ecosystem.hopfieldTelemetry.similarityScore * 100).roundToInt()}%), ანომალია ${String.format(Locale.US, "%.2f", ecosystem.htmTelemetry.anomalyScore)}",
             "3. სინაფსური დასკვნა: ჩამოყალიბდა ლოგიკური აზრი [$latestWord]"
         )
 
@@ -583,9 +682,9 @@ class HybridCognitiveEngine(private val context: Context) {
             ),
             AlgorithmicNode(
                 step = 2,
-                stageName = "EVALUATE_POLYVAGAL",
-                description = "ნეირო-მოტორული და ემოციური ენტროპიის შეფასება",
-                conditionOrAction = "FlowScore = ComputeFlowIndex(Entropy, Fatigue)",
+                stageName = "MULTI_NEURAL_INFERENCE",
+                description = "HTM SDR კოლონები და Hopfield ენერგიის მინიმიზაცია",
+                conditionOrAction = "RunEcosystem(SNN, HTM, Hopfield)",
                 status = "ACTIVE"
             ),
             AlgorithmicNode(
@@ -613,7 +712,7 @@ class HybridCognitiveEngine(private val context: Context) {
             ),
             CognitiveConceptNode(
                 category = "ნეირო-ტელემეტრია",
-                concept = "HRV $bpm BPM • SPL ${db.roundToInt()} dB",
+                concept = "HRV $bpm BPM • Hopfield E=${String.format(Locale.US, "%.1f", ecosystem.hopfieldTelemetry.energy)}",
                 priority = "LOW",
                 weightPct = 68
             )
@@ -629,6 +728,8 @@ class HybridCognitiveEngine(private val context: Context) {
             logicalDeductionChain = localLogicChain,
             algorithmicSteps = localAlgoSteps,
             conceptHierarchy = localConcepts,
+            snnTelemetry = snnSnapshot,
+            ecosystemTelemetry = ecosystem,
             metaCognitionScore = 0.94f,
             intentionalFocusPrediction = if (focusLevel > 0.6f) "კოგნიტური კონცენტრაცია" else "ემოციური დაკვირვება",
             emotionalEntropyIndex = emotionalEntropy,
