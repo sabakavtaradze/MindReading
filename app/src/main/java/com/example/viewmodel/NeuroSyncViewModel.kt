@@ -1246,7 +1246,43 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         focusLevel = _uiState.value.matchPercentage / 100f,
                         activeThought = _uiState.value.wordDecoder.currentDecodedWord
                     )
-                    _uiState.update { it.copy(cognitiveResult = cognitiveAnalyticsResult) }
+                    
+                    // Map AI predicted words directly to word prediction branches
+                    val aiBranches = if (cognitiveAnalyticsResult.aiPredictedWords.isNotEmpty()) {
+                        cognitiveAnalyticsResult.aiPredictedWords.mapIndexed { idx, pNode ->
+                            WordBranchPrediction(
+                                id = "ai_b_${System.currentTimeMillis()}_$idx",
+                                word = pNode.word,
+                                probabilityPct = pNode.probabilityPct,
+                                phonemeLookaheadMs = -(280 + (idx * 20)),
+                                category = pNode.category,
+                                linguisticGrammarRole = pNode.grammaticalRole,
+                                semanticContextTrigger = pNode.contextReason,
+                                cognitiveLoadRequirementPct = 20 + (idx * 4)
+                            )
+                        }
+                    } else null
+
+                    _uiState.update { current ->
+                        val updatedPrediction = if (aiBranches != null) {
+                            val topW = aiBranches.first().word
+                            val nextSentence = if (cognitiveAnalyticsResult.synthesizedThoughtSentence.isNotBlank()) {
+                                cognitiveAnalyticsResult.synthesizedThoughtSentence
+                            } else current.wordPrediction.unifiedDecodedSentence
+                            current.wordPrediction.copy(
+                                branches = aiBranches,
+                                activeFocusWordCandidate = topW,
+                                unifiedDecodedSentence = nextSentence,
+                                unifiedDecodingConfidencePct = aiBranches.first().probabilityPct,
+                                lastAppliedPrediction = "🌐 AI პროგნოზი: '$topW' (${aiBranches.first().probabilityPct}%)"
+                            )
+                        } else current.wordPrediction
+
+                        current.copy(
+                            cognitiveResult = cognitiveAnalyticsResult,
+                            wordPrediction = updatedPrediction
+                        )
+                    }
 
                     // 🌟 REAL-TIME WEARABLE HUB UPDATE (ZL02C Pro & Galaxy Buds 2 & Google Fit)
                     wearableTelemetryHub.updateLiveTelemetry(
@@ -1375,10 +1411,13 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             )
         }
 
-        // 🌟 Instantly update Notification with dynamic thought
+        // 🌟 Instantly update Notification with clean AI thought & predicted words
+        val livePredictedWords = _uiState.value.wordPrediction.branches.map { "${it.word} (${it.probabilityPct}%)" }
         com.example.service.NeuralContextService.postLiveThoughtNotification(
             context = getApplication(),
             thoughtText = nextThought.first.removePrefix("🌐 Cloud Gemini: ").removePrefix("🎯 "),
+            predictedWords = livePredictedWords,
+            aiInsight = nextThought.second,
             accuracyPct = conf.toFloat(),
             isCloud = isCloud,
             heartRateBpm = state.heartRateBpm,
@@ -1506,9 +1545,13 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
         val sentence = _uiState.value.wordPrediction.unifiedDecodedSentence.ifBlank { _uiState.value.wordDecoder.accumulatedSentence }
         if (sentence.isNotBlank()) {
+            val decoderPredictedWords = _uiState.value.wordPrediction.branches.map { "${it.word} (${it.probabilityPct}%)" }
+            val cognitiveInsight = _uiState.value.cognitiveResult?.deepSynthesisText.orEmpty()
             com.example.service.NeuralContextService.postLiveThoughtNotification(
                 context = getApplication(),
                 thoughtText = sentence,
+                predictedWords = decoderPredictedWords,
+                aiInsight = cognitiveInsight,
                 accuracyPct = conf.toFloat(),
                 isCloud = _uiState.value.cognitiveResult?.isCloudActive == true,
                 heartRateBpm = _uiState.value.heartRateBpm,

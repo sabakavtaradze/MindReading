@@ -62,6 +62,15 @@ class HybridCognitiveEngine(private val context: Context) {
         val weightPct: Int
     )
 
+    data class AiWordPredictionNode(
+        val word: String,
+        val probabilityPct: Int,
+        val category: String,
+        val phonemes: String,
+        val grammaticalRole: String = "სემანტიკური ერთეული",
+        val contextReason: String = ""
+    )
+
     data class CognitiveResult(
         val isCloudActive: Boolean,
         val modeLabel: String,
@@ -79,7 +88,10 @@ class HybridCognitiveEngine(private val context: Context) {
         val insights: List<CognitiveInsight>,
         val recentlyDiscoveredWords: List<String>,
         val totalVocabularySize: Int,
-        val telemetryLatencyMs: Long
+        val telemetryLatencyMs: Long,
+        val aiPredictedWords: List<AiWordPredictionNode> = emptyList(),
+        val aiNextWordCandidates: List<String> = emptyList(),
+        val synthesizedPredictionTitle: String = ""
     )
 
     data class CognitiveInsight(
@@ -190,7 +202,10 @@ class HybridCognitiveEngine(private val context: Context) {
                     focus = focusLevel,
                     entropy = emotionalEntropy,
                     newHarvestedWords = newHarvestedWords,
-                    latencyMs = latency
+                    latencyMs = latency,
+                    aiPredictedWords = cloudParsed.predictedWords,
+                    aiNextWordCandidates = cloudParsed.nextWordCandidates,
+                    predictionTitle = cloudParsed.predictionTitle
                 )
             }
         }
@@ -245,7 +260,10 @@ class HybridCognitiveEngine(private val context: Context) {
         val snnPruningRate: Float = 0.01f,
         val snnModulationReason: String = "",
         val consolidatedMemoryPattern: String? = null,
-        val keywords: List<String>
+        val keywords: List<String>,
+        val predictedWords: List<AiWordPredictionNode> = emptyList(),
+        val nextWordCandidates: List<String> = emptyList(),
+        val predictionTitle: String = ""
     )
 
     /**
@@ -307,10 +325,46 @@ class HybridCognitiveEngine(private val context: Context) {
                 - Hopfield ასოციაციური მეხსიერება: E=${String.format(Locale.US, "%.2f", ecosystem.hopfieldTelemetry.energy)}, ატრაქტორი: "${ecosystem.hopfieldTelemetry.recalledPatternLabel}" (${(ecosystem.hopfieldTelemetry.similarityScore * 100).roundToInt()}% მსგავსება)
                 - გლობალური სინერგია: ${ecosystem.globalSynergyScore.roundToInt()}% | ნეირომოდულატორები: Dopamine=${String.format(Locale.US, "%.2f", ecosystem.snnTelemetry.neuromodulation.dopamineLevel)}, Serotonin=${String.format(Locale.US, "%.2f", ecosystem.snnTelemetry.neuromodulation.serotoninLevel)}, Noradrenaline=${String.format(Locale.US, "%.2f", ecosystem.snnTelemetry.neuromodulation.noradrenalineLevel)}
 
-                მოთხოვნა: ყველა ამ მრავალშრიანი სენსორული, ბიომეტრიული, HTM, SNN და Hopfield პარამეტრის საფუძველზე შექმენი დალაგებული ლოგიკა, ალგორითმი, აზრები და დააბრუნე ორმხრივი ნეირომოდულაციური რეგულაცია მთელი On-Device ნეირო-ეკოსისტემისთვის. დააბრუნე მკაცრად JSON ფორმატი:
+                მოთხოვნა: ყველა ამ მრავალშრიანი სენსორული, ბიომეტრიული, HTM, SNN და Hopfield პარამეტრის საფუძველზე შექმენი დალაგებული ლოგიკა, ალგორითმი, აზრები, შემდეგი სიტყვების პროგნოზირება (predictedWords) და დააბრუნე ორმხრივი ნეირომოდულაციური რეგულაცია მთელი On-Device ნეირო-ეკოსისტემისთვის. დააბრუნე მკაცრად JSON ფორმატი:
                 {
                   "thought": "ადამიანის ზუსტი, ბუნებრივი, კონტექსტური ქართული აზრი მოცემულ წამს (მაქსიმუმ 1 სხარტი წინადადება)",
                   "insight": "მოკლე (1-2 წინადადება) ნეირო-ფსიქოლოგიური ახსნა",
+                  "predictionTitle": "კოგნიტური განზრახვის მოკლე სათაური (3-5 სიტყვა ქართულად)",
+                  "predictedWords": [
+                    {
+                      "word": "სიტყვა1",
+                      "probability": 98,
+                      "category": "DEV",
+                      "phonemes": "ს-ი-ტ-ყ-ვ-ა",
+                      "role": "ზმნა",
+                      "reason": "კონტექსტური შესაბამისობა"
+                    },
+                    {
+                      "word": "სიტყვა2",
+                      "probability": 92,
+                      "category": "COMMON",
+                      "phonemes": "ს-ი-ტ-ყ-ვ-ა-2",
+                      "role": "არსებითი სახელი",
+                      "reason": "სუბვოკალური მზადყოფნა"
+                    },
+                    {
+                      "word": "სიტყვა3",
+                      "probability": 86,
+                      "category": "OBJECTS",
+                      "phonemes": "ს-ი-ტ-ყ-ვ-ა-3",
+                      "role": "შემდეგი ალტერნატივა",
+                      "reason": "ასოციაციური კავშირი"
+                    },
+                    {
+                      "word": "სიტყვა4",
+                      "probability": 80,
+                      "category": "EMOTIONS",
+                      "phonemes": "ს-ი-ტ-ყ-ვ-ა-4",
+                      "role": "სემანტიკური ერთეული",
+                      "reason": "ბიომეტრიული თანხვედრა"
+                    }
+                  ],
+                  "nextWordCandidates": ["სიტყვა1", "სიტყვა2", "სიტყვა3", "სიტყვა4", "სიტყვა5"],
                   "logicChain": [
                     "ნაბიჯი 1: სენსორული სიგნალებისა და გუგის ფიქსაციის აღქმა",
                     "ნაბიჯი 2: აკუსტიკური და სუბვოკალური მზადყოფნის იდენტიფიკაცია",
@@ -398,6 +452,58 @@ class HybridCognitiveEngine(private val context: Context) {
                     val parsed = JSONObject(cleanJsonStr)
                     val thought = parsed.optString("thought").trim()
                     val insight = parsed.optString("insight").trim()
+                    val predTitle = parsed.optString("predictionTitle").trim()
+
+                    // Parse Predicted Words List
+                    val predictedWordsArray = parsed.optJSONArray("predictedWords")
+                    val parsedPredictedWords = mutableListOf<AiWordPredictionNode>()
+                    if (predictedWordsArray != null) {
+                        for (i in 0 until predictedWordsArray.length()) {
+                            val wObj = predictedWordsArray.optJSONObject(i)
+                            if (wObj != null) {
+                                val wWord = wObj.optString("word").trim()
+                                if (wWord.isNotBlank()) {
+                                    val wProb = wObj.optInt("probability", 85).coerceIn(40, 99)
+                                    val wCat = wObj.optString("category", "COMMON")
+                                    val wPhonemes = wObj.optString("phonemes", wWord.toCharArray().joinToString("-"))
+                                    val wRole = wObj.optString("role", "სემანტიკური ერთეული")
+                                    val wReason = wObj.optString("reason", "AI კონტექსტური პროგნოზი")
+                                    
+                                    val node = AiWordPredictionNode(
+                                        word = wWord,
+                                        probabilityPct = wProb,
+                                        category = wCat,
+                                        phonemes = wPhonemes,
+                                        grammaticalRole = wRole,
+                                        contextReason = wReason
+                                    )
+                                    parsedPredictedWords.add(node)
+
+                                    // Learn token into dynamic lexicon & linguistic engine
+                                    AutonomousDynamicLexiconLearner.registerNewDiscoveredWord(wWord, wCat, "GEMINI_CLOUD_AI")
+                                    GeorgianNeuroLinguisticEngine.registerNewLearnedWord(wWord, wCat, wReason, listOf())
+                                }
+                            }
+                        }
+                    }
+
+                    // Parse nextWordCandidates
+                    val nextCandidatesArray = parsed.optJSONArray("nextWordCandidates")
+                    val parsedNextCandidates = mutableListOf<String>()
+                    if (nextCandidatesArray != null) {
+                        for (i in 0 until nextCandidatesArray.length()) {
+                            val cWord = nextCandidatesArray.optString(i).trim()
+                            if (cWord.isNotBlank()) {
+                                parsedNextCandidates.add(cWord)
+                                AutonomousDynamicLexiconLearner.registerNewDiscoveredWord(cWord, "AI_STREAM", "GEMINI_CLOUD_AI")
+                            }
+                        }
+                    }
+
+                    // Learn Markov transitions pairwise
+                    for (i in 0 until parsedNextCandidates.size - 1) {
+                        UnifiedPredictiveThoughtEngine.learnMarkovTransition(parsedNextCandidates[i], parsedNextCandidates[i + 1])
+                    }
 
                     // Parse Logic Chain
                     val logicArray = parsed.optJSONArray("logicChain")
@@ -492,7 +598,10 @@ class HybridCognitiveEngine(private val context: Context) {
                             snnPruningRate = prune,
                             snnModulationReason = snnReason,
                             consolidatedMemoryPattern = if (!memoryPattern.isNullOrBlank()) memoryPattern else null,
-                            keywords = kwList
+                            keywords = kwList,
+                            predictedWords = parsedPredictedWords,
+                            nextWordCandidates = parsedNextCandidates,
+                            predictionTitle = predTitle
                         )
                     }
                 } catch (e: Exception) {
@@ -555,7 +664,10 @@ class HybridCognitiveEngine(private val context: Context) {
         focus: Float,
         entropy: Float,
         newHarvestedWords: List<String>,
-        latencyMs: Long
+        latencyMs: Long,
+        aiPredictedWords: List<AiWordPredictionNode> = emptyList(),
+        aiNextWordCandidates: List<String> = emptyList(),
+        predictionTitle: String = ""
     ): CognitiveResult {
         val insights = mutableListOf<CognitiveInsight>()
 
@@ -605,7 +717,10 @@ class HybridCognitiveEngine(private val context: Context) {
             insights = insights,
             recentlyDiscoveredWords = recentTokens,
             totalVocabularySize = AutonomousDynamicLexiconLearner.getActiveVocabularyCount(),
-            telemetryLatencyMs = latencyMs
+            telemetryLatencyMs = latencyMs,
+            aiPredictedWords = aiPredictedWords,
+            aiNextWordCandidates = aiNextWordCandidates,
+            synthesizedPredictionTitle = predictionTitle
         )
     }
 
@@ -719,6 +834,27 @@ class HybridCognitiveEngine(private val context: Context) {
 
         val tokensList = recentTokens.map { it.token }.take(8)
 
+        // Generate dynamic local predicted words
+        val currentHour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        val candidateWords = GeorgianNeuroLinguisticEngine.predictCandidateWords(
+            screenContext = "სუბვოკალური დეკოდერი",
+            currentCluster = if (audio.dominantFrequencyHz > 120f) "სინთეზ" else "",
+            stressLevel = polyvagal.sympatheticScore,
+            circadianHour = currentHour,
+            limit = 6
+        )
+
+        val localPredictedNodes = candidateWords.take(4).mapIndexed { idx, cand ->
+            AiWordPredictionNode(
+                word = cand.word,
+                probabilityPct = (92 - (idx * 6)).coerceIn(45, 96),
+                category = cand.category,
+                phonemes = cand.phonemes.joinToString("-"),
+                grammaticalRole = "სემანტიკური ერთეული",
+                contextReason = cand.description
+            )
+        }
+
         return CognitiveResult(
             isCloudActive = false,
             modeLabel = "ტელეფონის შიდა ინტელექტი (On-Device Offline) • 100% ავტონომიური",
@@ -736,7 +872,10 @@ class HybridCognitiveEngine(private val context: Context) {
             insights = insights,
             recentlyDiscoveredWords = tokensList,
             totalVocabularySize = AutonomousDynamicLexiconLearner.getActiveVocabularyCount(),
-            telemetryLatencyMs = latencyMs
+            telemetryLatencyMs = latencyMs,
+            aiPredictedWords = localPredictedNodes,
+            aiNextWordCandidates = candidateWords.map { it.word }.take(6),
+            synthesizedPredictionTitle = "⚡ On-Device განზრახვა: $latestWord"
         )
     }
 }

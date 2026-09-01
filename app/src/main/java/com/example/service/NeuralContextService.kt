@@ -111,9 +111,9 @@ class NeuralContextService : Service() {
             audioAnalyzer?.startListening()
             cameraAnalyzer?.startBackgroundGazeTracking()
             val customText = intent?.getStringExtra(EXTRA_NOTIFICATION_TEXT)
-                ?: "ამოცნობილია: ნეირონული კავშირი, მიკროფონი, კამერა და სენსორები აქტიურია (24/7)"
+                ?: "აქტიურია • AI აზრებისა და სიტყვების პროგნოზირება"
             startForegroundServiceWithNotification(
-                title = "NeuroSync • ამოცნობილია (98.9%)",
+                title = "🎯 AI აზრი • NeuroSync",
                 text = customText
             )
         } catch (e: Throwable) {
@@ -203,21 +203,14 @@ class NeuralContextService : Service() {
     }
 
     /**
-     * Updates notification in real-time with rich BigTextStyle and multimodal telemetry badges
+     * Updates notification in real-time with clean, focused AI thoughts and predicted words.
      */
     private fun updateNotificationLive(
         thoughtText: String,
-        accuracyPct: Float,
-        isCloud: Boolean,
-        polyvagalState: String,
-        heartRateBpm: Int,
-        micDb: Float,
-        dominantFreqHz: Float,
-        synthesisSummary: String = "",
-        logicChain: List<String> = emptyList(),
-        topAlgorithmStep: String = "",
-        ecosystemCrossTalk: String = "",
-        topInterSignal: String = ""
+        predictedWords: List<String> = emptyList(),
+        aiInsight: String = "",
+        accuracyPct: Float = 98.5f,
+        isCloud: Boolean = true
     ) {
         try {
             val notificationIntent = Intent(this, MainActivity::class.java).apply {
@@ -230,45 +223,33 @@ class NeuralContextService : Service() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
 
-            val title = "NeuroSync • ამოცნობილია (${String.format(Locale.US, "%.1f", accuracyPct)}%)"
-            val subText = "${if (isCloud) "🌐 Cloud Gemini AI" else "🧠 Neural Engine"} • $heartRateBpm BPM • ${micDb.toInt()} dB"
+            val title = "🎯 AI აზრი: $thoughtText"
+            val subText = if (isCloud) "🌐 Cloud Gemini AI • ${String.format(Locale.US, "%.1f", accuracyPct)}%" else "⚡ On-Device AI • ${String.format(Locale.US, "%.1f", accuracyPct)}%"
+
+            val collapsedSummary = if (predictedWords.isNotEmpty()) {
+                "🔮 შემდეგი სიტყვები: ${predictedWords.take(4).joinToString(", ")}"
+            } else if (aiInsight.isNotBlank()) {
+                aiInsight
+            } else {
+                thoughtText
+            }
 
             val expandedText = buildString {
-                append("🎯 ამოცნობილია: ")
+                append("🎯 AI ნამსჯელები აზრი:\n")
                 append(thoughtText)
-                if (topInterSignal.isNotBlank()) {
-                    append("\n\n📡 ნეირო-ხიდი (Live Bus): ")
-                    append(topInterSignal)
+                if (predictedWords.isNotEmpty()) {
+                    append("\n\n🔮 პროგნოზირებული სიტყვები:\n")
+                    append(predictedWords.joinToString(" • "))
                 }
-                if (synthesisSummary.isNotBlank()) {
-                    append("\n\n💡 AI ანალიზი: ")
-                    append(synthesisSummary)
+                if (aiInsight.isNotBlank()) {
+                    append("\n\n💡 AI კონტექსტური ანალიზი:\n")
+                    append(aiInsight)
                 }
-                if (logicChain.isNotEmpty()) {
-                    append("\n\n🔗 ლოგიკური ჯაჭვი:")
-                    logicChain.take(3).forEach { step ->
-                        append("\n• ")
-                        append(step)
-                    }
-                }
-                if (topAlgorithmStep.isNotBlank()) {
-                    append("\n\n⚡ ალგორითმი: ")
-                    append(topAlgorithmStep)
-                }
-                if (ecosystemCrossTalk.isNotBlank()) {
-                    append("\n\n🧬 ეკოსისტემა: ")
-                    append(ecosystemCrossTalk)
-                }
-                append("\n\n• წყარო: ")
-                append(if (isCloud) "🌐 Cloud AI (Gemini 2.5 Flash ონლაინ სინთეზი)" else "⚡ On-Device Autonomous Neural Engine")
-                append("\n• ქცევითი სტატუსი: ")
-                append(polyvagalState)
-                append("\n• ტელემეტრია: $heartRateBpm BPM • ${micDb.toInt()} dB • ${dominantFreqHz.toInt()} Hz")
             }
 
             val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(title)
-                .setContentText(thoughtText)
+                .setContentText(collapsedSummary)
                 .setSubText(subText)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(expandedText))
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
@@ -342,28 +323,23 @@ class NeuralContextService : Service() {
 
                     _latestDetectedThought.value = dynamicSentence
 
-                    val polyvagalLabel = cognitiveResult?.polyvagalResult?.dominantState?.labelKa ?: "ვენტრალ-ვაგალური (Flow)"
                     val isCloud = cognitiveResult?.isCloudActive ?: false
-                    val summary = cognitiveResult?.deepSynthesisText ?: ""
-                    val logicChain = cognitiveResult?.logicalDeductionChain ?: emptyList()
-                    val topAlgo = cognitiveResult?.algorithmicSteps?.firstOrNull()?.let { "${it.stageName}: ${it.conditionOrAction}" } ?: ""
-                    val ecosystemSummary = cognitiveResult?.ecosystemTelemetry?.interNetworkCrossTalkSummary ?: ""
-                    val topSignal = cognitiveResult?.ecosystemTelemetry?.liveSignals?.firstOrNull()?.let { "${it.source} ➔ ${it.target}: ${it.descriptionKa}" } ?: ""
+                    val insightText = cognitiveResult?.deepSynthesisText.orEmpty()
+                    val predictedWordsList = if (cognitiveResult?.aiPredictedWords?.isNotEmpty() == true) {
+                        cognitiveResult.aiPredictedWords.map { "${it.word} (${it.probabilityPct}%)" }
+                    } else if (cognitiveResult?.aiNextWordCandidates?.isNotEmpty() == true) {
+                        cognitiveResult.aiNextWordCandidates
+                    } else {
+                        emptyList()
+                    }
 
-                    // 3. Update the persistent notification with live rich text
+                    // 3. Update the persistent notification with clean, focused AI thoughts & predicted words
                     updateNotificationLive(
                         thoughtText = dynamicSentence,
+                        predictedWords = predictedWordsList,
+                        aiInsight = insightText,
                         accuracyPct = accuracy,
-                        isCloud = isCloud,
-                        polyvagalState = polyvagalLabel,
-                        heartRateBpm = heartRate,
-                        micDb = audioState.decibels,
-                        dominantFreqHz = audioState.dominantFrequencyHz,
-                        synthesisSummary = summary,
-                        logicChain = logicChain,
-                        topAlgorithmStep = topAlgo,
-                        ecosystemCrossTalk = ecosystemSummary,
-                        topInterSignal = topSignal
+                        isCloud = isCloud
                     )
 
                 } catch (e: Throwable) {
@@ -406,11 +382,13 @@ class NeuralContextService : Service() {
         var isServiceRunning: Boolean = false
 
         /**
-         * Direct utility method to immediately refresh notification with external thought prediction
+         * Direct utility method to immediately refresh notification with clean AI thought & predicted words
          */
         fun postLiveThoughtNotification(
             context: Context,
             thoughtText: String,
+            predictedWords: List<String> = emptyList(),
+            aiInsight: String = "",
             accuracyPct: Float = 98.6f,
             isCloud: Boolean = true,
             heartRateBpm: Int = 74,
@@ -427,14 +405,33 @@ class NeuralContextService : Service() {
                     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                 )
 
-                val title = "NeuroSync • ამოცნობილია (${String.format(Locale.US, "%.1f", accuracyPct)}%)"
-                val subText = "${if (isCloud) "🌐 Cloud AI (Gemini 2.5)" else "🧠 Neural Synapse"} • $heartRateBpm BPM"
+                val title = "🎯 AI აზრი: $thoughtText"
+                val subText = if (isCloud) "🌐 Cloud Gemini AI • ${String.format(Locale.US, "%.1f", accuracyPct)}%" else "⚡ On-Device AI • ${String.format(Locale.US, "%.1f", accuracyPct)}%"
 
-                val expandedText = "🎯 ამოცნობილია: $thoughtText\n\n• წყარო: ${if (isCloud) "🌐 Cloud AI (Gemini ონლაინ ინტელექტი)" else "⚡ On-Device Neural Matrix"}\n• სიზუსტე: ${String.format(Locale.US, "%.1f", accuracyPct)}%\n• ბიომეტრია: $heartRateBpm BPM • ${micDb.toInt()} dB"
+                val collapsedSummary = if (predictedWords.isNotEmpty()) {
+                    "🔮 შემდეგი სიტყვები: ${predictedWords.take(4).joinToString(", ")}"
+                } else if (aiInsight.isNotBlank()) {
+                    aiInsight
+                } else {
+                    thoughtText
+                }
+
+                val expandedText = buildString {
+                    append("🎯 AI ნამსჯელები აზრი:\n")
+                    append(thoughtText)
+                    if (predictedWords.isNotEmpty()) {
+                        append("\n\n🔮 პროგნოზირებული სიტყვები:\n")
+                        append(predictedWords.joinToString(" • "))
+                    }
+                    if (aiInsight.isNotBlank()) {
+                        append("\n\n💡 AI კონტექსტური ანალიზი:\n")
+                        append(aiInsight)
+                    }
+                }
 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                     .setContentTitle(title)
-                    .setContentText(thoughtText)
+                    .setContentText(collapsedSummary)
                     .setSubText(subText)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(expandedText))
                     .setSmallIcon(android.R.drawable.ic_dialog_info)
