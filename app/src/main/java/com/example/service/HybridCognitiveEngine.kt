@@ -727,6 +727,8 @@ class HybridCognitiveEngine(private val context: Context) {
     /**
      * High-Precision On-Device Autonomous Neural Engine (Zero Internet required)
      */
+    private var localRotationIndex = 0
+
     private fun buildOfflineLocalResult(
         audio: RealAudioState,
         gaze: RealCameraGazeState,
@@ -749,15 +751,22 @@ class HybridCognitiveEngine(private val context: Context) {
         val pupil = gaze.opticalPupilDiameterMm
         val bpm = gaze.opticalRadiancePulseBpm
         val recentTokens = AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens()
-        val latestWord = recentTokens.firstOrNull()?.token ?: "ოპტიმიზაცია"
+        
+        localRotationIndex++
+        val dynamicToken = if (recentTokens.isNotEmpty()) {
+            recentTokens[localRotationIndex % recentTokens.size].token
+        } else {
+            val allLex = GeorgianNeuroLinguisticEngine.getAllLexiconEntries()
+            if (allLex.isNotEmpty()) allLex[localRotationIndex % allLex.size].word else "ოპტიმიზაცია"
+        }
 
-        val localThought = when {
-            db > 50f -> "საუბრისა და აკუსტიკური გარემოს ანალიზი: $latestWord"
-            freq > 150f -> "სუბვოკალური მზადყოფნა: ფორმულირდება $latestWord"
-            pupil > 3.8f -> "ვიზუალური ყურადღების ფოკუსირება და $latestWord გააზრება"
-            bpm > 85 -> "აქტიური მენტალური ჩართულობა და სწრაფი გადაწყვეტილება"
-            focusLevel > 0.8f -> "ღრმა ალგორითმული ნაკადი: $latestWord და სტრუქტურის აგება"
-            else -> "სისტემური დაკვირვება და $latestWord"
+        val localThought = when (localRotationIndex % 6) {
+            0 -> "საუბრისა და აკუსტიკური გარემოს ანალიზი: $dynamicToken"
+            1 -> "სუბვოკალური მზადყოფნა: ფორმულირდება $dynamicToken"
+            2 -> "ვიზუალური ყურადღების ფოკუსირება და $dynamicToken გააზრება"
+            3 -> "აქტიური მენტალური ჩართულობა: $dynamicToken"
+            4 -> "ღრმა ალგორითმული ნაკადი: $dynamicToken და სტრუქტურის აგება"
+            else -> "სისტემური დაკვირვება და $dynamicToken"
         }
 
         insights.add(
@@ -782,7 +791,7 @@ class HybridCognitiveEngine(private val context: Context) {
         val localLogicChain = listOf(
             "1. სენსორული დაკვირვება: აკუსტიკა ${db.roundToInt()} dB, პულსი $bpm BPM, გუგა ${String.format(Locale.US, "%.1f", pupil)} მმ",
             "2. HTM & Hopfield მეხსიერება: ${ecosystem.hopfieldTelemetry.recalledPatternLabel} (${(ecosystem.hopfieldTelemetry.similarityScore * 100).roundToInt()}%), ანომალია ${String.format(Locale.US, "%.2f", ecosystem.htmTelemetry.anomalyScore)}",
-            "3. სინაფსური დასკვნა: ჩამოყალიბდა ლოგიკური აზრი [$latestWord]"
+            "3. სინაფსური დასკვნა: ჩამოყალიბდა ლოგიკური აზრი [$dynamicToken]"
         )
 
         // Generate On-Device Algorithmic Steps
@@ -805,7 +814,7 @@ class HybridCognitiveEngine(private val context: Context) {
                 step = 3,
                 stageName = "GENERATE_SYNAPSE",
                 description = "შინაგანი მეტყველებისა და აზრის მატრიცული სინთეზი",
-                conditionOrAction = "RouteOutputToWordDecoder(\"$latestWord\")",
+                conditionOrAction = "RouteOutputToWordDecoder(\"$dynamicToken\")",
                 status = "OPTIMIZED"
             )
         )
@@ -814,7 +823,7 @@ class HybridCognitiveEngine(private val context: Context) {
         val localConcepts = listOf(
             CognitiveConceptNode(
                 category = "დომინანტური აზრი",
-                concept = "$latestWord და ლოგიკური სტრუქტურა",
+                concept = "$dynamicToken და ლოგიკური სტრუქტურა",
                 priority = "HIGH",
                 weightPct = 94
             ),
@@ -836,13 +845,18 @@ class HybridCognitiveEngine(private val context: Context) {
 
         // Generate dynamic local predicted words
         val currentHour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+        val allLexicon = GeorgianNeuroLinguisticEngine.getAllLexiconEntries()
+        val rotatedCluster = if (allLexicon.isNotEmpty()) {
+            allLexicon[(localRotationIndex * 3) % allLexicon.size].word.take(3)
+        } else if (audio.dominantFrequencyHz > 120f) "სინთეზ" else ""
+
         val candidateWords = GeorgianNeuroLinguisticEngine.predictCandidateWords(
             screenContext = "სუბვოკალური დეკოდერი",
-            currentCluster = if (audio.dominantFrequencyHz > 120f) "სინთეზ" else "",
+            currentCluster = rotatedCluster,
             stressLevel = polyvagal.sympatheticScore,
             circadianHour = currentHour,
-            limit = 6
-        )
+            limit = 8
+        ).shuffled()
 
         val localPredictedNodes = candidateWords.take(4).mapIndexed { idx, cand ->
             AiWordPredictionNode(
@@ -875,7 +889,7 @@ class HybridCognitiveEngine(private val context: Context) {
             telemetryLatencyMs = latencyMs,
             aiPredictedWords = localPredictedNodes,
             aiNextWordCandidates = candidateWords.map { it.word }.take(6),
-            synthesizedPredictionTitle = "⚡ On-Device განზრახვა: $latestWord"
+            synthesizedPredictionTitle = "⚡ On-Device განზრახვა: $dynamicToken"
         )
     }
 }

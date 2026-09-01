@@ -307,7 +307,12 @@ class NeuralContextService : Service() {
                     // Extract synthesized phrase directly from Gemini AI (Online) or Sensor Synthesis (Offline)
                     val rawSentence = cognitiveResult?.synthesizedThoughtSentence.orEmpty().ifBlank {
                         val recentTokens = AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens()
-                        val topWord = recentTokens.firstOrNull()?.token ?: "ოპტიმიზაცია"
+                        val topWord = if (recentTokens.isNotEmpty()) {
+                            recentTokens[cycleCount % recentTokens.size].token
+                        } else {
+                            val allLex = GeorgianNeuroLinguisticEngine.getAllLexiconEntries()
+                            if (allLex.isNotEmpty()) allLex[cycleCount % allLex.size].word else "ოპტიმიზაცია"
+                        }
                         "ნეირონული ანალიზი: $topWord და ალგორითმული ფოკუსი"
                     }
 

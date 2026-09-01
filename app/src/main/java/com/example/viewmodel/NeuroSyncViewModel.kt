@@ -1410,19 +1410,6 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 )
             )
         }
-
-        // 🌟 Instantly update Notification with clean AI thought & predicted words
-        val livePredictedWords = _uiState.value.wordPrediction.branches.map { "${it.word} (${it.probabilityPct}%)" }
-        com.example.service.NeuralContextService.postLiveThoughtNotification(
-            context = getApplication(),
-            thoughtText = nextThought.first.removePrefix("🌐 Cloud Gemini: ").removePrefix("🎯 "),
-            predictedWords = livePredictedWords,
-            aiInsight = nextThought.second,
-            accuracyPct = conf.toFloat(),
-            isCloud = isCloud,
-            heartRateBpm = state.heartRateBpm,
-            micDb = state.audioDb
-        )
     }
 
     fun toggleContinuousThoughtStream() {
@@ -1544,20 +1531,6 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         }
 
         val sentence = _uiState.value.wordPrediction.unifiedDecodedSentence.ifBlank { _uiState.value.wordDecoder.accumulatedSentence }
-        if (sentence.isNotBlank()) {
-            val decoderPredictedWords = _uiState.value.wordPrediction.branches.map { "${it.word} (${it.probabilityPct}%)" }
-            val cognitiveInsight = _uiState.value.cognitiveResult?.deepSynthesisText.orEmpty()
-            com.example.service.NeuralContextService.postLiveThoughtNotification(
-                context = getApplication(),
-                thoughtText = sentence,
-                predictedWords = decoderPredictedWords,
-                aiInsight = cognitiveInsight,
-                accuracyPct = conf.toFloat(),
-                isCloud = _uiState.value.cognitiveResult?.isCloudActive == true,
-                heartRateBpm = _uiState.value.heartRateBpm,
-                micDb = _uiState.value.audioDb
-            )
-        }
     }
 
     fun clearDecodedSentence() {
