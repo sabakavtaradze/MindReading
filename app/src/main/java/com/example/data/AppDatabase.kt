@@ -5,10 +5,21 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [PredictionEntity::class, DigitalTwinCheckpointEntity::class], version = 2, exportSchema = false)
+@Database(
+    entities = [
+        PredictionEntity::class,
+        DigitalTwinCheckpointEntity::class,
+        AdaptiveProfileEntity::class,
+        LearnedLexiconWordEntity::class
+    ],
+    version = 3,
+    exportSchema = false
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun predictionDao(): PredictionDao
     abstract fun digitalTwinDao(): DigitalTwinDao
+    abstract fun adaptiveProfileDao(): AdaptiveProfileDao
+    abstract fun learnedLexiconDao(): LearnedLexiconDao
 
     companion object {
         @Volatile

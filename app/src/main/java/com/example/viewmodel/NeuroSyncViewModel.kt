@@ -1244,7 +1244,8 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                         emotionalEntropy = (100f - bayesianState.overallCertaintyPct) / 100f,
                         mentalFatigue = _uiState.value.thoughtCognitiveLoadPct / 100f,
                         focusLevel = _uiState.value.matchPercentage / 100f,
-                        activeThought = _uiState.value.wordDecoder.currentDecodedWord
+                        activeThought = _uiState.value.wordDecoder.currentDecodedWord,
+                        behavioralState = _uiState.value.behavioralPsychology
                     )
                     
                     // Map AI predicted words directly to word prediction branches

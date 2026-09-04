@@ -29,7 +29,13 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.service.AdaptivePersonalProfileEngine
+import com.example.service.GlobalCognitiveWorkspaceEngine
 import com.example.service.HybridCognitiveEngine
+import com.example.service.LocalConsensusArbitrator
+import com.example.service.LocalEpisodicMemoryGraph
+import com.example.service.LocalEvolutionaryBrain
+import com.example.service.LocalNeuralTransformerAi
 import com.example.service.MultiNeuralNetworkEcosystem
 import com.example.service.SpikingNeuralNetworkEngine
 import com.example.ui.theme.AppIcons
@@ -43,7 +49,869 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 @Composable
+fun LocalEvolutionaryBrainCard(localBrain: LocalEvolutionaryBrain.LocalBrainTelemetry) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF0D1B2A),
+                        Color(0xFF1B263B),
+                        Color(0xFF243B55)
+                    )
+                )
+            )
+            .border(1.5.dp, Color(0xFF00E5FF).copy(alpha = 0.55f), RoundedCornerShape(14.dp))
+            .padding(14.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF00E5FF).copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "🧬", fontSize = 14.sp)
+                    }
+                    Column {
+                        Text(
+                            text = "ლოკალური ევოლუციური ტვინი (Local Brain)",
+                            color = Color(0xFF80DEEA),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "ალგორითმული მართვა & უწყვეტი დახვეწა",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFF00E5FF).copy(alpha = 0.2f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "Gen #${localBrain.evolutionGeneration}",
+                            color = Color(0xFFE0F7FA),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFFFFD54F).copy(alpha = 0.25f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "${localBrain.experiencePoints} XP",
+                            color = Color(0xFFFFECB3),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            // Active Strategy Card
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color.Black.copy(alpha = 0.45f))
+                    .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.25f), RoundedCornerShape(10.dp))
+                    .padding(10.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "არჩეული მიდგომა: ${localBrain.activeStrategy.titleKa}",
+                            color = Color(0xFFE0F7FA),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = "${(localBrain.activeStrategy.efficacyScore * 100).toInt()}% ეფექტურობა",
+                            color = Color(0xFF69F0AE),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Text(
+                        text = localBrain.activeStrategy.descriptionKa,
+                        color = Color(0xFFB0BEC5),
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp
+                    )
+
+                    // Efficacy Progress Bar
+                    LinearProgressIndicator(
+                        progress = { localBrain.activeStrategy.efficacyScore },
+                        modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
+                        color = Color(0xFF00E5FF),
+                        trackColor = Color.White.copy(alpha = 0.1f)
+                    )
+
+                    // Adaptation Status Message
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = localBrain.adaptationStatusKa,
+                            color = Color(0xFFFFD54F),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Text(
+                            text = "STDP სინაფსი: ${(localBrain.activeStrategy.synapticWeight * 100).toInt()}%",
+                            color = Color(0xFF80CBC4),
+                            fontSize = 10.sp
+                        )
+                    }
+                }
+            }
+
+            // Algorithmic Plan Steps
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "⚙️ ალგორითმული ორგანიზების გეგმა (Gemini AI + On-Device):",
+                    color = Color(0xFF80DEEA),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                localBrain.algorithmicPlanSteps.forEach { step ->
+                    Row(
+                        modifier = Modifier.padding(start = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(text = "▸", color = Color(0xFF00E5FF), fontSize = 11.sp)
+                        Text(
+                            text = step,
+                            color = Color(0xFFECEFF1),
+                            fontSize = 10.5.sp,
+                            lineHeight = 15.sp
+                        )
+                    }
+                }
+            }
+
+            // Ranked Strategies (Evolutionary Leaderboard)
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = "🏆 სტრატეგიების ევოლუციური რეიტინგი (დაგროვილი გამოცდილება):",
+                    color = Color(0xFFB0BEC5),
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    localBrain.topStrategiesRanked.forEach { rank ->
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.Black.copy(alpha = 0.35f))
+                                .border(1.dp, if (rank.id == localBrain.activeStrategy.id) Color(0xFF00E5FF) else Color.White.copy(alpha = 0.1f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    text = rank.titleKa.take(22) + if (rank.titleKa.length > 22) "…" else "",
+                                    color = if (rank.id == localBrain.activeStrategy.id) Color(0xFF00E5FF) else Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text(
+                                        text = "${rank.efficacyPct}% მოგება",
+                                        color = Color(0xFF69F0AE),
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "გამოყენება: ${rank.usageCount}",
+                                        color = Color(0xFF90A4AE),
+                                        fontSize = 9.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LocalNeuralTransformerAiCard(transformer: LocalNeuralTransformerAi.LocalTransformerTelemetry) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF2A0845),
+                        Color(0xFF1B0A2A),
+                        Color(0xFF0F172A)
+                    )
+                )
+            )
+            .border(1.5.dp, Color(0xFFC084FC).copy(alpha = 0.6f), RoundedCornerShape(14.dp))
+            .padding(14.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFFC084FC).copy(alpha = 0.25f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "⚡", fontSize = 14.sp)
+                    }
+                    Column {
+                        Text(
+                            text = "ლოკალური ნეირო-ტრანსფორმერი (Local AI)",
+                            color = Color(0xFFE9D5FF),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "4-Head Self-Attention • 8-არხიანი Fusion",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFFA855F7).copy(alpha = 0.3f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = if (transformer.isOnlineDistilled) "Distill #${transformer.distillationStepCount}" else "On-Device",
+                            color = Color(0xFFF3E8FF),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFF06B6D4).copy(alpha = 0.25f))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "Norm ${String.format(Locale.US, "%.1f", transformer.latentEmbeddingNorm)}",
+                            color = Color(0xFFCFFAFE),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
+            // Synthesized Thought Box
+            if (transformer.synthesizedThought.isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color.Black.copy(alpha = 0.4f))
+                        .border(1.dp, Color(0xFFA855F7).copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+                        .padding(10.dp)
+                ) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(text = "💡", fontSize = 12.sp)
+                            Text(
+                                text = "ტრანსფორმერის მიერ სინთეზირებული აზრი:",
+                                color = Color(0xFFD8B4FE),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Text(
+                            text = transformer.synthesizedThought,
+                            color = Color(0xFFFAF5FF),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            lineHeight = 17.sp
+                        )
+                    }
+                }
+            }
+
+            // Attention Heatmap across 8 channels
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "🎯 Self-Attention ყურადღების განაწილება (8 არხი):",
+                        color = Color(0xFFD8B4FE),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "დომინანტი: ${transformer.dominantAttentionModality}",
+                        color = Color(0xFFF472B6),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                transformer.attentionDistribution.entries.chunked(2).forEach { rowEntries ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        rowEntries.forEach { entry ->
+                            val isDominant = entry.key == transformer.dominantAttentionModality
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isDominant) Color(0xFFA855F7).copy(alpha = 0.2f) else Color.Black.copy(alpha = 0.3f))
+                                    .border(
+                                        1.dp,
+                                        if (isDominant) Color(0xFFEC4899).copy(alpha = 0.5f) else Color.White.copy(alpha = 0.08f),
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = entry.key,
+                                            color = if (isDominant) Color(0xFFF472B6) else Color(0xFFCBD5E1),
+                                            fontSize = 10.sp,
+                                            fontWeight = if (isDominant) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                        Text(
+                                            text = "${(entry.value * 100).roundToInt()}%",
+                                            color = if (isDominant) Color(0xFFF472B6) else Color(0xFF94A3B8),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    LinearProgressIndicator(
+                                        progress = { entry.value.coerceIn(0f, 1f) },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(3.dp)
+                                            .clip(CircleShape),
+                                        color = if (isDominant) Color(0xFFEC4899) else Color(0xFFA855F7),
+                                        trackColor = Color.White.copy(alpha = 0.1f)
+                                    )
+                                }
+                            }
+                        }
+                        if (rowEntries.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+
+            // Next-Token Predictions from Transformer Decoder
+            if (transformer.predictedTokens.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = "🔮 დეკოდერის პროგნოზირებული ტოკენები (Cross-Entropy):",
+                        color = Color(0xFFCBD5E1),
+                        fontSize = 10.5.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Row(
+                        modifier = Modifier.horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        transformer.predictedTokens.forEachIndexed { idx, pair ->
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF3B0764).copy(alpha = 0.45f))
+                                    .border(1.dp, Color(0xFFC084FC).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 8.dp, vertical = 5.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Text(
+                                        text = "#${idx + 1} ${pair.first}",
+                                        color = Color.White,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF10B981).copy(alpha = 0.25f))
+                                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                                    ) {
+                                        Text(
+                                            text = "${(pair.second * 100).roundToInt()}%",
+                                            color = Color(0xFF6EE7B7),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Knowledge Distillation Status
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color.White.copy(alpha = 0.05f))
+                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (transformer.isOnlineDistilled)
+                        "✨ Cloud AI ცოდნის დისტილაცია (Online Calibration)"
+                    else
+                        "🔒 100% On-Device ავტონომიური Self-Attention რეჟიმი",
+                    color = if (transformer.isOnlineDistilled) Color(0xFFFDE047) else Color(0xFF94A3B8),
+                    fontSize = 9.5.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "${transformer.activeMultiModalChannelsCount}/8 არხი",
+                    color = Color(0xFFA78BFA),
+                    fontSize = 9.5.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AdaptivePersonalProfileCard(
+    profile: AdaptivePersonalProfileEngine.AdaptivePersonalProfile,
+    guidance: String = ""
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF064E3B),
+                        Color(0xFF065F46),
+                        Color(0xFF0F172A)
+                    )
+                )
+            )
+            .border(1.5.dp, Color(0xFF10B981).copy(alpha = 0.6f), RoundedCornerShape(14.dp))
+            .padding(14.dp)
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            // Header
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF10B981).copy(alpha = 0.25f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "🎯", fontSize = 14.sp)
+                    }
+                    Column {
+                        Text(
+                            text = "ინდივიდუალური ადაპტაციური პროფილი",
+                            color = Color(0xFFA7F3D0),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "ავტონომიური თვით-კალიბრაცია & ბაზისები",
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.ExtraBold
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFF10B981).copy(alpha = 0.25f))
+                        .border(1.dp, Color(0xFF10B981), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "${profile.personalAdaptationScorePct}% მორგება",
+                        color = Color(0xFF6EE7B7),
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            // Baselines Grid
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.Black.copy(alpha = 0.35f))
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "ბაზისური HR (პულსი)",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 9.sp
+                    )
+                    Text(
+                        text = "${profile.baselineHeartRateBpm.toInt()} BPM",
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Δ = ${String.format(Locale.US, "%+.1f", profile.currentHrDeviationFromBaseline)} BPM",
+                        color = if (profile.currentHrDeviationFromBaseline > 3f) Color(0xFFF87171) else Color(0xFF6EE7B7),
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.Black.copy(alpha = 0.35f))
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "მოსვენების გუგა",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 9.sp
+                    )
+                    Text(
+                        text = "${String.format(Locale.US, "%.2f", profile.baselinePupilDiameterMm)} მმ",
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Δ = ${String.format(Locale.US, "%+.2f", profile.currentPupilDeviationFromBaselineMm)} მმ",
+                        color = Color(0xFF6EE7B7),
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.Black.copy(alpha = 0.35f))
+                        .padding(8.dp)
+                ) {
+                    Text(
+                        text = "რეაქციის ლატენტობა",
+                        color = Color(0xFF94A3B8),
+                        fontSize = 9.sp
+                    )
+                    Text(
+                        text = "${profile.baselineReactionLatencyMs} ms",
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = profile.circadianChronotype.take(12),
+                        color = Color(0xFF38BDF8),
+                        fontSize = 9.5.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+
+            // Adaptation State Footer
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(Color.White.copy(alpha = 0.05f))
+                    .padding(horizontal = 8.dp, vertical = 5.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "🌱 ${profile.adaptationStateDescription}",
+                    color = Color(0xFFA7F3D0),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = "სულ: ${profile.totalLifetimeInferences} ციკლი • XP: ${profile.totalExperiencePoints}",
+                    color = Color(0xFFFDE047),
+                    fontSize = 9.5.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // Behavioral Guidance Banner if present
+            if (guidance.isNotBlank()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFF0284C7).copy(alpha = 0.2f))
+                        .border(1.dp, Color(0xFF38BDF8).copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                        .padding(8.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(text = "🧭", fontSize = 13.sp)
+                        Text(
+                            text = guidance,
+                            color = Color(0xFFE0F2FE),
+                            fontSize = 11.sp,
+                            lineHeight = 15.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun CognitiveInsightsTab(result: HybridCognitiveEngine.CognitiveResult?) {
+    // 0. Adaptive Personal Profile & Baselines Card
+    result?.adaptiveProfile?.let { profile ->
+        AdaptivePersonalProfileCard(
+            profile = profile,
+            guidance = result.behavioralGuidance
+        )
+    }
+
+    // 1. Active Cognitive Task & Solution Card
+    if (!result?.activeCognitiveTask.isNullOrBlank()) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(14.dp))
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF1E1B4B),
+                            Color(0xFF0F172A)
+                        )
+                    )
+                )
+                .border(1.5.dp, Color(0xFF6366F1).copy(alpha = 0.6f), RoundedCornerShape(14.dp))
+                .padding(14.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xFF6366F1).copy(alpha = 0.3f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = "🎯", fontSize = 13.sp)
+                    }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "კოგნიტური ამოცანის ამოხსნა (AI Task Solver)",
+                            color = Color(0xFFA5B4FC),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = result?.activeCognitiveTask.orEmpty(),
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFF6366F1).copy(alpha = 0.25f))
+                            .padding(horizontal = 6.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = result?.taskCategory.orEmpty(),
+                            color = Color(0xFFC7D2FE),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                if (!result?.cognitiveTaskSolution.isNullOrBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color.Black.copy(alpha = 0.4f))
+                            .border(1.dp, Color(0xFF818CF8).copy(alpha = 0.2f), RoundedCornerShape(10.dp))
+                            .padding(10.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                text = "💡 AI გადაწყვეტა & აზროვნების დახმარება:",
+                                color = Color(0xFFFDE047),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = result?.cognitiveTaskSolution.orEmpty(),
+                                color = Color(0xFFF1F5F9),
+                                fontSize = 12.sp,
+                                lineHeight = 17.sp
+                            )
+                        }
+                    }
+                }
+
+                if (result?.taskReasoningSteps?.isNotEmpty() == true) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "🪜 ეტაპობრივი ამოხსნის საფეხურები:",
+                            color = Color(0xFF94A3B8),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        result.taskReasoningSteps.forEach { step ->
+                            Row(
+                                modifier = Modifier.padding(start = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Text(text = "•", color = Color(0xFF60A5FA), fontSize = 12.sp)
+                                Text(
+                                    text = step,
+                                    color = Color(0xFFE2E8F0),
+                                    fontSize = 11.sp,
+                                    lineHeight = 16.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                if (!result?.thinkingAidAdvice.isNullOrBlank()) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF0284C7).copy(alpha = 0.15f))
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "⚡", fontSize = 12.sp)
+                        Text(
+                            text = "რჩევა აზროვნებისთვის: ${result.thinkingAidAdvice}",
+                            color = Color(0xFFBAE6FD),
+                            fontSize = 11.sp
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. Self-Evolving Local Brain (Reinforcement & Evolutionary Meta-Learning)
+    result?.localBrainTelemetry?.let { localBrain ->
+        LocalEvolutionaryBrainCard(localBrain = localBrain)
+    }
+
+    // 3. On-Device Neural Transformer AI (Self-Attention & Latent Space Synthesis)
+    result?.localTransformerTelemetry?.let { transformer ->
+        LocalNeuralTransformerAiCard(transformer = transformer)
+    }
+
     val synthesisText = result?.deepSynthesisText
         ?: "სააზროვნო ბირთვი ამუშავებს მზა ანალიტიკას (კამერა, მიკროფონი, სენსორები)..."
 
@@ -1004,3 +1872,482 @@ fun CognitiveMeshBusTab(result: HybridCognitiveEngine.CognitiveResult?) {
         }
     }
 }
+
+// ==========================================
+// ⚖️ SYSTEM 2 ARBITRATOR & GLOBAL WORKSPACE TAB
+// ==========================================
+@Composable
+fun CognitiveArbitratorWorkspaceTab(result: HybridCognitiveEngine.CognitiveResult?) {
+    val workspace = result?.globalWorkspaceTelemetry
+    val arbitrator = result?.consensusVerdict
+    val broadcast = workspace?.activeBroadcast
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // 1. Conscious Broadcast Banner (Global Attention Winner)
+        if (broadcast != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(
+                                Color(0xFF00E5FF).copy(alpha = 0.18f),
+                                Color(0xFF7C4DFF).copy(alpha = 0.25f)
+                            )
+                        )
+                    )
+                    .border(1.2.dp, Color(0xFF00E5FF).copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+                    .padding(12.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(text = "🌐", fontSize = 14.sp)
+                            Text(
+                                text = "ცნობიერების გლობალური მაუწყებლობა",
+                                color = Color(0xFF00E5FF),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(Color(0xFF00E5FF).copy(alpha = 0.15f))
+                                .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 7.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "კოჰერენტულობა: ${broadcast.globalCoherencePct}%",
+                                color = Color(0xFF00E5FF),
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "„${broadcast.winningHypothesis}“",
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 17.sp
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "გამარჯვებული აგენტი: ${broadcast.winningAgentNameKa}",
+                            color = Color(0xFFE0F7FA),
+                            fontSize = 10.5.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Text(
+                            text = "${workspace.registeredAgentsCount} ლოკალური ქსელი",
+                            color = NeuralTextSecondary,
+                            fontSize = 10.sp
+                        )
+                    }
+
+                    // Feedback directive across networks
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.Black.copy(alpha = 0.35f))
+                            .padding(8.dp)
+                    ) {
+                        Text(
+                            text = "⚡ ${broadcast.broadcastFeedbackDirectiveKa}",
+                            color = Color(0xFFA7F3D0),
+                            fontSize = 10.sp,
+                            lineHeight = 13.sp
+                        )
+                    }
+                }
+            }
+        }
+
+        // 2. System 2 Deliberation Arbitrator & Verifier
+        if (arbitrator != null) {
+            val badgeColor = Color(arbitrator.verdictType.badgeColorHex)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(NeuralSurface.copy(alpha = 0.7f))
+                    .border(1.dp, badgeColor.copy(alpha = 0.45f), RoundedCornerShape(12.dp))
+                    .padding(12.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(text = "⚖️", fontSize = 13.sp)
+                            Text(
+                                text = "System 2 არბიტრი & კრიტიკოსი",
+                                color = Color.White,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(badgeColor.copy(alpha = 0.15f))
+                                .border(1.dp, badgeColor.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                                .padding(horizontal = 7.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = arbitrator.verdictType.labelKa,
+                                color = badgeColor,
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Progress Meters: Consensus & Somatic Congruence
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = "კონსენსუსი:", color = NeuralTextSecondary, fontSize = 10.sp)
+                                Text(
+                                    text = "${arbitrator.consensusScorePct}%",
+                                    color = badgeColor,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(3.dp))
+                            LinearProgressIndicator(
+                                progress = { arbitrator.consensusScorePct / 100f },
+                                modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
+                                color = badgeColor,
+                                trackColor = Color.White.copy(alpha = 0.1f)
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(text = "🫀 სომატური თანხვედრა:", color = NeuralTextSecondary, fontSize = 10.sp)
+                                Text(
+                                    text = "${arbitrator.somaticCongruencePct}%",
+                                    color = Color(0xFF38BDF8),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(3.dp))
+                            LinearProgressIndicator(
+                                progress = { arbitrator.somaticCongruencePct / 100f },
+                                modifier = Modifier.fillMaxWidth().height(4.dp).clip(CircleShape),
+                                color = Color(0xFF38BDF8),
+                                trackColor = Color.White.copy(alpha = 0.1f)
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = arbitrator.arbitrationExplanationKa,
+                        color = Color(0xFFE2E8F0),
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp
+                    )
+
+                    // Deliberation Trace Steps
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "დელიბერაციის ლოგიკური ნაბიჯები:",
+                            color = NeuralTextSecondary,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        arbitrator.deliberationSteps.take(4).forEach { step ->
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(Color.Black.copy(alpha = 0.25f))
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = step,
+                                    color = Color(0xFFF1F5F9),
+                                    fontSize = 10.sp,
+                                    lineHeight = 13.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. The Global Blackboard: Active Competing Proposals
+        if (broadcast != null && broadcast.proposals.isNotEmpty()) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "📋 გლობალური სამუშაო დაფა (Blackboard) — შეჯიბრი:",
+                    color = NeuralTextSecondary,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                broadcast.proposals.forEach { prop ->
+                    val isWinning = prop.agentId == broadcast.winningAgentId
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(if (isWinning) NeuralAccent.copy(alpha = 0.15f) else NeuralSurface.copy(alpha = 0.6f))
+                            .border(
+                                width = 1.dp,
+                                color = if (isWinning) NeuralAccent else Color.White.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .padding(8.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Text(text = prop.icon, fontSize = 12.sp)
+                                    Text(
+                                        text = prop.agentNameKa,
+                                        color = if (isWinning) NeuralAccent else Color.White,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    if (isWinning) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(4.dp))
+                                                .background(NeuralAccent.copy(alpha = 0.2f))
+                                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                        ) {
+                                            Text(
+                                                text = "გამარჯვებული",
+                                                color = NeuralAccent,
+                                                fontSize = 8.5.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+                                Text(
+                                    text = "${prop.confidenceScorePct}% რწმენა",
+                                    color = if (isWinning) NeuralAccent else NeuralTextSecondary,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Text(
+                                text = "ჰიპოთეზა: ${prop.proposedHypothesis}",
+                                color = Color(0xFFF1F5F9),
+                                fontSize = 10.5.sp,
+                                lineHeight = 14.sp
+                            )
+                            Text(
+                                text = prop.telemetryDetail,
+                                color = NeuralTextSecondary,
+                                fontSize = 9.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ==========================================
+// 🔮 LOCAL EPISODIC MEMORY GRAPH TAB
+// ==========================================
+@Composable
+fun CognitiveEpisodicMemoryTab(result: HybridCognitiveEngine.CognitiveResult?) {
+    val recall = result?.episodicMemoryRecall
+    val topMatch = recall?.topMatch
+
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Nearest Recall Banner
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color(0xFFFFD600).copy(alpha = 0.15f),
+                            Color(0xFF00E5FF).copy(alpha = 0.12f)
+                        )
+                    )
+                )
+                .border(1.dp, Color(0xFFFFD600).copy(alpha = 0.45f), RoundedCornerShape(12.dp))
+                .padding(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(text = "🔮", fontSize = 13.sp)
+                        Text(
+                            text = "ასოციაციური ეპიზოდური მეხსიერება",
+                            color = Color(0xFFFFD600),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFFFFD600).copy(alpha = 0.15f))
+                            .border(1.dp, Color(0xFFFFD600).copy(alpha = 0.4f), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 7.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "${recall?.similarityScorePct ?: 0}% Cos-Sim",
+                            color = Color(0xFFFFD600),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Text(
+                    text = recall?.associativeExplanationKa ?: "ეპიზოდური მეხსიერების ანალიზი...",
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    lineHeight = 15.sp
+                )
+
+                if (topMatch != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.Black.copy(alpha = 0.35f))
+                            .padding(8.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Text(
+                                text = "ანალოგიური გამოცდილება: „${topMatch.decodedThought}“",
+                                color = Color(0xFFFFF9C4),
+                                fontSize = 10.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "კატეგორია: ${topMatch.contextCategory}",
+                                    color = NeuralTextSecondary,
+                                    fontSize = 9.sp
+                                )
+                                Text(
+                                    text = "პულსი: ${topMatch.hrBpm.toInt()} BPM • Flow: ${(topMatch.flowIndex * 100).toInt()}%",
+                                    color = NeuralTextSecondary,
+                                    fontSize = 9.sp
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "ინდექსირებული ეპიზოდები: ${recall?.totalIndexedEpisodes ?: 0}",
+                        color = NeuralTextSecondary,
+                        fontSize = 9.5.sp
+                    )
+                    Text(
+                        text = "16-განზომილებიანი Cos-Sim ინფერენცია",
+                        color = Color(0xFF00E5FF),
+                        fontSize = 9.5.sp
+                    )
+                }
+            }
+        }
+
+        // Nearest Neighbors List
+        if (recall?.nearestNeighbors?.isNotEmpty() == true) {
+            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                Text(
+                    text = "უახლოესი ასოციაციური მეზობლები:",
+                    color = NeuralTextSecondary,
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+                recall.nearestNeighbors.forEach { (thoughtExcerpt, simScore) ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(NeuralSurface.copy(alpha = 0.6f))
+                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 6.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = thoughtExcerpt,
+                                color = Color(0xFFF1F5F9),
+                                fontSize = 10.sp
+                            )
+                            Text(
+                                text = "$simScore% მსგავსება",
+                                color = Color(0xFFFFD600),
+                                fontSize = 9.5.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

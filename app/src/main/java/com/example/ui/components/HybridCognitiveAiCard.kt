@@ -408,7 +408,7 @@ fun HybridCognitiveAiCard(
             // ==========================================
             // 🧠 COGNITIVE LOGIC, ALGORITHMS, MULTI-NEURAL ECOSYSTEM & CONCEPTS
             // ==========================================
-            var cognitiveSubTab by remember { mutableStateOf(0) } // 0: Insights, 1: Logic Chain, 2: Algorithm Tree, 3: SNN Network, 4: HTM Cortical Columns, 5: Hopfield Memory, 6: Concept Hierarchy, 7: Neural Mesh Bus
+            var cognitiveSubTab by remember { mutableStateOf(0) } // 0: Insights, 1: Arbitrator & Workspace, 2: Episodic Memory, 3: Logic, 4: Algo, 5: SNN, 6: HTM, 7: Hopfield, 8: Concepts, 9: Mesh Bus
 
             Row(
                 modifier = Modifier
@@ -419,7 +419,7 @@ fun HybridCognitiveAiCard(
                     .padding(4.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                val tabs = listOf("💡 ინსაითი", "🔗 ლოგიკა", "⚡ ალგორითმი", "🧠 SNN", "🧬 HTM სვეტები", "🔮 Hopfield", "📊 კონცეფცია", "🌐 ნეირო-ხიდი (Mesh)")
+                val tabs = listOf("💡 ინსაითი", "⚖️ არბიტრი & Workspace", "🔮 ეპიზოდები", "🔗 ლოგიკა", "⚡ ალგორითმი", "🧠 SNN", "🧬 HTM სვეტები", "🔮 Hopfield", "📊 კონცეფცია", "🌐 ნეირო-ხიდი (Mesh)")
                 tabs.forEachIndexed { index, label ->
                     val selected = cognitiveSubTab == index
                     Box(
@@ -447,13 +447,15 @@ fun HybridCognitiveAiCard(
 
             when (cognitiveSubTab) {
                 0 -> CognitiveInsightsTab(result)
-                1 -> CognitiveLogicTab(result)
-                2 -> CognitiveAlgorithmsTab(result)
-                3 -> CognitiveSnnTab(result)
-                4 -> CognitiveHtmTab(result)
-                5 -> CognitiveHopfieldTab(result)
-                6 -> CognitiveConceptsTab(result)
-                7 -> CognitiveMeshBusTab(result)
+                1 -> CognitiveArbitratorWorkspaceTab(result)
+                2 -> CognitiveEpisodicMemoryTab(result)
+                3 -> CognitiveLogicTab(result)
+                4 -> CognitiveAlgorithmsTab(result)
+                5 -> CognitiveSnnTab(result)
+                6 -> CognitiveHtmTab(result)
+                7 -> CognitiveHopfieldTab(result)
+                8 -> CognitiveConceptsTab(result)
+                9 -> CognitiveMeshBusTab(result)
             }
         }
     }

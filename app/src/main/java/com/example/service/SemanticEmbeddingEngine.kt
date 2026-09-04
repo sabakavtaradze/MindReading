@@ -48,6 +48,14 @@ object SemanticEmbeddingEngine {
     }
 
     /**
+     * Retrieve 32-dimensional embedding vector for a given word
+     */
+    fun getWordEmbedding(word: String): FloatArray {
+        val clean = word.trim().lowercase(Locale.ROOT)
+        return wordEmbeddings[clean] ?: DOMAIN_CENTROIDS["COMMON"]!!
+    }
+
+    /**
      * Compute cosine similarity between two vectors
      */
     fun cosineSimilarity(v1: FloatArray, v2: FloatArray): Float {

@@ -96,6 +96,26 @@ object AutonomousDynamicLexiconLearner {
     }
 
     /**
+     * Loads persisted words from Room Database upon startup
+     */
+    fun loadPersistedWords(words: List<com.example.data.LearnedLexiconWordEntity>) {
+        for (w in words) {
+            GeorgianNeuroLinguisticEngine.registerNewLearnedWord(
+                word = w.word,
+                category = w.category,
+                definition = w.definition,
+                synonyms = if (w.synonyms.isNotBlank()) w.synonyms.split(",") else emptyList()
+            )
+            synchronized(recentlyLearnedTokens) {
+                if (recentlyLearnedTokens.none { it.token.equals(w.word, ignoreCase = true) }) {
+                    recentlyLearnedTokens.add(DynamicLearnedToken(w.word, w.category, w.originSource, w.addedTimestampMs))
+                }
+            }
+        }
+        totalLearnedTokensCount += words.size
+    }
+
+    /**
      * Registers word into Georgian linguistic engine and continual learning engine
      */
     fun registerNewDiscoveredWord(word: String, category: String, source: String): Boolean {
@@ -117,6 +137,14 @@ object AutonomousDynamicLexiconLearner {
                 }
             }
             totalLearnedTokensCount++
+
+            // Persist to Room Database asynchronously
+            AdaptivePersonalProfileEngine.persistNewLearnedWord(
+                word = clean,
+                category = category,
+                source = source,
+                definition = "ავტონომიურად გარედან მოძიებული / სინთეზირებული ცნება ($source)"
+            )
 
             // Also register baseline in Continual Self-Learning Engine
             ContinualSelfLearningEngine.recordUserFeedback(

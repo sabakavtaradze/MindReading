@@ -205,10 +205,18 @@ class NeuralContextService : Service() {
     /**
      * Updates notification in real-time with clean, focused AI thoughts and predicted words.
      */
+    /**
+     * Updates notification in real-time with internal neural processes, recognized words, and cognitive task solver.
+     */
     private fun updateNotificationLive(
         thoughtText: String,
         predictedWords: List<String> = emptyList(),
+        recognizedWords: List<String> = emptyList(),
+        internalProcess: String = "",
+        activeTask: String = "",
+        taskSolution: String = "",
         aiInsight: String = "",
+        localBrainInfo: String = "",
         accuracyPct: Float = 98.5f,
         isCloud: Boolean = true
     ) {
@@ -223,29 +231,45 @@ class NeuralContextService : Service() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
 
-            val title = "🎯 AI აზრი: $thoughtText"
+            val title = if (activeTask.isNotBlank()) "🎯 $activeTask" else "🧠 AI აზრი: $thoughtText"
             val subText = if (isCloud) "🌐 Cloud Gemini AI • ${String.format(Locale.US, "%.1f", accuracyPct)}%" else "⚡ On-Device AI • ${String.format(Locale.US, "%.1f", accuracyPct)}%"
 
-            val collapsedSummary = if (predictedWords.isNotEmpty()) {
-                "🔮 შემდეგი სიტყვები: ${predictedWords.take(4).joinToString(", ")}"
-            } else if (aiInsight.isNotBlank()) {
-                aiInsight
-            } else {
-                thoughtText
+            val collapsedSummary = when {
+                taskSolution.isNotBlank() -> "💡 გადაწყვეტა: $taskSolution"
+                localBrainInfo.isNotBlank() -> "🧬 $localBrainInfo"
+                recognizedWords.isNotEmpty() -> "📚 ამოცნობილი სიტყვები: ${recognizedWords.take(4).joinToString(", ")}"
+                predictedWords.isNotEmpty() -> "🔮 პროგნოზი: ${predictedWords.take(4).joinToString(", ")}"
+                else -> thoughtText
             }
 
             val expandedText = buildString {
-                append("🎯 AI ნამსჯელები აზრი:\n")
-                append(thoughtText)
+                if (localBrainInfo.isNotBlank()) {
+                    append("🧬 ლოკალური ევოლუციური ტვინი:\n$localBrainInfo\n\n")
+                }
+                if (activeTask.isNotBlank()) {
+                    append("🎯 აქტიური ამოცანა: $activeTask\n")
+                    if (taskSolution.isNotBlank()) {
+                        append("💡 ამოხსნა / დახმარება: $taskSolution\n\n")
+                    }
+                }
+                append("🧠 ნეირო-აზრი:\n$thoughtText\n\n")
+                if (recognizedWords.isNotEmpty()) {
+                    append("📚 სისტემის მიერ ამოცნობილი სიტყვები:\n")
+                    append(recognizedWords.take(6).joinToString(" • "))
+                    append("\n\n")
+                }
                 if (predictedWords.isNotEmpty()) {
-                    append("\n\n🔮 პროგნოზირებული სიტყვები:\n")
-                    append(predictedWords.joinToString(" • "))
+                    append("🔮 შემდეგი სიტყვების პროგნოზი:\n")
+                    append(predictedWords.take(6).joinToString(" • "))
+                    append("\n\n")
+                }
+                if (internalProcess.isNotBlank()) {
+                    append("⚙️ შიდა ნეირო-პროცესები:\n$internalProcess\n\n")
                 }
                 if (aiInsight.isNotBlank()) {
-                    append("\n\n💡 AI კონტექსტური ანალიზი:\n")
-                    append(aiInsight)
+                    append("🔬 კოგნიტური ანალიტიკა:\n$aiInsight")
                 }
-            }
+            }.trimEnd()
 
             val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(title)
@@ -338,11 +362,31 @@ class NeuralContextService : Service() {
                         emptyList()
                     }
 
-                    // 3. Update the persistent notification with clean, focused AI thoughts & predicted words
+                    val recognizedWords = cognitiveResult?.recentlyDiscoveredWords?.takeIf { it.isNotEmpty() }
+                        ?: AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens().map { it.token }.take(6)
+
+                    val snnCluster = cognitiveResult?.snnTelemetry?.dominantActiveCluster?.labelKa ?: "ფრონტალური"
+                    val snnSpikes = cognitiveResult?.snnTelemetry?.totalSpikesPerSec?.toInt() ?: 0
+                    val htmColumns = cognitiveResult?.ecosystemTelemetry?.htmTelemetry?.activeColumnsCount ?: 0
+                    val hopfieldPattern = cognitiveResult?.ecosystemTelemetry?.hopfieldTelemetry?.recalledPatternLabel ?: "ნეირო-ჰარმონია"
+                    val internalProcessDesc = "SNN კლასტერი: $snnCluster ($snnSpikes Hz) • HTM: $htmColumns/40 სვეტი • Hopfield: „$hopfieldPattern“"
+
+                    val activeTask = cognitiveResult?.activeCognitiveTask.orEmpty()
+                    val taskSol = cognitiveResult?.cognitiveTaskSolution.orEmpty()
+                    val localBrainInfo = cognitiveResult?.localBrainTelemetry?.let { lb ->
+                        "თაობა #${lb.evolutionGeneration} • ${lb.activeStrategy.titleKa} (${(lb.activeStrategy.efficacyScore * 100).toInt()}%) • ${lb.adaptationStatusKa}"
+                    }.orEmpty()
+
+                    // 3. Update the persistent notification with internal processes, recognized words, task solution & local brain
                     updateNotificationLive(
                         thoughtText = dynamicSentence,
                         predictedWords = predictedWordsList,
+                        recognizedWords = recognizedWords,
+                        internalProcess = internalProcessDesc,
+                        activeTask = activeTask,
+                        taskSolution = taskSol,
                         aiInsight = insightText,
+                        localBrainInfo = localBrainInfo,
                         accuracyPct = accuracy,
                         isCloud = isCloud
                     )
