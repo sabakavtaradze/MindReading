@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import com.example.service.AdaptivePersonalProfileEngine
 import com.example.service.GlobalCognitiveWorkspaceEngine
 import com.example.service.HybridCognitiveEngine
+import com.example.service.LocalAdversarialSelfPlayEngine
 import com.example.service.LocalConsensusArbitrator
 import com.example.service.LocalEpisodicMemoryGraph
 import com.example.service.LocalEvolutionaryBrain
@@ -2350,4 +2351,357 @@ fun CognitiveEpisodicMemoryTab(result: HybridCognitiveEngine.CognitiveResult?) {
         }
     }
 }
+
+/**
+ * 🥊 Local Adversarial Self-Play Arena Composable (ორმხრივი შეჯიბრი და თვით-სწავლება)
+ * Visualizes the on-device sparring arena between Proposer (Generator) and Skeptic (Adversary Critic).
+ */
+@Composable
+fun CognitiveAdversarialSelfPlayTab(result: HybridCognitiveEngine.CognitiveResult?) {
+    val selfPlay = result?.adversarialSelfPlayTelemetry
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        // Tournament Header Banner
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(
+                    Brush.horizontalGradient(
+                        listOf(Color(0xFF31103F), Color(0xFF1E1B4B), Color(0xFF140D26))
+                    )
+                )
+                .border(1.dp, Color(0xFFD946EF).copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                .padding(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(text = "🥊", fontSize = 16.sp)
+                        Text(
+                            text = "ორმხრივი შეჯიბრი და თვით-სწავლება",
+                            color = Color(0xFFF5D0FE),
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xFFD946EF).copy(alpha = 0.25f))
+                            .border(1.dp, Color(0xFFD946EF).copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text(
+                            text = "რაუნდი #${selfPlay?.tournamentRound ?: 25}",
+                            color = Color(0xFFF0ABFC),
+                            fontSize = 9.5.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
+                Text(
+                    text = "100% On-Device Reinforcement Learning through Self-Play (RLSP): პროპოზერი (Generator) და სკეპტიკოსი (Adversary Critic) ეჯიბრებიან ერთმანეთს ჰიპოთეზების გამოსაწრთობად და ჰალუცინაციების აღმოსაფხვრელად.",
+                    color = NeuralTextSecondary,
+                    fontSize = 10.sp,
+                    lineHeight = 14.sp
+                )
+            }
+        }
+
+        // Elo Rating & Battle Cards
+        val genElo = selfPlay?.generatorElo ?: 1528
+        val advElo = selfPlay?.adversaryElo ?: 1506
+        val totalElo = (genElo + advElo).toFloat()
+        val genRatio = (genElo / totalElo).coerceIn(0.2f, 0.8f)
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(NeuralSurface.copy(alpha = 0.85f))
+                .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                .padding(12.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    // Generator Agent
+                    Column(horizontalAlignment = Alignment.Start) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(text = "⚡", fontSize = 12.sp)
+                            Text(text = "პროპოზერი (Gen)", color = Color(0xFF38BDF8), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Text(text = "Elo: $genElo", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                    }
+
+                    // VS Badge & Last Winner
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.1f))
+                                .padding(horizontal = 8.dp, vertical = 2.dp)
+                        ) {
+                            Text(text = "VS", color = Color(0xFFFFD600), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Text(
+                            text = "გამარჯვებული: ${selfPlay?.currentWinnerNameKa ?: "⚡ პროპოზერი"} (Δ${selfPlay?.eloDelta ?: 8})",
+                            color = Color(0xFFA7F3D0),
+                            fontSize = 8.5.sp
+                        )
+                    }
+
+                    // Adversary Agent
+                    Column(horizontalAlignment = Alignment.End) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(text = "სკეპტიკოსი (Adv)", color = Color(0xFFFB7185), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(text = "🛡️", fontSize = 12.sp)
+                        }
+                        Text(text = "Elo: $advElo", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold)
+                    }
+                }
+
+                // Balance of Power Bar
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(text = "გენერატორის უპირატესობა: ${(genRatio * 100).toInt()}%", color = Color(0xFF38BDF8), fontSize = 9.sp)
+                        Text(text = "სკეპტიკოსის წნეხი: ${((1f - genRatio) * 100).toInt()}%", color = Color(0xFFFB7185), fontSize = 9.sp)
+                    }
+                    LinearProgressIndicator(
+                        progress = { genRatio },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp)),
+                        color = Color(0xFF38BDF8),
+                        trackColor = Color(0xFFFB7185)
+                    )
+                }
+
+                // Key Metrics Triple Grid
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    // Robustness Metric
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF10B981).copy(alpha = 0.15f))
+                            .border(1.dp, Color(0xFF10B981).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                            .padding(8.dp)
+                    ) {
+                        Column {
+                            Text(text = "სიმტკიცე", color = Color(0xFFA7F3D0), fontSize = 9.sp)
+                            Text(
+                                text = "${selfPlay?.stressTestedRobustnessPct ?: 88}%",
+                                color = Color(0xFF34D399),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Tension Metric
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFFF59E0B).copy(alpha = 0.15f))
+                            .border(1.dp, Color(0xFFF59E0B).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                            .padding(8.dp)
+                    ) {
+                        Column {
+                            Text(text = "დაძაბულობა", color = Color(0xFFFDE68A), fontSize = 9.sp)
+                            Text(
+                                text = "${selfPlay?.adversarialTensionPct ?: 42}%",
+                                color = Color(0xFFFBBF24),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Prevented Hallucinations
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color(0xFF6366F1).copy(alpha = 0.15f))
+                            .border(1.dp, Color(0xFF6366F1).copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                            .padding(8.dp)
+                    ) {
+                        Column {
+                            Text(text = "შეცდომა აცილდა", color = Color(0xFFC7D2FE), fontSize = 9.sp)
+                            Text(
+                                text = "${selfPlay?.preventedHallucinationsCount ?: 38}",
+                                color = Color(0xFF818CF8),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        // Active Duel Arena: Thesis vs Antithesis -> Hardened Synthesis
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(
+                text = "აქტიური დიალექტიკური დუელი (თეზისი vs ანტითეზისი):",
+                color = NeuralTextSecondary,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            // 1. Thesis (Proposer)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFF0284C7).copy(alpha = 0.12f))
+                    .border(1.dp, Color(0xFF0284C7).copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+                    .padding(10.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(text = "⚡", fontSize = 11.sp)
+                        Text(text = "თეზისი (პროპოზერის ჰიპოთეზა):", color = Color(0xFF38BDF8), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        text = selfPlay?.thesisProposition ?: result?.synthesizedThoughtSentence.orEmpty(),
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp
+                    )
+                }
+            }
+
+            // 2. Antithesis (Skeptic Adversary)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color(0xFFBE123C).copy(alpha = 0.12f))
+                    .border(1.dp, Color(0xFFBE123C).copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+                    .padding(10.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(text = "🛡️", fontSize = 11.sp)
+                            Text(text = "ანტითეზისი (სკეპტიკოსის კრიტიკა & სტრეს-ტესტი):", color = Color(0xFFFB7185), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Text(
+                            text = selfPlay?.activeDebateCategory ?: "სომატური შემოწმება",
+                            color = Color(0xFFFFD600),
+                            fontSize = 8.5.sp
+                        )
+                    }
+                    Text(
+                        text = selfPlay?.antithesisChallenge ?: "სკეპტიკოსი ამოწმებს ბიომეტრიულ და ნეირონულ შესაბამისობას...",
+                        color = Color(0xFFFECDD3),
+                        fontSize = 11.sp,
+                        lineHeight = 15.sp
+                    )
+                }
+            }
+
+            // 3. Hardened Synthesis
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(Color(0xFF064E3B).copy(alpha = 0.8f), Color(0xFF042F2E).copy(alpha = 0.8f))
+                        )
+                    )
+                    .border(1.5.dp, Color(0xFF10B981).copy(alpha = 0.6f), RoundedCornerShape(10.dp))
+                    .padding(10.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(text = "💎", fontSize = 11.sp)
+                        Text(text = "გამყარებული სინთეზი (Hegelian Hardened Output):", color = Color(0xFF34D399), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Text(
+                        text = selfPlay?.dialecticalSynthesis ?: result?.synthesizedThoughtSentence.orEmpty(),
+                        color = Color(0xFFF0FDF4),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 15.sp
+                    )
+                }
+            }
+        }
+
+        // Sparring History List
+        if (selfPlay?.sparringHistory?.isNotEmpty() == true) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = "თვით-სწავლების ისტორია & ტურნირის რაუნდები:",
+                    color = NeuralTextSecondary,
+                    fontSize = 10.5.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                selfPlay.sparringHistory.take(4).forEach { exchange ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(NeuralSurface.copy(alpha = 0.6f))
+                            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 10.dp, vertical = 8.dp)
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "რაუნდი #${exchange.roundNumber} • ${exchange.challengeCategoryKa}",
+                                    color = Color(0xFFE2E8F0),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                val statusText = if (exchange.defenseSuccess) "დაცულია ✓" else "კორექტირებულია 🛡️"
+                                val statusColor = if (exchange.defenseSuccess) Color(0xFF34D399) else Color(0xFFFB7185)
+                                Text(text = statusText, color = statusColor, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            }
+                            Text(
+                                text = exchange.hardenedSynthesis,
+                                color = NeuralTextSecondary,
+                                fontSize = 9.5.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 

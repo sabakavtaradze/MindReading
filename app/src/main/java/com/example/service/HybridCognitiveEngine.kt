@@ -44,6 +44,7 @@ class HybridCognitiveEngine(private val context: Context) {
     val episodicMemoryGraph = LocalEpisodicMemoryGraph()
     val consensusArbitrator = LocalConsensusArbitrator()
     val globalWorkspaceEngine = GlobalCognitiveWorkspaceEngine()
+    val adversarialSelfPlayEngine = LocalAdversarialSelfPlayEngine()
     val snnEngine: SpikingNeuralNetworkEngine get() = neuralEcosystem.snnEngine
     val hopfieldEngine: HopfieldMemoryNetwork get() = neuralEcosystem.hopfieldEngine
     val htmEngine: HierarchicalTemporalMemoryEngine get() = neuralEcosystem.htmEngine
@@ -109,7 +110,8 @@ class HybridCognitiveEngine(private val context: Context) {
         val behavioralGuidance: String = "",
         val consensusVerdict: LocalConsensusArbitrator.ConsensusVerdict? = null,
         val globalWorkspaceTelemetry: GlobalCognitiveWorkspaceEngine.GlobalWorkspaceTelemetry? = null,
-        val episodicMemoryRecall: LocalEpisodicMemoryGraph.MemoryRecallResult? = null
+        val episodicMemoryRecall: LocalEpisodicMemoryGraph.MemoryRecallResult? = null,
+        val adversarialSelfPlayTelemetry: LocalAdversarialSelfPlayEngine.SelfPlayTelemetry? = null
     )
 
     /**
@@ -364,9 +366,22 @@ class HybridCognitiveEngine(private val context: Context) {
                     focusLevel = focusLevel
                 )
 
-                // 4. Index experience into Episodic Memory Graph
+                // 4. Local Adversarial Self-Play Sparring
+                val onlineSelfPlay = adversarialSelfPlayEngine.sparAndSelfLearn(
+                    candidateThought = onlineConsensus.system2VerifiedThought,
+                    focusLevel = focusLevel,
+                    emotionalEntropy = emotionalEntropy,
+                    mentalFatigue = mentalFatigue,
+                    microTremorMagnitude = sensors.microTremorMagnitude,
+                    heartRateBpm = currentAdaptiveProfile.baselineHeartRateBpm,
+                    pupilDiameterMm = gaze.opticalPupilDiameterMm,
+                    snnCoherence = updatedEcosystem.snnTelemetry.neuralCoherenceScore,
+                    htmAnomaly = updatedEcosystem.htmTelemetry.anomalyScore
+                )
+
+                // 5. Index experience into Episodic Memory Graph
                 episodicMemoryGraph.recordEpisode(
-                    thought = onlineConsensus.system2VerifiedThought,
+                    thought = onlineSelfPlay.dialecticalSynthesis,
                     category = taskCategory,
                     vector = onlineEpisodicVector,
                     hrBpm = currentAdaptiveProfile.baselineHeartRateBpm,
@@ -377,7 +392,7 @@ class HybridCognitiveEngine(private val context: Context) {
 
                 val latency = System.currentTimeMillis() - startTime
                 return@withContext buildOnlineResult(
-                    thoughtSentence = onlineConsensus.system2VerifiedThought,
+                    thoughtSentence = onlineSelfPlay.dialecticalSynthesis,
                     synthesis = cloudParsed.summary,
                     logicalChain = cloudParsed.logicalChain,
                     algorithmicSteps = cloudParsed.algorithmicSteps,
@@ -406,7 +421,8 @@ class HybridCognitiveEngine(private val context: Context) {
                     behavioralGuidance = cloudParsed.behavioralGuidance,
                     consensusVerdict = onlineConsensus,
                     globalWorkspaceTelemetry = onlineWorkspace,
-                    episodicMemoryRecall = onlineRecall
+                    episodicMemoryRecall = onlineRecall,
+                    adversarialSelfPlayTelemetry = onlineSelfPlay
                 )
             }
         }
@@ -481,9 +497,22 @@ class HybridCognitiveEngine(private val context: Context) {
             focusLevel = focusLevel
         )
 
-        // 4. Index experience into Episodic Memory Graph
+        // 4. Local Adversarial Self-Play Sparring
+        val offlineSelfPlay = adversarialSelfPlayEngine.sparAndSelfLearn(
+            candidateThought = offlineConsensus.system2VerifiedThought,
+            focusLevel = focusLevel,
+            emotionalEntropy = emotionalEntropy,
+            mentalFatigue = mentalFatigue,
+            microTremorMagnitude = sensors.microTremorMagnitude,
+            heartRateBpm = currentAdaptiveProfile.baselineHeartRateBpm,
+            pupilDiameterMm = gaze.opticalPupilDiameterMm,
+            snnCoherence = snnSnapshot.neuralCoherenceScore,
+            htmAnomaly = ecosystemTelemetry.htmTelemetry.anomalyScore
+        )
+
+        // 5. Index experience into Episodic Memory Graph
         episodicMemoryGraph.recordEpisode(
-            thought = offlineConsensus.system2VerifiedThought,
+            thought = offlineSelfPlay.dialecticalSynthesis,
             category = taskCategory,
             vector = offlineEpisodicVector,
             hrBpm = currentAdaptiveProfile.baselineHeartRateBpm,
@@ -503,7 +532,7 @@ class HybridCognitiveEngine(private val context: Context) {
             emotionalEntropy = emotionalEntropy,
             mentalFatigue = mentalFatigue,
             focusLevel = focusLevel,
-            activeThought = activeThought,
+            activeThought = offlineSelfPlay.dialecticalSynthesis,
             activeTask = activeTask,
             taskCategory = taskCategory,
             newHarvestedWords = offlineHarvested,
@@ -514,7 +543,8 @@ class HybridCognitiveEngine(private val context: Context) {
             behavioralGuidance = currentAdaptiveProfile.personalizedGuidance,
             consensusVerdict = offlineConsensus,
             globalWorkspaceTelemetry = offlineWorkspace,
-            episodicMemoryRecall = offlineRecall
+            episodicMemoryRecall = offlineRecall,
+            adversarialSelfPlayTelemetry = offlineSelfPlay
         )
     }
 
@@ -1065,9 +1095,21 @@ class HybridCognitiveEngine(private val context: Context) {
         behavioralGuidance: String = "",
         consensusVerdict: LocalConsensusArbitrator.ConsensusVerdict? = null,
         globalWorkspaceTelemetry: GlobalCognitiveWorkspaceEngine.GlobalWorkspaceTelemetry? = null,
-        episodicMemoryRecall: LocalEpisodicMemoryGraph.MemoryRecallResult? = null
+        episodicMemoryRecall: LocalEpisodicMemoryGraph.MemoryRecallResult? = null,
+        adversarialSelfPlayTelemetry: LocalAdversarialSelfPlayEngine.SelfPlayTelemetry? = null
     ): CognitiveResult {
         val insights = mutableListOf<CognitiveInsight>()
+
+        adversarialSelfPlayTelemetry?.let { sp ->
+            insights.add(
+                CognitiveInsight(
+                    title = "🥊 თვით-სწავლება (Self-Play): ${sp.currentWinnerNameKa}",
+                    description = "რაუნდი #${sp.tournamentRound} • Elo: Gen ${sp.generatorElo} vs Adv ${sp.adversaryElo} (Δ=${sp.eloDelta}) • სიმტკიცე: ${sp.stressTestedRobustnessPct}% • თავიდან აცილებული შეცდომები: ${sp.preventedHallucinationsCount}",
+                    confidence = sp.stressTestedRobustnessPct / 100f,
+                    type = "SELF_PLAY"
+                )
+            )
+        }
 
         consensusVerdict?.let { cv ->
             insights.add(
@@ -1220,7 +1262,8 @@ class HybridCognitiveEngine(private val context: Context) {
             behavioralGuidance = behavioralGuidance,
             consensusVerdict = consensusVerdict,
             globalWorkspaceTelemetry = globalWorkspaceTelemetry,
-            episodicMemoryRecall = episodicMemoryRecall
+            episodicMemoryRecall = episodicMemoryRecall,
+            adversarialSelfPlayTelemetry = adversarialSelfPlayTelemetry
         )
     }
 
@@ -1250,9 +1293,21 @@ class HybridCognitiveEngine(private val context: Context) {
         behavioralGuidance: String = "",
         consensusVerdict: LocalConsensusArbitrator.ConsensusVerdict? = null,
         globalWorkspaceTelemetry: GlobalCognitiveWorkspaceEngine.GlobalWorkspaceTelemetry? = null,
-        episodicMemoryRecall: LocalEpisodicMemoryGraph.MemoryRecallResult? = null
+        episodicMemoryRecall: LocalEpisodicMemoryGraph.MemoryRecallResult? = null,
+        adversarialSelfPlayTelemetry: LocalAdversarialSelfPlayEngine.SelfPlayTelemetry? = null
     ): CognitiveResult {
         val insights = mutableListOf<CognitiveInsight>()
+
+        adversarialSelfPlayTelemetry?.let { sp ->
+            insights.add(
+                CognitiveInsight(
+                    title = "🥊 თვით-სწავლება (Self-Play): ${sp.currentWinnerNameKa}",
+                    description = "რაუნდი #${sp.tournamentRound} • Elo: Gen ${sp.generatorElo} vs Adv ${sp.adversaryElo} (Δ=${sp.eloDelta}) • სიმტკიცე: ${sp.stressTestedRobustnessPct}% • თავიდან აცილებული შეცდომები: ${sp.preventedHallucinationsCount}",
+                    confidence = sp.stressTestedRobustnessPct / 100f,
+                    type = "SELF_PLAY"
+                )
+            )
+        }
 
         consensusVerdict?.let { cv ->
             insights.add(
@@ -1562,7 +1617,8 @@ class HybridCognitiveEngine(private val context: Context) {
             behavioralGuidance = behavioralGuidance,
             consensusVerdict = consensusVerdict,
             globalWorkspaceTelemetry = globalWorkspaceTelemetry,
-            episodicMemoryRecall = episodicMemoryRecall
+            episodicMemoryRecall = episodicMemoryRecall,
+            adversarialSelfPlayTelemetry = adversarialSelfPlayTelemetry
         )
     }
 }

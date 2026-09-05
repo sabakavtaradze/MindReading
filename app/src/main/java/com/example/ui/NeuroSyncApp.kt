@@ -49,6 +49,7 @@ import com.example.ui.components.ExplanationModal
 import com.example.ui.components.HeaderView
 import com.example.ui.components.HeroNeuralOverlay
 import com.example.ui.components.HybridCognitiveAiCard
+import com.example.ui.components.LiveCognitiveWordsAndBehaviorBar
 import com.example.ui.components.IntentPredictionCard
 import com.example.ui.components.MindBandData
 import com.example.ui.components.InteractiveTouchPad
@@ -75,7 +76,7 @@ fun NeuroSyncApp(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val historyList by viewModel.history.collectAsStateWithLifecycle()
     val savedCheckpoints by viewModel.digitalTwinCheckpoints.collectAsStateWithLifecycle()
-    var activeTab by remember { mutableStateOf(NeuroTab.UNIFIED_MATRIX) }
+    var activeTab by remember { mutableStateOf(NeuroTab.WORDS) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
@@ -134,24 +135,14 @@ fun NeuroSyncApp(
                     modifier = Modifier.padding(horizontal = 24.dp)
                 )
 
-                // Hero Synaptic Overlay Visualizer
-                HeroNeuralOverlay(
-                    matchPercentage = uiState.matchPercentage,
-                    statusText = uiState.statusText,
-                    touchValue = uiState.telemetry.touchValue,
-                    audioValue = uiState.telemetry.audioValue,
-                    visualValue = uiState.telemetry.visualValue,
-                    motionValue = uiState.telemetry.motionValue,
-                    biometricsValue = uiState.telemetry.biometricsValue,
-                    neuralValue = uiState.telemetry.neuralValue,
-                    isSyncing = uiState.isSyncing,
-                    onCenterCoreClick = { viewModel.runNeuralPredictionInference() },
-                    modifier = Modifier.padding(horizontal = 24.dp)
-                )
-
-                // Hybrid Cognitive AI Reasoning Card (Cloud Gemini + On-Device Offline Fallback)
-                HybridCognitiveAiCard(
-                    result = uiState.cognitiveResult,
+                // Right Below Menu: Live Word Guessing and Cognitive Behavior Bar
+                LiveCognitiveWordsAndBehaviorBar(
+                    uiState = uiState,
+                    onInjectWord = { word, cat -> viewModel.injectDecodedWord(word, cat) },
+                    onClearSentence = { viewModel.clearDecodedSentence() },
+                    onCycleNextWord = { viewModel.cycleNextDecodedWord() },
+                    onToggleDecoding = { viewModel.toggleWordDecoding() },
+                    onSelectTab = { activeTab = it },
                     modifier = Modifier.padding(horizontal = 24.dp)
                 )
 
@@ -365,6 +356,27 @@ fun NeuroSyncApp(
                         }
                     }
                 }
+
+                // Hybrid Cognitive AI Reasoning Card (Cloud Gemini + On-Device Offline Fallback & SNN/HTM/Hopfield)
+                HybridCognitiveAiCard(
+                    result = uiState.cognitiveResult,
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
+
+                // Hero Synaptic Overlay Visualizer
+                HeroNeuralOverlay(
+                    matchPercentage = uiState.matchPercentage,
+                    statusText = uiState.statusText,
+                    touchValue = uiState.telemetry.touchValue,
+                    audioValue = uiState.telemetry.audioValue,
+                    visualValue = uiState.telemetry.visualValue,
+                    motionValue = uiState.telemetry.motionValue,
+                    biometricsValue = uiState.telemetry.biometricsValue,
+                    neuralValue = uiState.telemetry.neuralValue,
+                    isSyncing = uiState.isSyncing,
+                    onCenterCoreClick = { viewModel.runNeuralPredictionInference() },
+                    modifier = Modifier.padding(horizontal = 24.dp)
+                )
             }
         }
 
@@ -421,25 +433,25 @@ private fun TabSelectorBar(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        TabPillItem("სიტყვები", activeTab == NeuroTab.WORDS) {
+        TabPillItem("🔮 სიტყვები", activeTab == NeuroTab.WORDS) {
             onTabSelected(NeuroTab.WORDS)
         }
-        TabPillItem("მატრიცა", activeTab == NeuroTab.UNIFIED_MATRIX) {
-            onTabSelected(NeuroTab.UNIFIED_MATRIX)
-        }
-        TabPillItem("🧬 ქცევა & BLE", activeTab == NeuroTab.BEHAVIOR_PSYCH) {
+        TabPillItem("🧬 კოგნიტური ქცევა", activeTab == NeuroTab.BEHAVIOR_PSYCH) {
             onTabSelected(NeuroTab.BEHAVIOR_PSYCH)
         }
-        TabPillItem("90 დღე", activeTab == NeuroTab.DIGITAL_TWIN) {
+        TabPillItem("🌐 მატრიცა", activeTab == NeuroTab.UNIFIED_MATRIX) {
+            onTabSelected(NeuroTab.UNIFIED_MATRIX)
+        }
+        TabPillItem("🤖 90 დღე", activeTab == NeuroTab.DIGITAL_TWIN) {
             onTabSelected(NeuroTab.DIGITAL_TWIN)
         }
-        TabPillItem("ლაბი", activeTab == NeuroTab.MIND_LAB) {
+        TabPillItem("🔬 ლაბი", activeTab == NeuroTab.MIND_LAB) {
             onTabSelected(NeuroTab.MIND_LAB)
         }
-        TabPillItem("სენსორები", activeTab == NeuroTab.SENSORS) {
+        TabPillItem("📡 სენსორები", activeTab == NeuroTab.SENSORS) {
             onTabSelected(NeuroTab.SENSORS)
         }
-        TabPillItem("ლოგი", activeTab == NeuroTab.LOGS) {
+        TabPillItem("📋 ლოგი", activeTab == NeuroTab.LOGS) {
             onTabSelected(NeuroTab.LOGS)
         }
 
