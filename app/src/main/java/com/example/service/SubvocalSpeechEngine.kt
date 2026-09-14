@@ -7,28 +7,15 @@ data class SubvocalSpeechMetrics(
     val formantF1Hz: Float = 520f,
     val formantF2Hz: Float = 1750f,
     val formantF3Hz: Float = 2650f,
-    val silentPhonemeCandidate: String = "ა",
+    val silentPhonemeCandidate: String = "მ",
     val innerMonologueVelocityWpm: Int = 340,
     val subvocalMuscleTensionPct: Int = 42,
-    val decodedInnerPhraseSnippet: String = "მინდა გადავამოწმო კოდის ლოგიკა",
+    val decodedInnerPhraseSnippet: String = "მშვიდად ვფიქრობ და საქმეს ვაგრძელებ",
     val innerSpeechConfidencePct: Float = 94.5f,
     val laryngealActivityCategory: String = "ჩუმი შინაგანი მონოლოგი (Silent Inner Monologue)"
 )
 
 class SubvocalSpeechEngine {
-
-    private val innerPhrases = listOf(
-        "მინდა გადავამოწმო კოდის ლოგიკა" to "კ",
-        "რა იქნება შემდეგი სწორი ნაბიჯი?" to "რ",
-        "ეს ფუნქცია ოპტიმიზაციას საჭიროებს" to "ე",
-        "შეტყობინება უნდა გავაგზავნო ახლავე" to "შ",
-        "იდეალური არქიტექტურული გადაწყვეტაა" to "ი",
-        "ყურადღება უნდა გავამახვილო დეტალებზე" to "ყ",
-        "მშვენიერი შედეგია, გავაგრძელოთ" to "მ",
-        "სად შეიძლება იყოს ფარული შეცდომა?" to "ს"
-    )
-
-    private var phraseIndex = 0
 
     fun computeSubvocalSpeech(
         micDb: Float = 28f,
@@ -40,7 +27,12 @@ class SubvocalSpeechEngine {
         val isQuietEnvironment = micDb < 48f
         val isSubvocal = isQuietEnvironment || isAudioActive
 
-        val (phrase, phoneme) = innerPhrases[phraseIndex % innerPhrases.size]
+        val dynamicThought = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicHumanThought(
+            focusLevel = cognitiveArousal.coerceIn(0.1f, 1f),
+            stressLevel = (micDb / 100f).coerceIn(0.1f, 0.9f)
+        )
+        val phrase = dynamicThought.detail.removePrefix("ნავარაუდევი აზრი: ").trim()
+        val firstChar = phrase.firstOrNull()?.toString() ?: "მ"
 
         val f1 = 400f + (Random.nextFloat() * 250f)
         val f2 = 1500f + (Random.nextFloat() * 600f)
@@ -61,7 +53,7 @@ class SubvocalSpeechEngine {
             formantF1Hz = f1,
             formantF2Hz = f2,
             formantF3Hz = f3,
-            silentPhonemeCandidate = phoneme,
+            silentPhonemeCandidate = firstChar,
             innerMonologueVelocityWpm = innerSpeedWpm,
             subvocalMuscleTensionPct = tension,
             decodedInnerPhraseSnippet = phrase,
@@ -71,7 +63,6 @@ class SubvocalSpeechEngine {
     }
 
     fun stepNextSubvocalThought(): SubvocalSpeechMetrics {
-        phraseIndex++
         return computeSubvocalSpeech(cognitiveArousal = 0.85f)
     }
 }

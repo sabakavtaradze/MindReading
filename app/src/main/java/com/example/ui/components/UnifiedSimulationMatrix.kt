@@ -438,28 +438,40 @@ fun UnifiedSimulationMatrix(
                         .padding(16.dp)
                 ) {
                     androidx.compose.animation.Crossfade(
-                        targetState = currentPredictionTitle to currentPredictionText,
+                        targetState = Triple(currentPredictionTitle, currentPredictionText, uiState.sensorReasoningTrace),
                         animationSpec = tween(600),
                         label = "thought_transition"
-                    ) { (title, text) ->
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    ) { (title, text, trace) ->
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(
-                                    text = "🧠 მიმდინარე მენტალური განზრახვა & აზრი:",
-                                    color = Color(0xFF00E5FF),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(8.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF00E5FF))
+                                    )
+                                    Text(
+                                        text = "სენსორებიდან გამომდინარე აზრი",
+                                        color = Color(0xFF00E5FF),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                                 Text(
                                     text = "🕒 $lastThoughtUpdated",
                                     color = NeuralTextSecondary,
                                     fontSize = 10.sp
                                 )
                             }
+
                             Text(
                                 text = title,
                                 color = Color.White,
@@ -467,12 +479,57 @@ fun UnifiedSimulationMatrix(
                                 fontWeight = FontWeight.ExtraBold,
                                 lineHeight = 23.sp
                             )
+
                             Text(
                                 text = text,
-                                color = NeuralTextPrimary,
-                                fontSize = 13.sp,
-                                lineHeight = 19.sp
+                                color = Color.White.copy(alpha = 0.95f),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium,
+                                lineHeight = 20.sp
                             )
+
+                            // Causal Sensor Reasoning Box
+                            if (uiState.sensorReasonExplanation.isNotBlank() || trace.isNotBlank()) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFF0D1B2A).copy(alpha = 0.8f))
+                                        .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.25f), RoundedCornerShape(12.dp))
+                                        .padding(10.dp),
+                                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                    ) {
+                                        Text(
+                                            text = "🔗 დაკავშირებული სენსორები:",
+                                            color = Color(0xFF00E5FF),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+
+                                    Text(
+                                        text = trace,
+                                        color = Color(0xFFE0E1DD),
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold,
+                                        lineHeight = 16.sp
+                                    )
+
+                                    if (uiState.sensorReasonExplanation.isNotBlank()) {
+                                        Text(
+                                            text = "💡 რატომ ფიქრობს ამას: ${uiState.sensorReasonExplanation}",
+                                            color = Color(0xFFFFD166),
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Normal,
+                                            lineHeight = 17.sp
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -1065,7 +1122,7 @@ fun UnifiedSimulationMatrix(
                         OutlinedTextField(
                             value = customThoughtPrompt,
                             onValueChange = { customThoughtPrompt = it },
-                            placeholder = { Text("შეიყვანეთ აზრი (e.g. კოდის რეფაქტორინგი)...", color = NeuralTextSecondary, fontSize = 11.sp) },
+                            placeholder = { Text("შეიყვანეთ აზრი (მაგ. ყურადღების კონცენტრაცია)...", color = NeuralTextSecondary, fontSize = 11.sp) },
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                             colors = TextFieldDefaults.colors(
@@ -1104,9 +1161,9 @@ fun UnifiedSimulationMatrix(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        PresetThoughtChip("⚡ UI ოპტიმიზაცია", "UI Optimization and Refactor", onDecodeCustomThought, Modifier.weight(1f))
-                        PresetThoughtChip("☕ შესვენება", "Take a short break and relax", onDecodeCustomThought, Modifier.weight(1f))
-                        PresetThoughtChip("🧠 ღრმა ფოკუსი", "Deep Focus Architecture Session", onDecodeCustomThought, Modifier.weight(1f))
+                        PresetThoughtChip("⚡ სამუშაო ფოკუსი", "საქმეზე კონცენტრირება და წინსვლა", onDecodeCustomThought, Modifier.weight(1f))
+                        PresetThoughtChip("☕ შესვენება", "მოკლე შესვენება და დასვენება", onDecodeCustomThought, Modifier.weight(1f))
+                        PresetThoughtChip("🧠 ახალი იდეა", "ახალი იდეის ანალიზი და ჩანიშვნა", onDecodeCustomThought, Modifier.weight(1f))
                     }
                 }
             }

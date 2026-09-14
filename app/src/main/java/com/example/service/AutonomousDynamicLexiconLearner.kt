@@ -85,12 +85,11 @@ object AutonomousDynamicLexiconLearner {
             PolyvagalBehavioralEngine.PolyvagalState.DORSAL_VAGAL -> listOf("დასვენება", "რელაქსაცია", "აღდგენა", "პაუზა", "ჰარმონია", "სიმყუდროვე")
         }
 
-        val prefix = prefixes.random()
-        val root = roots.random()
-        val combinedWord = "${prefix}_$root"
+        val dynamicCandidates = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicCandidateWords(1)
+        val discoveredWord = dynamicCandidates.firstOrNull()?.first ?: roots.random()
 
-        if (registerNewDiscoveredWord(combinedWord, "MORPHO_SYNTHESIS", "OFFLINE_MORPHO_SYNTHESIS")) {
-            return combinedWord
+        if (registerNewDiscoveredWord(discoveredWord, "MORPHO_SYNTHESIS", "OFFLINE_MORPHO_SYNTHESIS")) {
+            return discoveredWord
         }
         return null
     }

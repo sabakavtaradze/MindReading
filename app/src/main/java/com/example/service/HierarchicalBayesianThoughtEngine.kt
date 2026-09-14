@@ -21,7 +21,7 @@ data class ThoughtHypothesis(
 
 data class HierarchicalBayesianState(
     val topHypotheses: List<ThoughtHypothesis> = emptyList(),
-    val dominantThought: String = "სისტემის არქიტექტურის ოპტიმიზაცია და კომპილაცია",
+    val dominantThought: String = "გონებრივი კონცენტრაცია და სამუშაო ნაკადი",
     val overallCertaintyPct: Float = 93.6f,
     val cognitiveStateSummary: String = "მაღალი ანალიტიკური კონვერგენცია",
     val ppgMetrics: PpgHrvMetrics = PpgHrvMetrics(),
@@ -60,12 +60,23 @@ object HierarchicalBayesianThoughtEngine {
         screenContext: String,
         lastDecodedWord: String = ""
     ): HierarchicalBayesianState {
+        val dynamicThought = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicHumanThought(
+            focusLevel = ppg.cognitiveLoadScore.coerceIn(0.1f, 1f),
+            stressLevel = (ppg.baevskyStressIndex / 300f).coerceIn(0f, 1f)
+        )
+        val dynamicSummary = dynamicThought.detail.removePrefix("ნავარაუდევი აზრი: ").trim()
+
         // Candidate Thought Hypotheses pools
         val candidateThoughts = listOf(
             Triple(
-                "კოდის კომპილაცია, შეცდომების შემოწმება და რეპოზიტორიის სინქრონიზაცია",
+                dynamicSummary,
+                "DYNAMIC_STREAM",
+                "გააგრძელეთ აქტიური გონებრივი ნაკადი"
+            ),
+            Triple(
+                "მიმდინარე სამუშაოს ანალიზი და შემდეგი ეტაპის დაგეგმვა",
                 "DEV_ACTION",
-                "გაუშვით ტესტები და შეამოწმეთ build"
+                "გააგრძელეთ დავალების შესრულება"
             ),
             Triple(
                 "გადაუდებელი მოკლე პასუხი და სტატუსის გადაცემა",
@@ -88,7 +99,7 @@ object HierarchicalBayesianThoughtEngine {
                 "შეისვენეთ 10 წუთით და მიიღეთ სითხე"
             ),
             Triple(
-                "კრეატიული არქიტექტურული გადაწყვეტილება და ალგორითმული სინთეზი",
+                "კრეატიული გადაწყვეტილება და ალგორითმული სინთეზი",
                 "CREATIVE_THOUGHT",
                 "ჩაიწერეთ იდეა და შექმენით მოდელი"
             ),
@@ -107,7 +118,7 @@ object HierarchicalBayesianThoughtEngine {
             // 1. Biometrics (PPG / HRV)
             val hrvWeight = when (intent) {
                 "URGENT_COMMAND" -> if (ppg.baevskyStressIndex > 200f) 2.2f else 0.6f
-                "DEV_ACTION" -> if (ppg.cognitiveLoadScore > 0.4f && ppg.baevskyStressIndex in 90f..220f) 2.0f else 0.8f
+                "DEV_ACTION", "DYNAMIC_STREAM" -> if (ppg.cognitiveLoadScore > 0.35f) 2.1f else 0.9f
                 "REST_STATE" -> if (ppg.baevskyStressIndex < 80f || ppg.cognitiveLoadScore < 0.25f) 2.4f else 0.5f
                 "CREATIVE_THOUGHT" -> if (ppg.rmssdMs > 50f) 1.8f else 0.9f
                 else -> 1.0f
@@ -117,7 +128,7 @@ object HierarchicalBayesianThoughtEngine {
 
             // 2. Pupillometry & Saccades
             val pupilWeight = when (intent) {
-                "CREATIVE_THOUGHT", "DEV_ACTION" -> if (pupil.isAhaDecisionMoment || pupil.pupilDiameterMm > 4.2f) 2.3f else 0.9f
+                "CREATIVE_THOUGHT", "DEV_ACTION", "DYNAMIC_STREAM" -> if (pupil.isAhaDecisionMoment || pupil.pupilDiameterMm > 4.0f) 2.2f else 0.95f
                 "URGENT_COMMAND" -> if (pupil.microSaccadeRateHz > 3.0f) 1.9f else 0.8f
                 "REST_STATE" -> if (pupil.visualEntropyScore < 0.3f && !pupil.isAhaDecisionMoment) 1.7f else 0.7f
                 else -> 1.0f
@@ -128,7 +139,7 @@ object HierarchicalBayesianThoughtEngine {
             // 3. Psychomotor Hesitation
             val hesitationWeight = when (intent) {
                 "URGENT_COMMAND" -> if (hesitation.flightTimeMs < 140L) 2.1f else 0.7f
-                "CREATIVE_THOUGHT" -> if (hesitation.shannonEntropyScore > 1.8f) 1.9f else 0.8f
+                "CREATIVE_THOUGHT", "DYNAMIC_STREAM" -> if (hesitation.shannonEntropyScore > 1.5f) 1.9f else 0.9f
                 "DEV_ACTION" -> if (hesitation.shannonEntropyScore in 1.1f..1.9f) 1.8f else 0.9f
                 "REST_STATE" -> if (hesitation.holdDurationMs > 180L) 1.6f else 0.8f
                 else -> 1.0f
@@ -138,7 +149,7 @@ object HierarchicalBayesianThoughtEngine {
 
             // 4. Ultradian & Chrono
             val ultradianWeight = when (intent) {
-                "DEV_ACTION", "CREATIVE_THOUGHT" -> if (bioRhythm.isPeakCognitiveWindow) 2.1f else 0.6f
+                "DEV_ACTION", "CREATIVE_THOUGHT", "DYNAMIC_STREAM" -> if (bioRhythm.isPeakCognitiveWindow) 2.0f else 0.8f
                 "REST_STATE", "PHYSIOLOGICAL_NEED" -> if (!bioRhythm.isPeakCognitiveWindow || bioRhythm.ultradianEnergyPercent < 50) 2.4f else 0.5f
                 "SOCIAL_MESSAGE" -> if (bioRhythm.circadianPhaseName.contains("შუადღის")) 1.8f else 1.0f
                 else -> 1.0f

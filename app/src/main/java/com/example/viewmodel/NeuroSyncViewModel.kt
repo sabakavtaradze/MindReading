@@ -179,8 +179,8 @@ data class DecisionBranch(
 
 data class CognitiveDecisionTreeState(
     val branches: List<DecisionBranch> = listOf(
-        DecisionBranch("b1", "შტო A: კოდის რეფაქტორინგი და Compose ოპტიმიზაცია", 68, "ქვეცნობიერი განზრახვა მიმართულია Jetpack Compose ინტერფეისის დაჩქარებაზე.", "კომპილატორის ქეშის წინასწარ მომზადება"),
-        DecisionBranch("b2", "შტო B: დოკუმენტაცია & ქართული ენის მოდელი", 24, "ქართული მორფოლოგიური ზმნების ნეირონული პარამეტრების შემოწმება.", "ქართული სუბვოკალური მოდელის დაქეშვა"),
+        DecisionBranch("b1", "შტო A: საქმის გაგრძელება და ფოკუსირება", 68, "ქვეცნობიერი განზრახვა მიმართულია მიმდინარე სამუშაო ნაკადის შეუფერხებელ გაგრძელებაზე.", "სამუშაო გარემოს აქტიური მხარდაჭერა"),
+        DecisionBranch("b2", "შტო B: ახალი იდეის ჩანიშვნა და ანალიზი", 24, "შემოქმედებითი კოგნიტური იმპულსი, იდეის კრისტალიზაცია.", "ჩანაწერების ბუფერის მომზადება"),
         DecisionBranch("b3", "შტო C: გონებრივი განტვირთვა და ალფა-რელაქსაცია", 8, "კოგნიტური ტრაექტორია მიუთითებს ხანმოკლე 2-წუთიან დასვენების მზაობაზე.", "ბინაურალური 10Hz ტალღის ჩართვა")
     ),
     val activeBranchId: String = "b1"
@@ -366,13 +366,12 @@ data class DirectWordDecoderState(
         DecodedWordCandidate("გაჩერება", 35, "COMMANDS", "გ-ა-ჩ-ე-რ-ე-ბ-ა", 10)
     ),
     val activeLexiconCategory: String = "ALL", // "ALL", "COMMON", "DEV", "COMMANDS", "EMOTIONS", "ENGLISH"
-    val accumulatedSentence: String = "გამარჯობა მინდა დავიწყო კოდის რეფაქტორინგი",
+    val accumulatedSentence: String = "გამარჯობა, მზად ვარ მუშაობისთვის",
     val recentWords: List<DecodedWordHistoryItem> = listOf(
         DecodedWordHistoryItem("w1", "15:20:11", "გამარჯობა", "GEORGIAN", 98, "COMMON", "გ-ა-მ-ა-რ-ჯ-ო-ბ-ა"),
-        DecodedWordHistoryItem("w2", "15:19:45", "მინდა", "GEORGIAN", 96, "COMMON", "მ-ი-ნ-დ-ა"),
-        DecodedWordHistoryItem("w3", "15:19:12", "დავიწყო", "GEORGIAN", 94, "COMMANDS", "დ-ა-ვ-ი-წ-ყ-ო"),
-        DecodedWordHistoryItem("w4", "15:18:30", "კოდის", "GEORGIAN", 97, "DEV", "კ-ო-დ-ი-ს"),
-        DecodedWordHistoryItem("w5", "15:17:50", "რეფაქტორინგი", "GEORGIAN", 99, "DEV", "რ-ე-ფ-ა-ქ-ტ-ო-რ-ი-ნ-გ-ი")
+        DecodedWordHistoryItem("w2", "15:19:45", "მზად", "GEORGIAN", 96, "COMMON", "მ-ზ-ა-დ"),
+        DecodedWordHistoryItem("w3", "15:19:12", "ვარ", "GEORGIAN", 94, "COMMANDS", "ვ-ა-რ"),
+        DecodedWordHistoryItem("w4", "15:18:30", "საქმისთვის", "GEORGIAN", 97, "COMMON", "ს-ა-ქ-მ-ი-ს-თ-ვ-ი-ს")
     ),
     val activeLanguage: String = "GEORGIAN", // "GEORGIAN", "ENGLISH", "BILINGUAL"
     val internalSpeechVpuFrequencyHz: Float = 142.8f,
@@ -486,8 +485,8 @@ data class WordPredictionAnalyticsState(
         CognitiveFatigueHeatmapItem("18:00 - 21:00", 86, "FATIGUED", 28)
     ),
     val accuracyTrajectory: List<Int> = listOf(86, 89, 91, 94, 96, 98),
-    val topPredictedContexts: List<String> = listOf("კოდის რეფაქტორინგი", "ნეირონული სინქრონიზაცია", "არქიტექტურის გაუმჯობესება"),
-    val lastAppliedPrediction: String = "შევამოწმოთ (ავტო-დასრულებულია 320 მწ-ით ადრე)"
+    val topPredictedContexts: List<String> = listOf("საქმეზე კონცენტრირება", "ახალი იდეის ანალიზი", "გადაწყვეტილების მიღება"),
+    val lastAppliedPrediction: String = "საქმე (ავტო-დასრულებულია 320 მწ-ით ადრე)"
 )
 
 data class PersonProfile(
@@ -547,9 +546,11 @@ data class NeuroSyncUiState(
     val stressLevelPct: Int = 28,
     val activeAppContext: String = "Developer IDE & Neural Research",
     val currentPredictionTitle: String = "აზრების პროგნოზირება (Intent Prediction)",
-    val currentPredictionText: String = "ნავარაუდევი აზრი: მომხმარებელი აყალიბებს განზრახვას გააუმჯობესოს კოდის არქიტექტურა და შეამოწმოს მომავალი დიზაინის ფუნქციონალი.",
-    val currentActionPlan: String = "• მაღალი ფოკუსის კოგნიტური გარემოს შექმნა\n• IDE ბუფერების წინასწარი მომზადება სწრაფი აკრეფისთვის\n• გარე ხმაურის ფილტრაცია და ალფა-სინქრონიზაცია",
-    val dominantMindThought: String = "კოდის არქიტექტურის ოპტიმიზაციის შემდეგი ნაბიჯის ფორმულირება",
+    val currentPredictionText: String = "ნავარაუდევი აზრი: მომხმარებელი კონცენტრირებულია მიმდინარე ამოცანაზე და ემზადება გადაწყვეტილების მისაღებად.",
+    val sensorReasoningTrace: String = "სენსორული კავშირი: [❤️ პულსი: 74 BPM] • [👁️ გუგა: 3.8მმ] • [🎙️ ხმა: 34 dB] • [🌊 ალფა: 10.4Hz]",
+    val sensorReasonExplanation: String = "სტაბილური პულსი და მშვიდი აკუსტიკა ქმნის ოპტიმალურ გარემოს ფოკუსირებული მუშაობისთვის.",
+    val currentActionPlan: String = "• მაღალი ფოკუსის კოგნიტური გარემოს შექმნა\n• ყურადღების ცენტრის შენარჩუნება\n• გარე ხმაურის ფილტრაცია და ალფა-სინქრონიზაცია",
+    val dominantMindThought: String = "მიმდინარე სამუშაო პროცესზე კონცენტრირება და წინსვლა",
     val thoughtCognitiveLoadPct: Int = 42,
     val subconsciousFocusLevel: String = "ღრმა ნაკადის მდგომარეობა (Alpha 10.2 Hz)",
     val alphaBandHz: Float = 10.2f,
@@ -1310,107 +1311,123 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         val state = _uiState.value
         val timeNow = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
 
-        val isCloud = state.cognitiveResult?.isCloudActive == true
-        val cloudThought = state.cognitiveResult?.synthesizedThoughtSentence.orEmpty()
-        val cloudSummary = state.cognitiveResult?.deepSynthesisText ?: ""
-        val recentTokens = com.example.service.AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens()
-        val latestInsight = state.cognitiveResult?.insights?.firstOrNull()?.description
-
-        // Dynamically build thought candidates from Cloud AI, recently ingested tokens, and multimodal state
-        val dynamicCandidates = mutableListOf<Triple<String, String, String>>()
-
-        if (cloudThought.isNotBlank()) {
-            dynamicCandidates.add(
-                Triple(
-                    if (isCloud) "🌐 Cloud AI: $cloudThought" else "⚡ ნეირო-აზრი: $cloudThought",
-                    "ნავარაუდევი აზრი: $cloudThought",
-                    if (cloudSummary.isNotBlank()) "• AI ანალიზი: $cloudSummary" else "• სენსორული & კოგნიტური სინთეზი\n• მაღალი სიზუსტე"
-                )
-            )
-        }
-
-        if (cloudSummary.isNotBlank() && cloudSummary != cloudThought) {
-            val firstLine = cloudSummary.lines().firstOrNull { it.isNotBlank() } ?: cloudSummary
-            val shortTitle = if (firstLine.length > 50) firstLine.take(47) + "..." else firstLine
-            dynamicCandidates.add(
-                Triple(
-                    "💡 AI ინსაითი: $shortTitle",
-                    "ნავარაუდევი აზრი: $cloudSummary",
-                    "• ინტერნეტ-ინსაითი მიღებულია\n• სინაფსური ლექსიკა გაფართოებულია\n• მაღალი კოგნიტური სიზუსტე"
-                )
-            )
-        }
-
-        if (latestInsight != null && latestInsight.isNotBlank()) {
-            dynamicCandidates.add(
-                Triple(
-                    "🧠 ქცევითი & პოლივაგალური ინსაითი",
-                    "ნავარაუდევი აზრი: $latestInsight",
-                    "• სომატური დისონანსის ნიველირება\n• Flow ზონის ადაპტაცია\n• ემოციური ენტროპიის სტაბილიზაცია"
-                )
-            )
-        }
-
-        if (recentTokens.isNotEmpty()) {
-            val sampleTokens = recentTokens.shuffled().take(3).map { it.token }
-            val joined = sampleTokens.joinToString(" • ")
-            dynamicCandidates.add(
-                Triple(
-                    "🧬 დინამიკური ლექსიკონი: ${sampleTokens.first()}",
-                    "ნავარაუდევი აზრი: გარედან ათვისებული ახალი ცნებები: [$joined]. მიმდინარეობს ასოციაციური ქსელის გაფართოება.",
-                    "• ახალი ტოკენების ჩაშენება\n• განმეორების საწინააღმდეგო ფილტრი\n• ნეირო-ლინგვისტური სინქრონი"
-                )
-            )
-        }
-
-        // Add multimodal state based thoughts
-        dynamicCandidates.add(
-            Triple(
-                "კოდის სტრუქტურის ოპტიმიზაცია და კომპოუზის აჩქარება",
-                "ნავარაუდევი აზრი: გონებაში აყალიბებთ Jetpack Compose-ის მდგომარეობების რეფაქტორინგს და ეკრანის რენდერის ოპტიმიზაციას.",
-                "• Compose Compiler მინიჭება\n• StateFlow რეაქტიული ბუფერის მომზადება\n• ალფა-ფოკუსის შენარჩუნება"
-            )
-        )
-        dynamicCandidates.add(
-            Triple(
-                "სუბვოკალური ენის დეკოდირება (Inner Speech)",
-                "ნავარაუდევი აზრი: შინაგანი ხმით წარმოთქვამთ ცვლადების სახელებსა და შემდეგ ლოგიკურ პირობებს (${String.format(Locale.US, "%.1f", state.enhancedMetrics.subvocalFrequencyHz)} Hz VPU).",
-                "• ქართული ფონემების კლასტერირება\n• კლავიატურის ბუფერის წინასწარი შევსება\n• აკუსტიკური ფილტრაცია"
-            )
-        )
-        dynamicCandidates.add(
-            Triple(
-                "იდეის სინთეზი & ალგორითმული არქიტექტურა",
-                "ნავარაუდევი აზრი: გამა ტალღების პიკი (${String.format(Locale.US, "%.1f", state.gammaBandHz)} Hz) ადასტურებს ახალი იდეის ან ალგორითმის სწრაფ გონებრივ მოდელირებას.",
-                "• IDE ქეშის ინდექსირება\n• არაკრიტიკული აპლიკაციების გაჩუმება\n• სინაფსური მეხსიერების გაძლიერება"
-            )
+        val bayes = state.cognitiveBiometrics
+        val snapshot = com.example.service.SensorCognitiveReasoningEngine.SensorSnapshot(
+            heartRateBpm = if (bayes.ppgMetrics.heartRateBpm > 0) bayes.ppgMetrics.heartRateBpm.toInt() else state.heartRateBpm,
+            stressLevelPct = state.stressLevelPct,
+            audioDb = state.audioDb,
+            audioSpeechDetected = state.realAudio.voiceActivityDetected,
+            touchTapsCount = state.touchTapsCount,
+            touchRateCadence = state.touchCadenceHz,
+            touchHesitationIndex = (bayes.hesitationMetrics.flightTimeMs / 1000f).coerceIn(0f, 1f),
+            gazeConfidencePct = state.cameraGaze.gazeConfidencePct,
+            pupilDiameterMm = bayes.pupillometryMetrics.pupilDiameterMm,
+            blinkRatePerMinute = (bayes.pupillometryMetrics.microSaccadeRateHz * 9f).coerceIn(12f, 28f),
+            isAhaMoment = bayes.pupillometryMetrics.isAhaDecisionMoment,
+            motionTremor = state.motionTremor,
+            stepCount = state.daFitWatch.stepsCount,
+            lightLux = state.realSensors.ambientLightLux,
+            alphaBandHz = state.alphaBandHz,
+            betaBandHz = state.betaBandHz,
+            gammaBandHz = state.gammaBandHz,
+            thetaBandHz = state.thetaBandHz,
+            isApneaActive = bayes.respiratoryMetrics.isCognitiveApneaActive,
+            vpuFrequencyHz = state.earbudSensor.vpuBoneConductionHz,
+            activeAppContext = state.activeAppContext
         )
 
-        val filtered = dynamicCandidates.filter { it.first != state.currentPredictionTitle }
-        val nextThought = if (filtered.isNotEmpty()) filtered.random() else dynamicCandidates.random()
+        val reasoned = com.example.service.SensorCognitiveReasoningEngine.reasonThoughtFromSensors(snapshot)
+
+        // Generate dynamic candidate words shaped directly by the active sensors
+        val decodedCandidateItems = reasoned.candidateWords.mapIndexed { idx, pair ->
+            DecodedWordCandidate(
+                word = pair.first,
+                probabilityPct = pair.second,
+                category = "DYNAMIC_SENSOR",
+                phonemes = pair.first.map { it.toString() }.joinToString("-"),
+                latencyMs = -100 - (idx * 20)
+            )
+        }
+        val nextBranches = reasoned.candidateWords.mapIndexed { idx, pair ->
+            WordBranchPrediction(
+                id = "sens_branch_${System.currentTimeMillis()}_$idx",
+                word = pair.first,
+                probabilityPct = pair.second,
+                phonemeLookaheadMs = -(250 + (idx * 25)),
+                category = "SENSOR_LINKED",
+                linguisticGrammarRole = "სემანტიკური ერთეული",
+                semanticContextTrigger = "სენსორული მიზეზი: ${pair.first}",
+                cognitiveLoadRequirementPct = 20 + (idx * 5)
+            )
+        }
+
+        val dynamicDecisionBranches = reasoned.branches.map {
+            DecisionBranch(
+                id = it.id,
+                title = it.title,
+                probabilityPct = it.probabilityPct,
+                description = it.description,
+                nextAction = it.nextAction
+            )
+        }
+
+        val horizons = TimeHorizonPredictions(
+            horizon30Sec = reasoned.horizon30Sec,
+            horizon5Min = reasoned.horizon5Min,
+            horizon30Min = reasoned.horizon30Min
+        )
+
         val conf = (97..99).random()
-
         val newLog = ThoughtLogItem(
             id = "auto_${System.currentTimeMillis()}",
             timestamp = timeNow,
-            title = nextThought.first,
-            detail = nextThought.second,
+            title = reasoned.title,
+            detail = reasoned.thoughtSentence,
             confidencePct = conf,
-            category = if (isCloud) "Cloud AI" else "Neural Intent"
+            category = "სენსორული აზრი"
         )
 
         _uiState.update { current ->
             current.copy(
-                currentPredictionTitle = nextThought.first,
-                currentPredictionText = nextThought.second,
-                currentActionPlan = nextThought.third,
+                currentPredictionTitle = reasoned.title,
+                currentPredictionText = reasoned.thoughtSentence,
+                currentActionPlan = reasoned.actionPlan,
+                sensorReasoningTrace = reasoned.sensorTrace,
+                sensorReasonExplanation = reasoned.sensorReasonExplanation,
+                timeHorizons = horizons,
                 lastThoughtUpdatedTimestamp = timeNow,
-                dominantMindThought = nextThought.first,
+                dominantMindThought = reasoned.thoughtSentence,
+                wordDecoder = current.wordDecoder.copy(
+                    candidateWords = decodedCandidateItems
+                ),
+                wordPrediction = current.wordPrediction.copy(
+                    branches = nextBranches,
+                    activeFocusWordCandidate = nextBranches.firstOrNull()?.word ?: current.wordPrediction.activeFocusWordCandidate
+                ),
+                decisionTree = current.decisionTree.copy(
+                    branches = dynamicDecisionBranches,
+                    activeBranchId = dynamicDecisionBranches.firstOrNull()?.id ?: "b1"
+                ),
                 thoughtTimeline = current.thoughtTimeline.copy(
                     historyLogs = (listOf(newLog) + current.thoughtTimeline.historyLogs).take(25)
                 )
             )
         }
+
+        // Immediately update status bar notification with brand-new words & human thought
+        try {
+            val wordsForNotif = reasoned.candidateWords.map { it.first }
+            val cleanThought = reasoned.thoughtSentence.removePrefix("ნავარაუდევი აზრი: ").trim()
+            val currentBpm = if (state.heartRateBpm > 0) state.heartRateBpm else 72
+            com.example.service.NeuralContextService.postLiveThoughtNotification(
+                context = getApplication(),
+                thoughtText = cleanThought,
+                predictedWords = wordsForNotif,
+                accuracyPct = conf.toFloat(),
+                isCloud = false,
+                heartRateBpm = currentBpm
+            )
+        } catch (_: Exception) {}
     }
 
     fun toggleContinuousThoughtStream() {
@@ -1578,9 +1595,10 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
 
     fun cycleNextDecodedWord() {
         val category = _uiState.value.wordDecoder.activeLexiconCategory
+        val recentWordsList = _uiState.value.wordDecoder.recentWords.map { it.word }
         val database = com.example.service.GeorgianNeuroLinguisticEngine.MIND_LEXICON_DATABASE
-        val pool = database.filter { category == "ALL" || it.category == category }
-            .ifEmpty { database }
+        val pool = database.filter { (category == "ALL" || it.category == category) && !recentWordsList.contains(it.word) }
+            .ifEmpty { database.filter { category == "ALL" || it.category == category }.ifEmpty { database } }
         val randomEntry = pool.random()
         injectDecodedWord(randomEntry.word, randomEntry.category)
     }
@@ -2176,6 +2194,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 )
             )
         }
+        if (newCount % 2 == 0) {
+            autoCyclePredictedThought()
+        }
     }
 
     fun measurePpgPulseManual() {
@@ -2203,6 +2224,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 cognitiveBiometrics = bayesian
             )
         }
+        autoCyclePredictedThought()
     }
 
     fun triggerPupilAhaMoment() {
@@ -2224,6 +2246,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 subconsciousFocusLevel = "💡 AHA! MOMENT დეტექცია (გაფართოება: ${String.format(Locale.US, "%.1f", pupilResult.pupilDiameterMm)}mm)"
             )
         }
+        autoCyclePredictedThought()
     }
 
     fun recomputeBayesianThought() {
@@ -2239,6 +2262,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             lastDecodedWord = current.wordDecoder.currentDecodedWord
         )
         _uiState.update { it.copy(cognitiveBiometrics = bayesian) }
+        autoCyclePredictedThought()
     }
 
     fun applyBayesianHypothesis(hypothesis: ThoughtHypothesis) {
@@ -2275,6 +2299,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 statusText = "🫁 კოგნიტური აპნოე დაფიქსირებულია"
             )
         }
+        autoCyclePredictedThought()
     }
 
     fun stepNextSubvocalThought() {
@@ -2300,6 +2325,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 statusText = "🤫 სუბვოკალური მონოლოგი: ${subvocalResult.decodedInnerPhraseSnippet}"
             )
         }
+        autoCyclePredictedThought()
     }
 
     fun cycleSaliencyTarget() {
@@ -2325,6 +2351,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 statusText = "🎯 ვიზუალური ყურადღება: ${saliencyResult.targetedVisualElement}"
             )
         }
+        autoCyclePredictedThought()
     }
 
     fun stepNextAssociativeConcept() {
@@ -2354,6 +2381,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 statusText = "🧬 ასოციაციური გრაფი: ${assocResult.activeSeedConcept}"
             )
         }
+        autoCyclePredictedThought()
     }
 
     fun stepNextFacsMicroExpression() {
@@ -2383,6 +2411,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 statusText = "⚡ FACS მიმიკა: ${facsResult.detectedMicroEmotion}"
             )
         }
+        autoCyclePredictedThought()
     }
 
     fun stepNextSpatialProfile() {
@@ -2412,6 +2441,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 statusText = "🧲 EMF გარემო: ${emfResult.estimatedEnvironmentDomain}"
             )
         }
+        autoCyclePredictedThought()
     }
 
     fun stepNextCognitiveLatency() {
@@ -2441,6 +2471,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 statusText = "⏳ კოგნიტური ლატენტობა: ${latResult.stimulusResponseLatencyMs}ms"
             )
         }
+        autoCyclePredictedThought()
     }
 
     fun stepNextDecisionFatigue() {
@@ -2470,6 +2501,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 statusText = "🧠 მენტალური რესურსი: ${fatResult.mentalEnergyReservePct}%"
             )
         }
+        autoCyclePredictedThought()
     }
 
     fun applyFeedbackCalibration(isAccurate: Boolean) {
@@ -2560,14 +2592,13 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     fun triggerSubvocalSpeechWord(customPhrase: String = "") {
-        val phrase = if (customPhrase.isNotBlank()) customPhrase else listOf(
-            "დავაკონფიგურიროთ კამერის მზერის სენსორი და თვალის ხამხამი",
-            "ახალი არქიტექტურული მოდელის ოპტიმიზაცია და კომპოუზის აჩქარება",
-            "სუბვოკალური შინაგანი მეტყველების დეკოდირება და ტელეპათიური შეყვანა",
-            "კოგნიტური დაღლილობის შემცირება და ალფა-ტალღების სინქრონიზაცია",
-            "val synapticMatrix = Tensor.createFloatBuffer()",
-            "გავაანალიზოთ ტვინის ალფა და ბეტა ტალღების თანაფარდობა"
-        ).random()
+        val phrase = if (customPhrase.isNotBlank()) customPhrase else {
+            val dyn = com.example.service.GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicHumanThought(
+                focusLevel = _uiState.value.matchPercentage / 100f,
+                stressLevel = _uiState.value.stressLevelPct / 100f
+            )
+            dyn.detail.removePrefix("ნავარაუდევი აზრი: ").trim()
+        }
 
         val tokens = phrase.split(" ").mapIndexed { index, word ->
             SubvocalSpeechToken(
@@ -3017,83 +3048,21 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
     }
 
     private suspend fun generateLocalNeuralPrediction() {
+        autoCyclePredictedThought()
         val state = _uiState.value
-        val isHighCognitive = state.thoughtCognitiveLoadPct > 55
-        val isDeepFlow = state.alphaBandHz > 10.0f
-        val isUrgentTouch = state.touchTapsCount > 20
-
-        val (title, summary, actionPlan, horizons) = when {
-            isHighCognitive && state.activeAppContext.contains("IDE") -> {
-                Quadruple(
-                    "ალგორითმული რეფაქტორინგი და კოდის ოპტიმიზაცია",
-                    "გამა-ტალღების სიხშირე (${String.format(java.util.Locale.US, "%.1f", state.gammaBandHz)}Hz), Galaxy Buds VPU და მზერის კონცენტრაცია მიუთითებს Kotlin/Compose არქიტექტურის აქტიურ გონებრივ სინთეზზე.",
-                    "• Kotlin ბაიტკოდის ქეშის ფონური წინასწარ კომპილაცია\n• შეტყობინებების დაბლოკვა და მაქსიმალური კონცენტრაციის რეჟიმი\n• ეკრანის ფერთა ტემპერატურის შერბილება თვალის დასაცავად",
-                    TimeHorizonPredictions(
-                        horizon30Sec = "+30წმ: კურსორის პოზიციონირება და ტელეპათიური ავტო-შევსება.",
-                        horizon5Min = "+5წთ: კოდის კომპილაცია და ტესტების გაშვება 0-შეფერხებით.",
-                        horizon30Min = "+30წთ: უწყვეტი ალფა-ფოკუსის შენარჩუნება გადაღლის გარეშე."
-                    )
-                )
-            }
-            isUrgentTouch && state.activeAppContext.contains("Messaging") -> {
-                Quadruple(
-                    "სწრაფი კომუნიკაცია და გადაუდებელი შეტყობინება",
-                    "თაჩის აჩქარებული ტემპი (${state.touchTapsCount} შეხება) და ბეტა ტალღები (${String.format(java.util.Locale.US, "%.1f", state.betaBandHz)}Hz) ადასტურებს სწრაფი პასუხის გაგზავნის განზრახვას.",
-                    "• კლავიატურის (IME) ბუფერის წინასწარი მომზადება\n• კონტექსტური ქართული პასუხების შეთავაზება\n• შეტყობინების გაგზავნის ქსელური პრიორიტეტის აწევა",
-                    TimeHorizonPredictions(
-                        horizon30Sec = "+30წმ: შეტყობინების გაგზავნა და შემდეგ დიალოგზე გადასვლა.",
-                        horizon5Min = "+5წთ: მიმოწერის დასრულება და მთავარ სამუშაოზე დაბრუნება.",
-                        horizon30Min = "+30წთ: ფონური სიჩუმის რეჟიმის ჩართვა გონების განსატვირთად."
-                    )
-                )
-            }
-            isDeepFlow -> {
-                Quadruple(
-                    "ღრმა შემოქმედებითი ფოკუსი და ალფა-ნაკადი",
-                    "ალფა-ტალღების სინქრონია (${String.format(java.util.Locale.US, "%.1f", state.alphaBandHz)}Hz), მშვიდი აკუსტიკა (${String.format(java.util.Locale.US, "%.1f", state.audioDb)} dB) და 72 BPM პულსი ადასტურებს შეუფერხებელ ნაკადს.",
-                    "• სისტემური შეტყობინებების გათიშვა 60 წუთით\n• 432Hz ბინაურალური ტალღების გენერირება\n• სესიის ავტომატური დამახსოვრება მონაცემთა ბაზაში",
-                    TimeHorizonPredictions(
-                        horizon30Sec = "+30წმ: უწყვეტი წრფივი ფოკუსირება ეკრანის არეზე.",
-                        horizon5Min = "+5წთ: ღრმა კონცეპტუალური ანალიზი კონტექსტის გაფანტვის გარეშე.",
-                        horizon30Min = "+30წთ: ალფა-ნაკადის დასრულება; მიკრო-შესვენების რეკომენდაცია."
-                    )
-                )
-            }
-            else -> {
-                Quadruple(
-                    "კონტექსტის შეცვლა და მრავალსენსორული სინქრონიზაცია",
-                    "სენსორების კომბინაცია (${state.activeAppContext}, ${state.touchTapsCount} შეხება, ${state.heartRateBpm} BPM პულსი) მიუთითებს სამუშაო პროცესის შეცვლაზე.",
-                    "• აქტიური სამუშაო გარემოს შენახვა ქეშში\n• გრაფიკული ბუფერის მომზადება აპლიკაციის გადასართავად\n• ნეირონული კალიბრაციის რეალურ დროში განახლება (+1.4%)",
-                    TimeHorizonPredictions(
-                        horizon30Sec = "+30წმ: აპლიკაციის გადართვის ჟესტი / ფანჯრის შემცირება.",
-                        horizon5Min = "+5წთ: ახალი ამოცანის დაწყება და ტელემეტრიის რეკალიბრაცია.",
-                        horizon30Min = "+30წთ: ბაზისური ნეირო-მაჩვენებლების ადაპტაცია ახალ ციკლზე."
-                    )
-                )
-            }
-        }
 
         val newPrediction = PredictionEntity(
-            title = title,
-            summary = summary,
+            title = state.currentPredictionTitle,
+            summary = state.currentPredictionText,
             matchConfidence = state.matchPercentage,
             touchActivityLevel = "${state.touchTapsCount} შეხება (${state.lastTouchCoords})",
             audioSpectrumDb = "${String.format(java.util.Locale.US, "%.1f", state.audioDb)} dB / ${state.heartRateBpm} BPM",
             visualContext = state.activeAppContext,
             neuralSyncRate = "${String.format(java.util.Locale.US, "%.1f", state.matchPercentage)}%",
-            actionPlan = actionPlan
+            actionPlan = state.currentActionPlan
         )
 
         repository.insert(newPrediction)
-
-        _uiState.update {
-            it.copy(
-                currentPredictionTitle = title,
-                currentPredictionText = summary,
-                currentActionPlan = actionPlan,
-                timeHorizons = horizons
-            )
-        }
     }
 
     fun clearHistory() {

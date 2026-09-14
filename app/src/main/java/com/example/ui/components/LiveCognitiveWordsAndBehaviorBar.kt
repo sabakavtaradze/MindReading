@@ -203,10 +203,14 @@ fun LiveCognitiveWordsAndBehaviorBar(
                         }
                     }
 
-                    // Live Accumulated Sentence
-                    val displaySentence = uiState.wordDecoder.accumulatedSentence.ifBlank {
-                        uiState.dominantMindThought.ifBlank { "გამარჯობა მინდა კოდის ოპტიმიზაცია" }
+                    // Live Accumulated Sentence in clean, human Georgian
+                    val rawSentence = uiState.wordDecoder.accumulatedSentence.ifBlank {
+                        uiState.dominantMindThought.ifBlank {
+                            val fresh = com.example.service.GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicHumanThought()
+                            fresh.detail.removePrefix("ნავარაუდევი აზრი: ").trim()
+                        }
                     }
+                    val displaySentence = com.example.service.NeuralContextService.sanitizeToHumanGeorgian(rawSentence)
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(10.dp),
@@ -253,17 +257,8 @@ fun LiveCognitiveWordsAndBehaviorBar(
                                 list.add(branch.word to branch.probabilityPct)
                             }
                         }
-                        if (list.isEmpty()) {
-                            listOf(
-                                "ოპტიმიზაცია" to 96,
-                                "შემოწმება" to 92,
-                                "გაშვება" to 88,
-                                "დადასტურება" to 84,
-                                "არქიტექტურა" to 79
-                            )
-                        } else {
-                            list.take(6)
-                        }
+                        val dynamicDefaults = com.example.service.GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicCandidateWords(6)
+                        (list + dynamicDefaults).distinctBy { it.first }.take(6)
                     }
 
                     FlowRow(

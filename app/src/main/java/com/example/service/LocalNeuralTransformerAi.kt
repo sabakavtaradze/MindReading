@@ -420,38 +420,13 @@ class LocalNeuralTransformerAi {
         val topModalityPct = ((attentionDistribution.values.maxOrNull() ?: 0.25f) * 100).toInt()
         val dominantModality = modalityLabelsKa.getOrElse(dominantIndex) { "მულტიმოდალური" }
 
-        // 1. Synthesized Dynamic Thought generated directly from cross-modal attention
-        val thoughtSentence = when (dominantIndex) {
-            TOKEN_ACOUSTIC -> {
-                if (audio.voiceActivityDetected) {
-                    "ტრანსფორმერმა დააფიქსირა სუბვოკალური არტიკულაცია (${db}dB): ფორმირდება მეტყველების სემანტიკური მოდელი"
-                } else {
-                    "აკუსტიკური გარემოს ფონური ანალიზი ($db dB, ${audio.dominantFrequencyHz.roundToInt()}Hz): ყურადღება მიმართულია აუდიო-ნაკადზე"
-                }
-            }
-            TOKEN_OPTICAL_PULSE -> {
-                "ვიზუალური ყურადღების ფოკუსი: გუგის რადიუსი ${String.format(Locale.US, "%.1f", pupil)} მმ, პულსი $bpm BPM — მაღალი კოგნიტური ჩართულობა"
-            }
-            TOKEN_SOMATIC_TREMOR -> {
-                "სომატური და ნეირო-კუნთოვანი სტაბილურობა (${String.format(Locale.US, "%.2f", sensors.microTremorMagnitude)}): მოძრაობისა და ტაქტილური რეფლექსების კორელაცია"
-            }
-            TOKEN_POLYVAGAL -> {
-                "ავტონომიური ნერვული სისტემის რეგულაცია: ${polyvagal.dominantState.labelKa} — Flow ინდექსი ${(polyvagal.flowStateIndex * 100).toInt()}%"
-            }
-            TOKEN_SNN_SPIKES -> {
-                "SNN ნეირონული იმპულსები: ${ecosystem.snnTelemetry.dominantActiveCluster.labelKa} კლასტერი აქტიურია ${ecosystem.snnTelemetry.totalSpikesPerSec.toInt()} Hz სიხშირით"
-            }
-            TOKEN_HTM_SDR -> {
-                "HTM კორტიკალური სვეტები (${ecosystem.htmTelemetry.activeColumnsCount}/40): SDR პროგნოზირებს მიმდევრობით კოგნიტურ ცვლილებას"
-            }
-            TOKEN_HOPFIELD_MEMORY -> {
-                "Hopfield-ის ასოციაციური მეხსიერება: ენერგიის მინიმიზაციით აღდგენილია „${ecosystem.hopfieldTelemetry.recalledPatternLabel}“"
-            }
-            TOKEN_EVOLUTIONARY_BRAIN -> {
-                "ლოკალური ტვინის ევოლუციური სტრატეგია: $strategyTitle (გენერაცია #${localBrain?.evolutionGeneration ?: 1}, ეფექტურობა ${( (localBrain?.activeStrategy?.efficacyScore ?: 0.8f) * 100).toInt()}%)"
-            }
-            else -> "მულტიმოდალური ტრანსფორმერის სინთეზი: ნეირონული და ბიომეტრიული სენსორები ჰარმონიზებულია"
-        }
+        // 1. Synthesized Dynamic Thought in clear, simple, human Georgian language
+        // Non-repeating human Georgian thought stream powered by DynamicThoughtAndWordStreamer
+        val dynamicThoughtItem = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicHumanThought(
+            focusLevel = focusLevel,
+            stressLevel = polyvagal.sympatheticScore
+        )
+        val thoughtSentence = dynamicThoughtItem.detail.removePrefix("ნავარაუდევი აზრი: ").trim()
 
         // 2. Cognitive Task Solution generated algorithmically
         val taskSolution = when (taskCategory) {
@@ -508,28 +483,10 @@ class LocalNeuralTransformerAi {
     }
 
     private fun generateNextTokens(thought: String, topK: Int): List<Pair<String, Float>> {
-        val words = thought.split("\\s+".toRegex()).filter { it.length > 2 }
-        val lastWord = words.lastOrNull()?.lowercase(Locale.ROOT) ?: "ანალიზი"
-
-        val candidates = GeorgianNeuroLinguisticEngine.getAllLexiconEntries()
-        val recentTokens = AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens().map { it.token }
-
-        if (candidates.isEmpty()) {
-            return listOf("სისტემა" to 0.94f, "ალგორითმი" to 0.88f, "ოპტიმიზაცია" to 0.82f)
+        val dynamicCandidates = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicCandidateWords(topK)
+        return dynamicCandidates.map { (word, prob) ->
+            word to (prob / 100f).coerceIn(0.65f, 0.99f)
         }
-
-        val scored = candidates.map { entry ->
-            val sim = SemanticEmbeddingEngine.cosineSimilarity(
-                SemanticEmbeddingEngine.getWordEmbedding(lastWord),
-                SemanticEmbeddingEngine.getWordEmbedding(entry.word.lowercase(Locale.ROOT))
-            )
-            // Bonus score if word was recently learned dynamically or synthesized
-            val dynamicBonus = if (recentTokens.any { it.equals(entry.word, ignoreCase = true) }) 0.15f else 0.0f
-            val prob = (((sim + 1.0f) * 0.45f + 0.1f) + dynamicBonus).coerceIn(0.40f, 0.99f)
-            entry.word to prob
-        }.sortedByDescending { it.second }.take(topK)
-
-        return scored
     }
 
     // --- Linear Algebra & Activation Helpers ---

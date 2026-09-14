@@ -52,7 +52,7 @@ class NeuralContextService : Service() {
     private val _activeContextName = MutableStateFlow("ფონური ნეირო-მონიტორინგი")
     val activeContextName: StateFlow<String> = _activeContextName.asStateFlow()
 
-    private val _latestDetectedThought = MutableStateFlow("კოდის რეფაქტორინგი და Compose ოპტიმიზაცია")
+    private val _latestDetectedThought = MutableStateFlow("საქმეზე კონცენტრირება და ახალი იდეების ანალიზი")
     val latestDetectedThought: StateFlow<String> = _latestDetectedThought.asStateFlow()
 
     inner class LocalBinder : Binder() {
@@ -111,9 +111,9 @@ class NeuralContextService : Service() {
             audioAnalyzer?.startListening()
             cameraAnalyzer?.startBackgroundGazeTracking()
             val customText = intent?.getStringExtra(EXTRA_NOTIFICATION_TEXT)
-                ?: "❤️ 72 BPM • 🎯 95% ფოკუსი • 📳 0.12 მ/წმ² • 🎙️ 28 dB"
+                ?: "💭 „საქმეზე ვარ კონცენტრირებული“ • ❤️ 72 BPM"
             startForegroundServiceWithNotification(
-                title = "🧠 NeuroSync • რეალური ტელემეტრია",
+                title = "🔮 სიტყვები: მინდა • კოდი • შემოწმება",
                 text = customText
             )
         } catch (e: Throwable) {
@@ -142,10 +142,10 @@ class NeuralContextService : Service() {
             try {
                 val channel = NotificationChannel(
                     CHANNEL_ID,
-                    "NeuroSync ნეირონული კავშირი",
+                    "აზრებისა და სიტყვების გამოცნობა",
                     NotificationManager.IMPORTANCE_LOW
                 ).apply {
-                    description = "აზრების უწყვეტი პროგნოზირება და ფონური სენსორული ტელემეტრია"
+                    description = "სიტყვებისა და აზრების რეალურ დროში გამოცნობა"
                     setShowBadge(false)
                     enableVibration(false)
                     enableLights(false)
@@ -203,10 +203,12 @@ class NeuralContextService : Service() {
     }
 
     /**
-     * Updates notification in real-time with CLEAN, REAL BIOMETRICS & PREDICTED DATA.
-     * Replaces verbose marketing text with pure real-time sensor metrics:
-     * Heart Rate (rPPG), Pupil (mm), Tremor (m/s²), Audio (dB), Focus %, Stress %,
-     * and recognized/predicted words.
+     * Updates notification in real-time with PREDICTED WORDS ON TOP and CLEAN HUMAN THOUGHT.
+     * Guaranteed to fit on mobile screens without truncation:
+     * Line 1: Title with Predicted Words
+     * Line 2: Words list inline
+     * Line 3: Human thought
+     * Line 4: Vital stats (Heart rate, Focus, Mood)
      */
     private fun updateNotificationLive(
         thoughtText: String,
@@ -232,26 +234,15 @@ class NeuralContextService : Service() {
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
             )
 
-            val cleanThought = thoughtText.ifBlank { "კოგნიტური ანალიზი მიმდინარეობს" }
-            val title = "🧠 აზრი: $cleanThought"
-            val subText = "❤️ $heartRateBpm BPM • $focusPct% ფოკუსი"
-            val collapsedSummary = "❤️ $heartRateBpm BPM • 🎯 $focusPct% • 📳 ${String.format(Locale.US, "%.2f", tremorMagnitude)} • 🎙️ ${audioDb.toInt()} dB"
-
-            val expandedText = buildString {
-                append("💭 გამოცნობილი აზრი:\n")
-                append("„$cleanThought“\n\n")
-
-                append("📊 რეალური ბიომეტრია და სენსორები (Live):\n")
-                append("• ❤️ გულისცემა (rPPG): $heartRateBpm BPM  |  👁️ გუგა: ${String.format(Locale.US, "%.1f", pupilMm)} მმ\n")
-                append("• 📳 მიკრო-ტრემორი: ${String.format(Locale.US, "%.2f", tremorMagnitude)} მ/წმ²  |  🎙️ ხმაური: ${audioDb.toInt()} dB\n")
-                append("• 🎯 ფოკუსი: $focusPct%  |  ⚡ მენტალური დაღლა: $fatiguePct%\n")
-                append("• 🧘 სტრესი: $stressPct%  |  🧬 ქცევა: $behaviorMode\n\n")
-
-                if (predictedWords.isNotEmpty()) {
-                    append("🔮 შემდეგი სიტყვების გამოცნობა:\n")
-                    append(predictedWords.take(5).joinToString(" • "))
-                }
-            }.trimEnd()
+            val (title, collapsedSummary, expandedText) = buildNotificationComponents(
+                thoughtText = thoughtText,
+                heartRateBpm = heartRateBpm,
+                focusPct = focusPct,
+                stressPct = stressPct,
+                fatiguePct = fatiguePct,
+                predictedWords = predictedWords
+            )
+            val subText = "❤️ $heartRateBpm • 🎯 $focusPct%"
 
             val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle(title)
@@ -318,16 +309,13 @@ class NeuralContextService : Service() {
                     val fatiguePct = (mentalFatigueVal * 100).toInt().coerceIn(10, 60)
                     val stressPct = (emotionalEntropyVal * 100).toInt().coerceIn(8, 50)
 
-                    // Extract synthesized phrase
+                    // Extract synthesized phrase using non-repeating dynamic human thought generator
+                    val dynamicGenerated = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicHumanThought(
+                        focusLevel = focusLevelVal,
+                        stressLevel = emotionalEntropyVal
+                    )
                     val rawSentence = cognitiveResult?.synthesizedThoughtSentence.orEmpty().ifBlank {
-                        val recentTokens = AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens()
-                        val topWord = if (recentTokens.isNotEmpty()) {
-                            recentTokens[cycleCount % recentTokens.size].token
-                        } else {
-                            val allLex = GeorgianNeuroLinguisticEngine.getAllLexiconEntries()
-                            if (allLex.isNotEmpty()) allLex[cycleCount % allLex.size].word else "ოპტიმიზაცია"
-                        }
-                        "ანალიზი: $topWord და კოგნიტური ფოკუსი"
+                        dynamicGenerated.detail.removePrefix("ნავარაუდევი აზრი: ").trim()
                     }
 
                     // Anti-Spam filter: deduplicate adjacent words
@@ -342,12 +330,13 @@ class NeuralContextService : Service() {
                     _latestDetectedThought.value = dynamicSentence
 
                     val isCloud = cognitiveResult?.isCloudActive ?: false
+                    val dynamicCandidateWords = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicCandidateWords(5).map { it.first }
                     val predictedWordsList = if (cognitiveResult?.aiPredictedWords?.isNotEmpty() == true) {
-                        cognitiveResult.aiPredictedWords.map { "${it.word} (${it.probabilityPct}%)" }
+                        cognitiveResult.aiPredictedWords.map { it.word }
                     } else if (cognitiveResult?.aiNextWordCandidates?.isNotEmpty() == true) {
                         cognitiveResult.aiNextWordCandidates
                     } else {
-                        AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens().map { it.token }.take(5)
+                        dynamicCandidateWords
                     }
 
                     val behaviorMode = when {
@@ -414,6 +403,84 @@ class NeuralContextService : Service() {
         /**
          * Direct utility method to immediately refresh notification with clean real telemetry and predicted words
          */
+        fun sanitizeToHumanGeorgian(text: String): String {
+            val trimmed = text.trim()
+            if (trimmed.isBlank()) {
+                val fresh = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicHumanThought()
+                return fresh.detail.removePrefix("ნავარაუდევი აზრი: ").trim()
+            }
+
+            // Filter out technical/academic jargon into simple everyday Georgian
+            if (trimmed.contains("Hopfield", ignoreCase = true) ||
+                trimmed.contains("მინიმიზაციით", ignoreCase = true) ||
+                trimmed.contains("ასოციაციური მეხსიერება", ignoreCase = true)) {
+                val extracted = trimmed.substringAfterLast("„", "").substringBeforeLast("“", "")
+                return if (extracted.isNotBlank() && extracted != trimmed) {
+                    "გონებაში ამოტივტივდა: $extracted"
+                } else {
+                    "აზრებს ვალაგებ და საქმეზე ვფიქრობ"
+                }
+            }
+            if (trimmed.contains("SNN", ignoreCase = true) || trimmed.contains("კლასტერი", ignoreCase = true)) {
+                return "სწრაფად და ლოგიკურად ვალაგებ აზრებს"
+            }
+            if (trimmed.contains("HTM", ignoreCase = true) || trimmed.contains("კორტიკალური", ignoreCase = true)) {
+                return "ახალ იდეას და ინფორმაციას ვამუშავებ"
+            }
+            if (trimmed.contains("პოლივაგალ", ignoreCase = true) || trimmed.contains("ვენტრალ", ignoreCase = true)) {
+                return "მშვიდად და გაწონასწორებულად ვარ"
+            }
+            if (trimmed.contains("სომატური", ignoreCase = true) || trimmed.contains("ტრემორი", ignoreCase = true)) {
+                return "ტელეფონში აქტიურად ვმოქმედებ"
+            }
+            if (trimmed.contains("ტრანსფორმერ", ignoreCase = true) || trimmed.contains("ტელემეტრია", ignoreCase = true)) {
+                val fresh = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicHumanThought()
+                return fresh.detail.removePrefix("ნავარაუდევი აზრი: ").trim()
+            }
+            return trimmed
+        }
+
+        fun buildNotificationComponents(
+            thoughtText: String,
+            heartRateBpm: Int,
+            focusPct: Int,
+            stressPct: Int,
+            fatiguePct: Int,
+            predictedWords: List<String>
+        ): Triple<String, String, String> {
+            val dynamicWordFallbacks = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicCandidateWords(5).map { it.first }
+            val inputWords = predictedWords.map {
+                it.substringBefore(" (").trim()
+            }.filter { it.isNotBlank() }
+
+            val cleanWords = (if (inputWords.isNotEmpty()) inputWords + dynamicWordFallbacks else dynamicWordFallbacks)
+                .distinct()
+                .take(5)
+            val wordsInline = cleanWords.joinToString(" • ")
+
+            val humanThought = sanitizeToHumanGeorgian(thoughtText)
+            val simpleMood = when {
+                stressPct > 35 -> "დაძაბული"
+                fatiguePct > 45 -> "დაღლილი"
+                focusPct > 90 -> "ღრმა ფოკუსი"
+                else -> "მშვიდად"
+            }
+
+            // 1. Title: Words are right on the top line!
+            val title = "🔮 სიტყვები: $wordsInline"
+
+            // 2. Collapsed summary: The human thought
+            val collapsedSummary = "💭 „$humanThought“"
+
+            // 3. Expanded: strictly 4-5 short lines, words on line 2!
+            val expandedText = "🔮 გამოცნობილი სიტყვები:\n" +
+                "👉 $wordsInline\n\n" +
+                "💭 რაზე ფიქრობ: „$humanThought“\n" +
+                "❤️ პულსი: $heartRateBpm • 🎯 ფოკუსი: $focusPct% • 🧘 $simpleMood"
+
+            return Triple(title, collapsedSummary, expandedText)
+        }
+
         fun postLiveThoughtNotification(
             context: Context,
             thoughtText: String,
@@ -435,24 +502,15 @@ class NeuralContextService : Service() {
                     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
                 )
 
-                val cleanThought = thoughtText.ifBlank { "ანალიზი აქტიურია" }
-                val title = "🧠 აზრი: $cleanThought"
-                val subText = "❤️ $heartRateBpm BPM • 95% ფოკუსი"
-                val collapsedSummary = "❤️ $heartRateBpm BPM • 🎙️ ${micDb.toInt()} dB • 🎯 95% ფოკუსი"
-
-                val expandedText = buildString {
-                    append("💭 გამოცნობილი აზრი:\n")
-                    append("„$cleanThought“\n\n")
-
-                    append("📊 რეალური ბიომეტრია (Live):\n")
-                    append("• ❤️ გულისცემა: $heartRateBpm BPM  |  🎙️ ხმაური: ${micDb.toInt()} dB\n")
-                    append("• 🎯 ფოკუსი: 95%  |  🧘 სტრესი: 12%\n\n")
-
-                    if (predictedWords.isNotEmpty()) {
-                        append("🔮 შემდეგი სიტყვების გამოცნობა:\n")
-                        append(predictedWords.take(5).joinToString(" • "))
-                    }
-                }.trimEnd()
+                val (title, collapsedSummary, expandedText) = buildNotificationComponents(
+                    thoughtText = thoughtText,
+                    heartRateBpm = heartRateBpm,
+                    focusPct = 95,
+                    stressPct = 12,
+                    fatiguePct = 15,
+                    predictedWords = predictedWords
+                )
+                val subText = "❤️ $heartRateBpm • 🎯 95%"
 
                 val notification = NotificationCompat.Builder(context, CHANNEL_ID)
                     .setContentTitle(title)

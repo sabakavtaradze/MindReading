@@ -1395,32 +1395,23 @@ class HybridCognitiveEngine(private val context: Context) {
         val bpm = gaze.opticalRadiancePulseBpm
         val recentTokens = AutonomousDynamicLexiconLearner.getRecentlyLearnedTokens()
         
-        localRotationIndex++
-        val dynamicToken = if (recentTokens.isNotEmpty()) {
-            recentTokens[localRotationIndex % recentTokens.size].token
-        } else {
-            val allLex = GeorgianNeuroLinguisticEngine.getAllLexiconEntries()
-            if (allLex.isNotEmpty()) allLex[localRotationIndex % allLex.size].word else "ოპტიმიზაცია"
-        }
+        val dynamicHumanThought = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicHumanThought(
+            focusLevel = focusLevel,
+            stressLevel = polyvagal.sympatheticScore
+        )
+        val dynamicCandidatePairs = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicCandidateWords(4)
+        val dynamicToken = dynamicCandidatePairs.firstOrNull()?.first ?: "აზრი"
+        val localThought = dynamicHumanThought.detail.removePrefix("ნავარაუდევი აზრი: ").trim()
 
-        val localThought = when (localRotationIndex % 6) {
-            0 -> "საუბრისა და აკუსტიკური გარემოს ანალიზი: $dynamicToken"
-            1 -> "სუბვოკალური მზადყოფნა: ფორმულირდება $dynamicToken"
-            2 -> "ვიზუალური ყურადღების ფოკუსირება და $dynamicToken გააზრება"
-            3 -> "აქტიური მენტალური ჩართულობა: $dynamicToken"
-            4 -> "ღრმა ალგორითმული ნაკადი: $dynamicToken და სტრუქტურის აგება"
-            else -> "სისტემური დაკვირვება და $dynamicToken"
-        }
-
-        // On-Device Cognitive Task Solution & Thinking Aid
+        // On-Device Cognitive Task Solution & Thinking Aid in clear human language
         val localTaskSolution = when (taskCategory) {
-            "COGNITIVE_REST" -> "სისტემამ დააფიქსირა სამუშაო მეხსიერების მაღალი დატვირთვა. რეკომენდებულია 20-წამიანი ვიზუალური პაუზა და ყურადღების გადატანა შორეულ ობიექტზე."
-            "NEURO_REGULATION" -> "სომატური დაძაბულობის შესამცირებლად გააქტიურდა პარასიმპათიკური რეგულაცია. სისტემა გირჩევთ ნელი სუნთქვის რიტმს (4-7-8) და პრიორიტეტების სტრუქტურირებას."
-            "SUBVOCAL_ARTICULATION" -> "დაფიქსირდა სუბვოკალური მზადყოფნა. სისტემამ ამოიცნო ძირითადი ცნება „$dynamicToken“ და აყალიბებს მის სემანტიკურ გაგრძელებას."
-            "DEEP_FLOW_FOCUS" -> "ვიზუალური და მენტალური ფოკუსი მაქსიმალურ ზონაშია (${(focusLevel * 100).roundToInt()}%). სისტემა აფიქსირებს მოდულარულ არქიტექტურას და მხარს უჭერს უწყვეტ ანალიტიკას."
-            "ANOMALY_INTEGRATION" -> "ახალი ინფორმაციის შემოსვლისას HTM-მა გამოავლინა ანომალია. სისტემა ახდენს მეხსიერების SDR სვეტების რეორგანიზაციას."
-            "ASSOCIATIVE_MEMORY" -> "Hopfield-ის ასოციაციური მეხსიერებიდან ამოტივტივდა „${ecosystem.hopfieldTelemetry.recalledPatternLabel}“. ის ინტეგრირდება მიმდინარე გადაწყვეტილებაში."
-            else -> "სისტემური აზროვნების მხარდასაჭერად შეირჩა ცნება „$dynamicToken“. სისტემა გირჩევთ ამოცანის 3 მარტივ ქვესაფეხურად დაყოფას."
+            "COGNITIVE_REST" -> "ცოტა ხნით შეისვენეთ, თვალები მოადუნეთ და წყალი დალიეთ."
+            "NEURO_REGULATION" -> "ღრმად ჩაისუნთქეთ და მშვიდად განაგრძეთ საქმე."
+            "SUBVOCAL_ARTICULATION" -> "შემდეგი სიტყვა, რომელზეც ფიქრობთ: „$dynamicToken“."
+            "DEEP_FLOW_FOCUS" -> "კონცენტრაცია მაღალია (${(focusLevel * 100).roundToInt()}%), შესანიშნავად მუშაობთ."
+            "ANOMALY_INTEGRATION" -> "ახალ ინფორმაციას ეცნობით, ყურადღება მიმართულია ეკრანზე."
+            "ASSOCIATIVE_MEMORY" -> "გონებაში ამოტივტივდა: „${ecosystem.hopfieldTelemetry.recalledPatternLabel}“."
+            else -> "ფოკუსირდით მთავარ მიზანზე: „$dynamicToken“."
         }
 
         val localReasoningSteps = listOf(
@@ -1573,14 +1564,15 @@ class HybridCognitiveEngine(private val context: Context) {
                 )
             }
         } else {
-            candidateWords.take(4).mapIndexed { idx, cand ->
+            val dynamicFallback = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicCandidateWords(4)
+            dynamicFallback.mapIndexed { idx, (w, prob) ->
                 AiWordPredictionNode(
-                    word = cand.word,
-                    probabilityPct = (92 - (idx * 6)).coerceIn(45, 96),
-                    category = cand.category,
-                    phonemes = cand.phonemes.joinToString("-"),
+                    word = w,
+                    probabilityPct = prob,
+                    category = "NEURAL_SYNAPSE",
+                    phonemes = w.toCharArray().joinToString("-"),
                     grammaticalRole = "სემანტიკური ერთეული",
-                    contextReason = cand.description
+                    contextReason = "დინამიკური ლექსიკონი: $w"
                 )
             }
         }

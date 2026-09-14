@@ -547,9 +547,11 @@ object UnifiedPredictiveThoughtEngine {
         )
 
         // Construct sentence cleanly without infinite concatenation
-        val topWord = effectiveCandidates.firstOrNull()?.word ?: "ოპტიმიზაცია"
+        val fallbackWord = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicCandidateWords(1).firstOrNull()?.first ?: "აზრი"
+        val topWord = effectiveCandidates.firstOrNull()?.word ?: fallbackWord
         val nextPredictedSentence = if (lastAccumulatedSentence.isBlank() || lastAccumulatedSentence.length > 60) {
-            "კოდის რეფაქტორინგი და $topWord"
+            val freshThought = GeorgianNeuroLinguisticEngine.DynamicThoughtAndWordStreamer.getNextDynamicHumanThought()
+            freshThought.detail.removePrefix("ნავარაუდევი აზრი: ").trim()
         } else {
             beamResult.bestHypothesisSentence.ifBlank { "$lastAccumulatedSentence $topWord" }
         }

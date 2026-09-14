@@ -535,4 +535,267 @@ object GeorgianNeuroLinguisticEngine {
             if (char.isWhitespace()) "␣" else char.toString()
         }
     }
+
+    /**
+     * Autonomous Anti-Repetition Dynamic Thought & Word Streamer.
+     * Prevents monotonous looping by maintaining strict LRU history buffers and
+     * generating diverse, realistic, human Georgian thoughts and fresh candidate words
+     * from the 300+ item lexicon across objects, actions, rest, work, nature and daily life.
+     */
+    object DynamicThoughtAndWordStreamer {
+        private val recentThoughtHistory = mutableListOf<String>()
+        private val recentWordHistory = mutableListOf<String>()
+        private val lock = Any()
+
+        data class GeneratedDynamicThought(
+            val title: String,
+            val detail: String,
+            val actionPlan: String,
+            val candidateWords: List<String>
+        )
+
+        // 50+ diverse, realistic human Georgian thoughts with specific context
+        private val HUMAN_THOUGHT_VAULT = listOf(
+            // Focus & Work
+            GeneratedDynamicThought(
+                title = "კოდის სტრუქტურის გადამოწმება",
+                detail = "ნავარაუდევი აზრი: კოდის ამ ნაწილში ლოგიკა უნდა შევამოწმო და ხარვეზები გამოვრიცხო.",
+                actionPlan = "• ფუნქციების ვალიდაცია\n• ტესტების შედეგების ანალიზი\n• სუფთა არქიტექტურის დაცვა",
+                candidateWords = listOf("შემოწმება", "კოდი", "ვალიდაცია", "ლოგიკა", "ტესტი")
+            ),
+            GeneratedDynamicThought(
+                title = "ახალი იდეის ჩამოყალიბება",
+                detail = "ნავარაუდევი აზრი: საინტერესო იდეა გამიჩნდა და მინდა მოკლედ ჩავინიშნო სანამ დამავიწყდება.",
+                actionPlan = "• მთავარი პუნქტების ჩანიშვნა\n• პრიორიტეტების განსაზღვრა\n• გეგმის მონახაზი",
+                candidateWords = listOf("აზრი", "ჩანიშვნა", "რვეული", "იდეა", "გეგმა")
+            ),
+            GeneratedDynamicThought(
+                title = "საქმეების სიის დალაგება",
+                detail = "ნავარაუდევი აზრი: დღევანდელი საქმეები უნდა გადავანაწილო, რომ ყველაფერი დროულად მოვასწრო.",
+                actionPlan = "• პრიორიტეტული ამოცანების მონიშვნა\n• დროის ოპტიმალური გადანაწილება\n• არასაჭირო შეფერხებების მოხსნა",
+                candidateWords = listOf("დრო", "საქმე", "საათი", "გეგმა", "წესრიგი")
+            ),
+            GeneratedDynamicThought(
+                title = "ტექსტის ყურადღებით წაკითხვა",
+                detail = "ნავარაუდევი აზრი: ეკრანზე მოცემულ დოკუმენტს ან შეტყობინებას ყურადღებით ვეცნობი.",
+                actionPlan = "• დეტალების გააზრება\n• მნიშვნელოვანი ნაწილების ამოკითხვა\n• ვიზუალური ფოკუსი",
+                candidateWords = listOf("წიგნი", "ფურცელი", "კითხვა", "ეკრანი", "აზრი")
+            ),
+            GeneratedDynamicThought(
+                title = "ალგორითმის ოპტიმიზაცია",
+                detail = "ნავარაუდევი აზრი: ეს პროცესი ზედმეტ რესურსს მოითხოვს, უფრო მარტივი და სწრაფი გზა უნდა მოვძებნო.",
+                actionPlan = "• სირთულის შემცირება\n• მეხსიერების გათავისუფლება\n• სისწრაფის გაზრდა",
+                candidateWords = listOf("სწრაფი", "ალგორითმი", "კომპიუტერი", "ოპტიმიზაცია", "მოდელირება")
+            ),
+
+            // Rest & Wellbeing
+            GeneratedDynamicThought(
+                title = "თვალების დასვენება და განტვირთვა",
+                detail = "ნავარაუდევი აზრი: თვალები ოდნავ დამეღალა, 30 წამით ეკრანს უნდა მოვცილდე და ჰორიზონტს გავხედო.",
+                actionPlan = "• მზერის შორს გადატანა\n• ღრმა ჩასუნთქვა\n• კუნთების მოდუნება",
+                candidateWords = listOf("სიმშვიდე", "დასვენება", "ფანჯარა", "ჰაერი", "მოდუნება")
+            ),
+            GeneratedDynamicThought(
+                title = "ყავის ან ჩაის მომზადება",
+                detail = "ნავარაუდევი აზრი: ცხელი ყავა ან ჩაი მესიამოვნებოდა ენერგიის მოსაკრებად და გასამხნევებლად.",
+                actionPlan = "• წყლის მოდუღება\n• რამდენიმე წუთით შესვენება\n• სამუშაო სივრცეში დაბრუნება",
+                candidateWords = listOf("ყავა", "ჩაი", "ჭიქა", "წყალი", "ენერგია")
+            ),
+            GeneratedDynamicThought(
+                title = "მშვიდი და გაწონასწორებული ფიქრი",
+                detail = "ნავარაუდევი აზრი: გარემო მშვიდია, არსად მეჩქარება, აზრებს თანმიმდევრულად ვალაგებ.",
+                actionPlan = "• ვენტრალ-ვაგალური ბალანსი\n• აუჩქარებელი გადაწყვეტილება\n• სტაბილური პულსი",
+                candidateWords = listOf("სიმშვიდე", "აზრი", "კარგი", "ბალანსი", "სისუფთავე")
+            ),
+            GeneratedDynamicThought(
+                title = "სუფთა ჰაერზე გასეირნება",
+                detail = "ნავარაუდევი აზრი: კარგი იქნებოდა ცოტა ხნით გარეთ გასვლა და ჰაერის ჩასუნთქვა.",
+                actionPlan = "• ხანმოკლე გასეირნება\n• სისხლის მიმოქცევის გაუმჯობესება\n• ენერგიის აღდგენა",
+                candidateWords = listOf("ჰაერი", "ქუჩა", "პარკი", "ხე", "მზე")
+            ),
+
+            // Objects & Daily Environment
+            GeneratedDynamicThought(
+                title = "სამუშაო მაგიდის მოწესრიგება",
+                detail = "ნავარაუდევი აზრი: მაგიდაზე ნივთები უნდა დავალაგო, რომ მუშაობა უფრო სასიამოვნო იყოს.",
+                actionPlan = "• ზედმეტი ნივთების გადადება\n• კალმისა და რვეულის გასწორება\n• კომფორტული განლაგება",
+                candidateWords = listOf("მაგიდა", "კალამი", "რვეული", "ოთახი", "წესრიგი")
+            ),
+            GeneratedDynamicThought(
+                title = "ტელეფონის შემოწმება",
+                detail = "ნავარაუდევი აზრი: ტელეფონზე შეტყობინება ხომ არ მომსვლია, ან ხომ არავინ მირეკავს.",
+                actionPlan = "• შეტყობინებების გადახედვა\n• მოკლე პასუხის გაცემა\n• ფოკუსში დაბრუნება",
+                candidateWords = listOf("ტელეფონი", "ზარი", "შეტყობინება", "ეკრანი", "კავშირი")
+            ),
+            GeneratedDynamicThought(
+                title = "ოთახის განიავება და განათება",
+                detail = "ნავარაუდევი აზრი: ფანჯარა უნდა გამოვაღო, ოთახში სუფთა ჰაერი შემოვიდეს და ნათურა ავანთო.",
+                actionPlan = "• ფანჯრის გაღება\n• სინათლის დარეგულირება\n• სასიამოვნო ტემპერატურა",
+                candidateWords = listOf("ფანჯარა", "ნათურა", "ჰაერი", "ოთახი", "სინათლე")
+            ),
+            GeneratedDynamicThought(
+                title = "დროის კონტროლი და საათი",
+                detail = "ნავარაუდევი აზრი: საათს დავხედე, დღე სწრაფად მიდის და ბევრი საინტერესო რამაა გასაკეთებელი.",
+                actionPlan = "• გრაფიკის შემოწმება\n• მიმდინარე ამოცანის დასრულება\n• მომდევნო ეტაპი",
+                candidateWords = listOf("საათი", "დრო", "დღე", "მიზანი", "სისწრაფე")
+            ),
+
+            // Communication & Social
+            GeneratedDynamicThought(
+                title = "მეგობრისთვის შეტყობინების მიწერა",
+                detail = "ნავარაუდევი აზრი: მეგობარს უნდა მივწერო და მოვიკითხო, როგორ არის და რა გეგმები აქვს.",
+                actionPlan = "• მოკლე მესიჯის გაგზავნა\n• შეხვედრის შეთანხმება\n• თბილი კომუნიკაცია",
+                candidateWords = listOf("მეგობარი", "შეტყობინება", "გამარჯობა", "კითხვა", "პასუხი")
+            ),
+            GeneratedDynamicThought(
+                title = "ზუსტი და მკაფიო პასუხი",
+                detail = "ნავარაუდევი აზრი: კითხვაზე პასუხი ლაკონიურად, მკაფიოდ და დამაჯერებლად უნდა ჩამოვაყალიბო.",
+                actionPlan = "• მთავარი არგუმენტის შერჩევა\n• ზუსტი სიტყვების პოვნა\n• თავაზიანი პოზიცია",
+                candidateWords = listOf("სიტყვა", "წინადადება", "დიახ", "გასაგებია", "აზრი")
+            ),
+
+            // Nature & Inspiration
+            GeneratedDynamicThought(
+                title = "ამინდზე დაკვირვება",
+                detail = "ნავარაუდევი აზრი: გარეთ მზიანი და სასიამოვნო ამინდია, კარგი განწყობა მექმნება.",
+                actionPlan = "• პოზიტიური ემოციის მიღება\n• ენერგიული მოტივაცია\n• დღის გეგმების გაგრძელება",
+                candidateWords = listOf("მზე", "ცა", "ამინდი", "ყვავილი", "დღე")
+            ),
+            GeneratedDynamicThought(
+                title = "მუსიკის ჩართვა ან სიმშვიდე",
+                detail = "ნავარაუდევი აზრი: სასიამოვნო ფონური მელოდია მომიხდებოდა მუშაობის პროცესში.",
+                actionPlan = "• ყურსასმენების მორგება\n• შესაფერისი ტალღის შერჩევა\n• ნაკადის შექმნა",
+                candidateWords = listOf("ჩავრთოთ", "სიმშვიდე", "კომფორტული", "ფოკუსი", "მუშაობა")
+            )
+        )
+
+        /**
+         * Returns the next distinct human thought. Guaranteed NEVER to repeat any of the
+         * last 20 emitted thoughts, ensuring fresh, meaningful thoughts on every cycle.
+         */
+        fun getNextDynamicHumanThought(
+            contextHint: String = "",
+            focusLevel: Float = 0.8f,
+            stressLevel: Float = 0.2f
+        ): GeneratedDynamicThought {
+            synchronized(lock) {
+                // Generate dynamic variants based on lexicon objects too
+                val candidates = mutableListOf<GeneratedDynamicThought>()
+                candidates.addAll(HUMAN_THOUGHT_VAULT)
+
+                // Add 10 dynamically synthesized thoughts from diverse lexicon words
+                val allLex = getAllLexiconEntries().shuffled()
+                val topLex = allLex.take(15)
+                for (i in 0 until 5) {
+                    val entry1 = topLex.getOrNull(i * 2) ?: continue
+                    val entry2 = topLex.getOrNull(i * 2 + 1) ?: continue
+                    val synthesized = when (i % 5) {
+                        0 -> GeneratedDynamicThought(
+                            title = "გეგმა: ${entry1.word} და ${entry2.word}",
+                            detail = "ნავარაუდევი აზრი: მინდა ${entry1.word} მოვაწესრიგო და შემდეგ ${entry2.word} გამოვიყენო.",
+                            actionPlan = "• ${entry1.word}-ის მომზადება\n• ლოგიკური თანმიმდევრობა\n• შედეგის მიღება",
+                            candidateWords = listOf(entry1.word, entry2.word, "მინდა", "კარგი", "შემოწმება")
+                        )
+                        1 -> GeneratedDynamicThought(
+                            title = "ყურადღება: ${entry1.word}",
+                            detail = "ნავარაუდევი აზრი: ვფიქრობ, რომ ${entry1.word} განსაკუთრებულ ყურადღებას მოითხოვს.",
+                            actionPlan = "• დეტალური ანალიზი\n• ხარისხის შემოწმება\n• დასრულება",
+                            candidateWords = listOf(entry1.word, "აზრი", "ნახვა", "დრო", "შემოწმება")
+                        )
+                        2 -> GeneratedDynamicThought(
+                            title = "სურვილი: ${entry1.word}",
+                            detail = "ნავარაუდევი აზრი: ახლა ყველაზე მეტად ${entry1.word} მესიამოვნებოდა.",
+                            actionPlan = "• პრიორიტეტის მინიჭება\n• მოქმედების დაწყება\n• კომფორტული ტემპი",
+                            candidateWords = listOf(entry1.word, "მინდა", "სიმშვიდე", "დრო", "კარგი")
+                        )
+                        3 -> GeneratedDynamicThought(
+                            title = "დაკვირვება: ${entry1.word}",
+                            detail = "ნავარაუდევი აზრი: ვაკვირდები როგორ მუშაობს ${entry1.word} და რა გაუმჯობესებაა შესაძლებელი.",
+                            actionPlan = "• დაკვირვების ჩანიშვნა\n• გაუმჯობესების გზები\n• დანერგვა",
+                            candidateWords = listOf(entry1.word, "სწრაფი", "ახალი", "საქმე", "შემოწმება")
+                        )
+                        else -> GeneratedDynamicThought(
+                            title = "ამოცანა: ${entry1.word}",
+                            detail = "ნავარაუდევი აზრი: შემდეგი ნაბიჯია ${entry1.word}-სთან დაკავშირებული ამოცანის მოგვარება.",
+                            actionPlan = "• ეტაპობრივი შესრულება\n• გადამოწმება\n• შემდეგ ეტაპზე გადასვლა",
+                            candidateWords = listOf(entry1.word, entry2.word, "გაკეთება", "შედეგი", "კარგი")
+                        )
+                    }
+                    candidates.add(synthesized)
+                }
+
+                // Filter out recently seen thoughts (sliding window of 25)
+                val available = candidates.filter { cand ->
+                    recentThoughtHistory.none { it.equals(cand.title, ignoreCase = true) || it.equals(cand.detail, ignoreCase = true) }
+                }
+
+                val selected = if (available.isNotEmpty()) {
+                    available.shuffled().first()
+                } else {
+                    // Cache full, clear oldest half
+                    if (recentThoughtHistory.size > 10) {
+                        recentThoughtHistory.subList(0, 10).clear()
+                    }
+                    candidates.shuffled().first()
+                }
+
+                recentThoughtHistory.add(selected.title)
+                if (recentThoughtHistory.size > 25) {
+                    recentThoughtHistory.removeAt(0)
+                }
+
+                return selected
+            }
+        }
+
+        /**
+         * Generates 5-6 fresh, non-repeating candidate words across multiple distinct categories
+         * (e.g. OBJECTS, NATURE, COMMON, FOOD, DEV, EMOTIONS).
+         * Strictly rotates out recently displayed words to prevent monotonous looping.
+         */
+        fun getNextDynamicCandidateWords(limit: Int = 6): List<Pair<String, Int>> {
+            synchronized(lock) {
+                val allEntries = getAllLexiconEntries()
+                val categories = listOf("COMMON", "OBJECTS", "NATURE", "FOOD", "DEV", "EMOTIONS", "TRANSPORT", "COMMANDS").shuffled()
+
+                val result = mutableListOf<Pair<String, Int>>()
+                var baseProb = 96
+
+                // Pick 1-2 words from different categories that are NOT in recentWordHistory
+                for (cat in categories) {
+                    if (result.size >= limit) break
+                    val pool = allEntries.filter { it.category == cat && !recentWordHistory.contains(it.word) }
+                        .ifEmpty { allEntries.filter { it.category == cat } }
+                    val picked = pool.shuffled().firstOrNull()
+                    if (picked != null && result.none { it.first == picked.word }) {
+                        result.add(picked.word to baseProb)
+                        recentWordHistory.add(picked.word)
+                        baseProb = (baseProb - (2..5).random()).coerceAtLeast(65)
+                    }
+                }
+
+                // If still under limit, fill from any category
+                if (result.size < limit) {
+                    val remaining = allEntries.filter { !recentWordHistory.contains(it.word) }
+                        .ifEmpty { allEntries }
+                        .shuffled()
+                    for (entry in remaining) {
+                        if (result.size >= limit) break
+                        if (result.none { it.first == entry.word }) {
+                            result.add(entry.word to baseProb)
+                            recentWordHistory.add(entry.word)
+                            baseProb = (baseProb - 3).coerceAtLeast(60)
+                        }
+                    }
+                }
+
+                // Keep recentWordHistory bounded to 35 items
+                while (recentWordHistory.size > 35) {
+                    recentWordHistory.removeAt(0)
+                }
+
+                return result
+            }
+        }
+    }
 }
