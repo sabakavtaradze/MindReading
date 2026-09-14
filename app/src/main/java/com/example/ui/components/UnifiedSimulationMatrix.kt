@@ -488,37 +488,52 @@ fun UnifiedSimulationMatrix(
                                 lineHeight = 20.sp
                             )
 
-                            // Causal Sensor Reasoning Box
-                            if (uiState.sensorReasonExplanation.isNotBlank() || trace.isNotBlank()) {
+                            // Multi-Neural Thought Networks Sync & Causal Sensor Reasoning Box
+                            if (uiState.sensorReasonExplanation.isNotBlank() || trace.isNotBlank() || uiState.neuralNetworksTrace.isNotBlank()) {
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFF0D1B2A).copy(alpha = 0.8f))
+                                        .background(Color(0xFF0D1B2A).copy(alpha = 0.85f))
                                         .border(1.dp, Color(0xFF00E5FF).copy(alpha = 0.25f), RoundedCornerShape(12.dp))
                                         .padding(10.dp),
-                                    verticalArrangement = Arrangement.spacedBy(5.dp)
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(5.dp)
-                                    ) {
+                                    // 1. Interconnected Thought Networks
+                                    if (uiState.neuralNetworksTrace.isNotBlank()) {
                                         Text(
-                                            text = "🔗 დაკავშირებული სენსორები:",
+                                            text = "🧠 აზროვნების ქსელები (SNN ⇄ HTM ⇄ Hopfield ⇄ Workspace):",
+                                            color = Color(0xFFB388FF),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                        Text(
+                                            text = uiState.neuralNetworksTrace,
+                                            color = Color(0xFFE2D9F3),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            lineHeight = 16.sp
+                                        )
+                                    }
+
+                                    // 2. Interconnected Sensor Network
+                                    if (trace.isNotBlank()) {
+                                        Text(
+                                            text = "🔗 დაკავშირებული სენსორები (PPG • Gaze • Audio • Touch • EEG):",
                                             color = Color(0xFF00E5FF),
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Bold
                                         )
+                                        Text(
+                                            text = trace,
+                                            color = Color(0xFFE0E1DD),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            lineHeight = 16.sp
+                                        )
                                     }
 
-                                    Text(
-                                        text = trace,
-                                        color = Color(0xFFE0E1DD),
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        lineHeight = 16.sp
-                                    )
-
+                                    // 3. Simple Human Explanation
                                     if (uiState.sensorReasonExplanation.isNotBlank()) {
                                         Text(
                                             text = "💡 რატომ ფიქრობს ამას: ${uiState.sensorReasonExplanation}",

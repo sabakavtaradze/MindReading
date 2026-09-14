@@ -38,7 +38,12 @@ object SensorCognitiveReasoningEngine {
         val thetaBandHz: Float = 5.8f,
         val isApneaActive: Boolean = false,
         val vpuFrequencyHz: Float = 135f,
-        val activeAppContext: String = "IDE / სამუშაო"
+        val activeAppContext: String = "IDE / სამუშაო",
+        val snnFiringRateHz: Float = 36.5f,
+        val htmCorticalColumns: Int = 40,
+        val hopfieldPattern: String = "ასოციაციური მეხსიერება",
+        val globalWorkspaceWinner: String = "System 2 Deliberative",
+        val associativeConcept: String = "კონცენტრაცია"
     )
 
     data class ReasoningBranch(
@@ -53,6 +58,7 @@ object SensorCognitiveReasoningEngine {
         val title: String,
         val thoughtSentence: String,
         val sensorTrace: String,
+        val neuralNetworksTrace: String,
         val sensorReasonExplanation: String,
         val actionPlan: String,
         val candidateWords: List<Pair<String, Int>>,
@@ -89,6 +95,17 @@ object SensorCognitiveReasoningEngine {
             if (sensor.stepCount > 5 || tremor > 0.35f) append(" • [🚶 მოძრაობა]")
         }
 
+        // Interconnected Multi-Neural Networks Trace
+        val neuralTrace = buildString {
+            append("⚡ SNN [${String.format(Locale.US, "%.1f", sensor.snnFiringRateHz)} Hz]")
+            append(" ⇄ 🧬 HTM [${sensor.htmCorticalColumns} სვეტი]")
+            append(" ⇄ 🌌 Hopfield [${sensor.hopfieldPattern}]")
+            append(" ⇄ 🏆 Workspace [${sensor.globalWorkspaceWinner}]")
+            if (sensor.associativeConcept.isNotBlank()) {
+                append(" ⇄ 🕸️ გრაფი [${sensor.associativeConcept}]")
+            }
+        }
+
         // Cross-Sensor Reasoning Rules
         return when {
             // 1. AHA! MOMENT OR SUDDEN PUPIL DILATION IN CALM STATE
@@ -114,6 +131,7 @@ object SensorCognitiveReasoningEngine {
                     title = title,
                     thoughtSentence = thought,
                     sensorTrace = sensorTrace,
+                    neuralNetworksTrace = neuralTrace,
                     sensorReasonExplanation = reason,
                     actionPlan = actionPlan,
                     candidateWords = words,
@@ -147,6 +165,7 @@ object SensorCognitiveReasoningEngine {
                     title = title,
                     thoughtSentence = thought,
                     sensorTrace = sensorTrace,
+                    neuralNetworksTrace = neuralTrace,
                     sensorReasonExplanation = reason,
                     actionPlan = actionPlan,
                     candidateWords = words,
@@ -180,6 +199,7 @@ object SensorCognitiveReasoningEngine {
                     title = title,
                     thoughtSentence = thought,
                     sensorTrace = sensorTrace,
+                    neuralNetworksTrace = neuralTrace,
                     sensorReasonExplanation = reason,
                     actionPlan = actionPlan,
                     candidateWords = words,
@@ -213,6 +233,7 @@ object SensorCognitiveReasoningEngine {
                     title = title,
                     thoughtSentence = thought,
                     sensorTrace = sensorTrace,
+                    neuralNetworksTrace = neuralTrace,
                     sensorReasonExplanation = reason,
                     actionPlan = actionPlan,
                     candidateWords = words,
@@ -246,6 +267,7 @@ object SensorCognitiveReasoningEngine {
                     title = title,
                     thoughtSentence = thought,
                     sensorTrace = sensorTrace,
+                    neuralNetworksTrace = neuralTrace,
                     sensorReasonExplanation = reason,
                     actionPlan = actionPlan,
                     candidateWords = words,
@@ -279,6 +301,7 @@ object SensorCognitiveReasoningEngine {
                     title = title,
                     thoughtSentence = thought,
                     sensorTrace = sensorTrace,
+                    neuralNetworksTrace = neuralTrace,
                     sensorReasonExplanation = reason,
                     actionPlan = actionPlan,
                     candidateWords = words,
@@ -312,6 +335,7 @@ object SensorCognitiveReasoningEngine {
                     title = title,
                     thoughtSentence = thought,
                     sensorTrace = sensorTrace,
+                    neuralNetworksTrace = neuralTrace,
                     sensorReasonExplanation = reason,
                     actionPlan = actionPlan,
                     candidateWords = words,
@@ -345,6 +369,7 @@ object SensorCognitiveReasoningEngine {
                     title = title,
                     thoughtSentence = thought,
                     sensorTrace = sensorTrace,
+                    neuralNetworksTrace = neuralTrace,
                     sensorReasonExplanation = reason,
                     actionPlan = actionPlan,
                     candidateWords = words,

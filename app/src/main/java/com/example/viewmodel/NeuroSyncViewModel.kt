@@ -548,6 +548,7 @@ data class NeuroSyncUiState(
     val currentPredictionTitle: String = "აზრების პროგნოზირება (Intent Prediction)",
     val currentPredictionText: String = "ნავარაუდევი აზრი: მომხმარებელი კონცენტრირებულია მიმდინარე ამოცანაზე და ემზადება გადაწყვეტილების მისაღებად.",
     val sensorReasoningTrace: String = "სენსორული კავშირი: [❤️ პულსი: 74 BPM] • [👁️ გუგა: 3.8მმ] • [🎙️ ხმა: 34 dB] • [🌊 ალფა: 10.4Hz]",
+    val neuralNetworksTrace: String = "⚡ SNN [36.5 Hz] ⇄ 🧬 HTM [40 სვეტი] ⇄ 🌌 Hopfield [ასოციაცია] ⇄ 🏆 Workspace [System 2]",
     val sensorReasonExplanation: String = "სტაბილური პულსი და მშვიდი აკუსტიკა ქმნის ოპტიმალურ გარემოს ფოკუსირებული მუშაობისთვის.",
     val currentActionPlan: String = "• მაღალი ფოკუსის კოგნიტური გარემოს შექმნა\n• ყურადღების ცენტრის შენარჩუნება\n• გარე ხმაურის ფილტრაცია და ალფა-სინქრონიზაცია",
     val dominantMindThought: String = "მიმდინარე სამუშაო პროცესზე კონცენტრირება და წინსვლა",
@@ -1312,6 +1313,9 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
         val timeNow = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
 
         val bayes = state.cognitiveBiometrics
+        val ecosystem = state.cognitiveResult?.ecosystemTelemetry
+        val workspace = state.cognitiveResult?.globalWorkspaceTelemetry
+
         val snapshot = com.example.service.SensorCognitiveReasoningEngine.SensorSnapshot(
             heartRateBpm = if (bayes.ppgMetrics.heartRateBpm > 0) bayes.ppgMetrics.heartRateBpm.toInt() else state.heartRateBpm,
             stressLevelPct = state.stressLevelPct,
@@ -1333,7 +1337,12 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
             thetaBandHz = state.thetaBandHz,
             isApneaActive = bayes.respiratoryMetrics.isCognitiveApneaActive,
             vpuFrequencyHz = state.earbudSensor.vpuBoneConductionHz,
-            activeAppContext = state.activeAppContext
+            activeAppContext = state.activeAppContext,
+            snnFiringRateHz = ecosystem?.snnTelemetry?.totalSpikesPerSec ?: 36.5f,
+            htmCorticalColumns = ecosystem?.htmTelemetry?.activeColumnsCount ?: 40,
+            hopfieldPattern = ecosystem?.hopfieldTelemetry?.recalledPatternLabel ?: "ასოციაციური მეხსიერება",
+            globalWorkspaceWinner = workspace?.activeBroadcast?.winningAgentNameKa ?: "System 2 ანალიტიკა",
+            associativeConcept = state.mindGraph.centralTopic
         )
 
         val reasoned = com.example.service.SensorCognitiveReasoningEngine.reasonThoughtFromSensors(snapshot)
@@ -1393,6 +1402,7 @@ class NeuroSyncViewModel(application: Application) : AndroidViewModel(applicatio
                 currentPredictionText = reasoned.thoughtSentence,
                 currentActionPlan = reasoned.actionPlan,
                 sensorReasoningTrace = reasoned.sensorTrace,
+                neuralNetworksTrace = reasoned.neuralNetworksTrace,
                 sensorReasonExplanation = reasoned.sensorReasonExplanation,
                 timeHorizons = horizons,
                 lastThoughtUpdatedTimestamp = timeNow,
